@@ -1,2 +1,2 @@
 # SIH-MarkME
-Smart India Hackathon Project 
+Automated Attendance System for Rural Schools 
