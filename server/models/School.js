@@ -1,0 +1,15 @@
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+
+const SchoolSchema = new Schema({
+    name: { type: String, required: true },
+    code: { type: String, required: true, unique: true, index: true },
+    address: { type: String },
+    contactPhone: { type: String },
+    meta: { type: Schema.Types.Mixed },
+    createdAt: { type: Date, default: Date.now }
+});
+
+
+module.exports = mongoose.model('School', SchoolSchema);
