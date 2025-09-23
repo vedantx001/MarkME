@@ -14,11 +14,15 @@ app.get('/', (req, res) => {
 });
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, {
+mongoose.connect(process.env.MONGO_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 })
 .then(() => console.log('MongoDB connected'))
 .catch(err => console.log(err));
+
+
+const studentRoute = require('./routes/studentRoutes')
+app.use('/api/students',studentRoute)
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
