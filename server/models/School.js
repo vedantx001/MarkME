@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 
 
 const SchoolSchema = new Schema({
+    schoolId: { type: Number, required: true },
     name: { type: String, required: true },
     code: { type: String, required: true, unique: true, index: true },
     address: { type: String },

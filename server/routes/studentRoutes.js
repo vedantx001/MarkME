@@ -1,40 +1,30 @@
-// routes/student.js
-
-const express = require("express");
+const express = require('express');
 const router = express.Router();
+const Student = require('../models/Student');
+const Classroom = require('../models/Classroom');
+const Photo = require('../models/Photo');
+const authMiddleware = require('../middleware/authMiddleware');
 
-// Import models
-const Student = require("../models/Student");
-const Classroom = require("../models/Classroom");
-const Photo = require("../models/Photo");
-
-// =========================
-// @route   POST /api/students
-// @desc    Add a new student
-// @access  Teacher/Admin
-// =========================
-router.post("/", async (req, res) => {
+// ADD STUDENT (teacher only)
+router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { name, rollNo, classroomId, gender, photo } = req.body;
+    if (req.user.role !== 'teacher') return res.status(403).json({ error: "Access denied" });
 
-    // Ensure classroom exists
+    const { name, rollNo, gender, photo, classroomId } = req.body;
 
+    const classroom = await Classroom.findById(classroomId);
+    if (!classroom) return res.status(404).json({ error: "Classroom not found" });
 
-    // const classroom = await Classroom.findById(classroomId);
-    // if (!classroom) {
-    //   return res.status(404).json({ error: "Classroom not found" });
-    // }
+    // Optional: store className automatically
+    const className = `${classroom.standard}${classroom.division}`;
 
     let photoId = null;
-    // const className = `${classroom.standard}${classroom.division}`;
-
-    // Create photo doc if provided
     if (photo) {
       const photoDoc = await Photo.create({
-        ownerType: "student",
-        ownerId: null, // will update after student is created
+        ownerType: 'student',
+        ownerId: null, // will update after student creation
         url: photo,
-        storage: "local"
+        storage: 'local'
       });
       photoId = photoDoc._id;
     }
@@ -42,41 +32,29 @@ router.post("/", async (req, res) => {
     const student = new Student({
       name,
       rollNo,
-      // classroomId,
-      photoId,  // single photo reference
-      gender
+      gender,
+      classroomId,
+      className,
+      photoId
     });
 
     await student.save();
 
-    // Update photo ownerId after student is created
-    if (photoId) {
-      await Photo.findByIdAndUpdate(photoId, { ownerId: student._id });
-    }
+    if (photoId) await Photo.findByIdAndUpdate(photoId, { ownerId: student._id });
 
     res.status(201).json(student);
-
-
-    res.status(201).json({ message: "Student created successfully", student });
   } catch (err) {
-    if (err.code === 11000) {
-      // Duplicate rollNo in a classroom
-      return res.status(400).json({ error: "Roll number already exists in this classroom" });
-    }
-    res.status(500).json({ error: "Server error", details: err.message });
+    if (err.code === 11000) return res.status(400).json({ error: "Duplicate rollNo in classroom" });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// =========================
-// @route   GET /api/students
-// @desc    Get all students (filter by classroom optional)
-// @access  Teacher/Principal
-// =========================
-router.get("/", async (req, res) => {
+// GET STUDENTS (filter by classroom optional)
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const { classroomId } = req.query;
     let filter = {};
-    if (classroomId) filter.classroomId = classroomId;
+    if (classroomId) filter.classroomId = mongoose.Types.ObjectId(classroomId);
 
     const students = await Student.find(filter)
       .populate("classroomId", "standard division")
@@ -84,16 +62,12 @@ router.get("/", async (req, res) => {
 
     res.status(200).json(students);
   } catch (err) {
-    res.status(500).json({ error: "Server error", details: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// =========================
-// @route   GET /api/students/:id
-// @desc    Get single student
-// @access  Teacher/Principal
-// =========================
-router.get("/:id", async (req, res) => {
+// GET single student by ID
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const student = await Student.findById(req.params.id)
       .populate("classroomId", "standard division")
@@ -103,15 +77,11 @@ router.get("/:id", async (req, res) => {
 
     res.status(200).json(student);
   } catch (err) {
-    res.status(500).json({ error: "Server error", details: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// =========================
-// @route   PUT /api/students/:id
-// @desc    Update student
-// @access  Teacher/Admin
-// =========================
+// UPDATE STUDENT
 router.put("/:id", async (req, res) => {
   try {
     const { name, rollNo, classroomId, gender, photo } = req.body;
@@ -123,16 +93,16 @@ router.put("/:id", async (req, res) => {
     }
 
     // If classroomId provided, validate it
-    // if (classroomId) {
-    //   const classroom = await Classroom.findById(classroomId);
-    //   if (!classroom) {
-    //     return res.status(404).json({ error: "Classroom not found" });
-    //   }
-    //   student.classroomId = classroomId;
+    if (classroomId) {
+      const classroom = await Classroom.findById(classroomId);
+      if (!classroom) {
+        return res.status(404).json({ error: "Classroom not found" });
+      }
+      student.classroomId = classroomId;
 
-    //   // Update className ("6A")
-    //   student.className = `${classroom.standard}${classroom.division}`;
-    // }
+      // Update className ("6A")
+      student.className = `${classroom.standard}${classroom.division}`;
+    }
 
     // Update student fields
     if (name) student.name = name;
@@ -191,8 +161,8 @@ router.delete("/:id", async (req, res) => {
 
     res.status(200).json({ message: "Student deleted successfully" });
   } catch (err) {
-    res.status(500).json({ error: "Server error", details: err.message });
-  }
+    res.status(500).json({ error: "Server error", details: err.message });
+  }
 });
 
 module.exports = router;
