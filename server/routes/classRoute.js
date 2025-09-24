@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Classroom = require('../models/Classroom');
+const Student = require("../models/Student");
+const Photo = require( "../models/Photo");
 const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
 
@@ -12,18 +14,35 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     const { standard, division } = req.body;
+    const std = Number(standard);
+    const div = String(division || '').toUpperCase();
+    if (!Number.isInteger(std) || std < 1 || std > 12) {
+      return res.status(400).json({ error: "Standard must be an integer between 1 and 12" });
+    }
+    if (!['A', 'B', 'C', 'D'].includes(div)) {
+      return res.status(400).json({ error: "Division must be one of A, B, C, D" });
+    }
+
+    // A teacher can create only one classroom (per school)
+    const alreadyOwned = await Classroom.findOne({
+      schoolId: req.user.schoolId,
+      teacherId: req.user.id
+    });
+    if (alreadyOwned) {
+      return res.status(400).json({ error: "Teacher already has a classroom" });
+    }
 
     const exists = await Classroom.findOne({
       schoolId: req.user.schoolId,
-      standard,
-      division
+      standard: std,
+      division: div
     });
     if (exists) return res.status(400).json({ error: "Classroom already exists" });
 
     const classroom = new Classroom({
       schoolId: req.user.schoolId,
-      standard,
-      division,
+      standard: std,
+      division: div,
       teacherId: req.user.id
     });
 
@@ -38,10 +57,16 @@ router.post('/', authMiddleware, async (req, res) => {
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const classrooms = await Classroom.find({ schoolId: req.user.schoolId })
-      .populate('teacherId', 'name email');
+      .populate({ path: 'teacherId', select: 'name email', options: { strictPopulate: false } });
     res.json(classrooms);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    // Fallback: return without populate if populate fails
+    try {
+      const classrooms = await Classroom.find({ schoolId: req.user.schoolId });
+      res.json(classrooms);
+    } catch (e2) {
+      res.status(500).json({ error: err.message });
+    }
   }
 });
 
@@ -57,8 +82,25 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const classroom = await Classroom.findById(req.params.id);
     if (!classroom) return res.status(404).json({ error: "Classroom not found" });
 
-    if (standard) classroom.standard = standard;
-    if (division) classroom.division = division;
+    // Ensure ownership and same school
+    if (String(classroom.teacherId) !== String(req.user.id) || classroom.schoolId !== req.user.schoolId) {
+      return res.status(403).json({ error: "You can only update your own classroom" });
+    }
+
+    if (standard !== undefined) {
+      const std = Number(standard);
+      if (!Number.isInteger(std) || std < 1 || std > 12) {
+        return res.status(400).json({ error: "Standard must be an integer between 1 and 12" });
+      }
+      classroom.standard = std;
+    }
+    if (division !== undefined) {
+      const div = String(division).toUpperCase();
+      if (!['A', 'B', 'C', 'D'].includes(div)) {
+        return res.status(400).json({ error: "Division must be one of A, B, C, D" });
+      }
+      classroom.division = div;
+    }
 
     await classroom.save();
     res.json({ message: "Classroom updated successfully", classroom });
@@ -80,11 +122,21 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     const classroom = await Classroom.findById(req.params.id);
     if (!classroom) return res.status(404).json({ error: "Classroom not found" });
 
-    
-    // // Ensure the classroom belongs to the same school
-    // if (classroom.schoolId.toString() !== req.user.schoolId) {
-    //   return res.status(403).json({ error: "Cannot delete classroom of another school",req.user.schoolId });
-    // }
+    // Ensure the classroom belongs to the same teacher and school
+    if (String(classroom.teacherId) !== String(req.user.id) || classroom.schoolId !== req.user.schoolId) {
+      return res.status(403).json({ error: "You can only delete your own classroom" });
+    }
+
+    // 🔹 Find all students in this classroom
+    const students = await Student.find({ classroomId: classroom._id });
+
+    // 🔹 Delete all photos linked to these students
+    const photoIds = students.map(s => s.photoId).filter(Boolean);
+    if (photoIds.length > 0) {
+      await Photo.deleteMany({ _id: { $in: photoIds } });
+    }
+
+    await Student.deleteMany({ classroomId: classroom._id });
 
     await Classroom.findByIdAndDelete(req.params.id);
     res.json({ message: "Classroom deleted successfully" });

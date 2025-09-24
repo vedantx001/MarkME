@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom"; // 👈 1. Import useNavigate
 import Navbar from "../components/Navbar";
 import { IoClose } from "react-icons/io5";
+import { useClassrooms } from "../context/ClassroomContext";
+import { useAuth } from "../context/AuthContext";
 
 // Helper function to create a URL-friendly slug from the class name
 const createClassSlug = (name) => {
@@ -10,26 +12,32 @@ const createClassSlug = (name) => {
 
 export default function TeacherDashboard() {
     const navigate = useNavigate(); // 👈 2. Initialize the navigate function
+    const { classrooms, createClassroom } = useClassrooms();
+    const { user } = useAuth();
+    const myClassrooms = user ? classrooms.filter(c => String(c.teacherId) === String(user._id)) : [];
+    const hasClassroom = myClassrooms.length > 0;
 
-    const [classrooms, setClassrooms] = useState([
-        { id: 1, name: "Class 6 - Section A" },
-        { id: 2, name: "Class 7 - Section B" },
-    ]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newClassName, setNewClassName] = useState("");
+    const [standard, setStandard] = useState("");
+    const [division, setDivision] = useState("");
     const [error, setError] = useState("");
 
-    const handleCreateClass = (e) => {
+    const handleCreateClass = async (e) => {
         e.preventDefault();
-        if (!newClassName.trim()) {
-            setError("Class name cannot be empty.");
+        setError("");
+        if (!standard || !division) {
+            setError("Please provide standard and division.");
             return;
         }
-        const newClass = { id: Date.now(), name: newClassName };
-        setClassrooms([...classrooms, newClass]);
-        setIsModalOpen(false);
-        setNewClassName("");
-        setError("");
+        try {
+            await createClassroom({ standard, division });
+            setIsModalOpen(false);
+            setStandard("");
+            setDivision("");
+        } catch (err) {
+            const msg = err?.response?.data?.error || err?.response?.data?.msg || err?.message || "Failed to create classroom";
+            setError(msg);
+        }
     };
 
     // 👇 3. Function to handle clicking a classroom card
@@ -47,17 +55,18 @@ export default function TeacherDashboard() {
                     <h1 className="text-3xl font-bold text-[var(--primary-text)]">Dashboard</h1>
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="flex cursor-pointer items-center gap-2 rounded-lg bg-[var(--accent-color)] px-4 py-2 font-semibold text-white shadow-md transition-transform duration-200 hover:opacity-90 hover:scale-105"
+                        disabled={hasClassroom}
+                        className={`flex items-center gap-2 rounded-lg px-4 py-2 font-semibold text-white shadow-md transition-transform duration-200 ${hasClassroom ? 'bg-gray-400 cursor-not-allowed' : 'bg-[var(--accent-color)] cursor-pointer hover:opacity-90 hover:scale-105'}`}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                        Create New Class
+                        {hasClassroom ? 'Classroom Already Created' : 'Create New Class'}
                     </button>
                 </header>
 
                 <h2 className="mb-4 text-xl font-semibold text-[var(--secondary-text)]">Your Classrooms</h2>
-                {classrooms.length > 0 ? (
+                {myClassrooms.length > 0 ? (
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {classrooms.map((classroom) => (
+                        {myClassrooms.map((classroom) => (
                             // 👇 4. Added onClick handler to this div
                             <div 
                                 key={classroom.id} 
@@ -93,15 +102,31 @@ export default function TeacherDashboard() {
                         
                         <form onSubmit={handleCreateClass}>
                             <div className="mb-4">
-                                <label htmlFor="className" className="mb-2 block text-sm font-medium text-[var(--secondary-text)]">Class Name</label>
-                                <input
-                                    type="text"
-                                    id="className"
-                                    value={newClassName}
-                                    onChange={(e) => setNewClassName(e.target.value)}
-                                    placeholder="e.g., Class 8 - Section C"
-                                    className="w-full rounded-lg border bg-[var(--primary-background)] py-2 px-4 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
-                                />
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div>
+                                        <label htmlFor="standard" className="mb-2 block text-sm font-medium text-[var(--secondary-text)]">Standard</label>
+                                        <input
+                                            type="number"
+                                            id="standard"
+                                            value={standard}
+                                            onChange={(e) => setStandard(e.target.value)}
+                                            placeholder="e.g., 8"
+                                            className="w-full rounded-lg border bg-[var(--primary-background)] py-2 px-4 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="division" className="mb-2 block text-sm font-medium text-[var(--secondary-text)]">Division</label>
+                                        <input
+                                            type="text"
+                                            id="division"
+                                            value={division}
+                                            onChange={(e) => setDivision(e.target.value.toUpperCase())}
+        
+                                            placeholder="e.g., A"
+                                            className="w-full rounded-lg border bg-[var(--primary-background)] py-2 px-4 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
+                                        />
+                                    </div>
+                                </div>
                                 {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
                             </div>
                             <div className="flex justify-end gap-4">

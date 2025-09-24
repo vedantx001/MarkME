@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Student = require('../models/Student');
 const Classroom = require('../models/Classroom');
 const Photo = require('../models/Photo');
@@ -18,29 +19,30 @@ router.post('/', authMiddleware, async (req, res) => {
     // Optional: store className automatically
     const className = `${classroom.standard}${classroom.division}`;
 
-    let photoId = null;
-    if (photo) {
-      const photoDoc = await Photo.create({
-        ownerType: 'student',
-        ownerId: null, // will update after student creation
-        url: photo,
-        storage: 'local'
-      });
-      photoId = photoDoc._id;
-    }
-
-    const student = new Student({
+    // Step 1: create student first (without photoId yet)
+    let student = new Student({
       name,
       rollNo,
       gender,
       classroomId,
       className,
-      photoId
     });
 
     await student.save();
 
-    if (photoId) await Photo.findByIdAndUpdate(photoId, { ownerId: student._id });
+    // Step 2: create photo (only if provided)
+    if (photo) {
+      const photoDoc = await Photo.create({
+        ownerType: "student",
+        ownerId: student._id,
+        url: photo,
+        storage: "local",
+      });
+
+      // Update student with photoId
+      student.photoId = photoDoc._id;
+      await student.save();
+    }
 
     res.status(201).json(student);
   } catch (err) {
@@ -54,7 +56,12 @@ router.get('/', authMiddleware, async (req, res) => {
   try {
     const { classroomId } = req.query;
     let filter = {};
-    if (classroomId) filter.classroomId = mongoose.Types.ObjectId(classroomId);
+    if (classroomId) {
+      if (!mongoose.isValidObjectId(classroomId)) {
+        return res.status(400).json({ error: "Invalid classroomId" });
+      }
+      filter.classroomId = classroomId;
+    }
 
     const students = await Student.find(filter)
       .populate("classroomId", "standard division")
@@ -82,8 +89,10 @@ router.get('/:id', authMiddleware, async (req, res) => {
 });
 
 // UPDATE STUDENT
-router.put("/:id", async (req, res) => {
+router.put("/:id", authMiddleware, async (req, res) => {
   try {
+    if (!['teacher','admin'].includes(req.user.role)) return res.status(403).json({ error: "Access denied" });
+
     const { name, rollNo, classroomId, gender, photo } = req.body;
 
     // Find the student
@@ -97,6 +106,12 @@ router.put("/:id", async (req, res) => {
       const classroom = await Classroom.findById(classroomId);
       if (!classroom) {
         return res.status(404).json({ error: "Classroom not found" });
+      }
+      // Ensure same school and ownership for teachers
+      if (req.user.role === 'teacher') {
+        if (String(classroom.teacherId) !== String(req.user.id) || classroom.schoolId !== req.user.schoolId) {
+          return res.status(403).json({ error: "You can only move students to your own classroom" });
+        }
       }
       student.classroomId = classroomId;
 
@@ -127,7 +142,7 @@ router.put("/:id", async (req, res) => {
       student.photoId = photoDoc._id;
     }
 
-    // Save updated student
+  // Save updated student
     await student.save();
 
     res.status(200).json({ message: "Student updated successfully", student });
@@ -144,11 +159,21 @@ router.put("/:id", async (req, res) => {
 // @desc    Delete student and unlink photos
 // @access  Teacher/Admin
 // =========================
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authMiddleware, async (req, res) => {
   try {
+    if (!['teacher','admin'].includes(req.user.role)) return res.status(403).json({ error: "Access denied" });
     const student = await Student.findById(req.params.id);
     if (!student) {
       return res.status(404).json({ error: "Student not found" });
+    }
+
+    // Verify teacher owns the classroom for this student
+    if (req.user.role === 'teacher') {
+      const classroom = await Classroom.findById(student.classroomId);
+      if (!classroom) return res.status(404).json({ error: "Classroom not found" });
+      if (String(classroom.teacherId) !== String(req.user.id) || classroom.schoolId !== req.user.schoolId) {
+        return res.status(403).json({ error: "You can only delete students from your own classroom" });
+      }
     }
 
     // If student has a photo, delete it too

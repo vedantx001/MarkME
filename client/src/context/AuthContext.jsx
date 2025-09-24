@@ -1,5 +1,6 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from "react";
+import api from "../utils/api";
 
 // 1. Create Context
 const AuthContext = createContext();
@@ -9,76 +10,58 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null); // store logged-in user
   const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage when app starts
+  // Load user strictly from token when app starts (avoid stale local auth)
   useEffect(() => {
-    const storedUser = localStorage.getItem("authUser");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const token = localStorage.getItem("token");
+    if (token) {
+      api
+        .get("/auth/profile")
+        .then((res) => {
+          if (res?.data) {
+            setUser(res.data);
+            localStorage.setItem("authUser", JSON.stringify(res.data));
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("authUser");
+          setUser(null);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      localStorage.removeItem("authUser");
+      setUser(null);
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
-  // Helpers to manage the local "users" store (mock backend)
-  const getStoredUsers = () => {
-    try {
-      const raw = localStorage.getItem("authUsers");
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  };
-
-  const setStoredUsers = (users) => {
-    localStorage.setItem("authUsers", JSON.stringify(users));
-  };
-
-  // signup function (mock): persists user in localStorage and prevents duplicates
-  const signup = async ({ name, email, password, role }) => {
-    if (!name || !email || !password || !role) {
+  // signup function (backend)
+  const signup = async ({ name, email, password, role, schoolId }) => {
+    if (!name || !email || !password || !role || !schoolId) {
       throw new Error("All fields are required");
     }
-
-    const users = getStoredUsers();
-    const exists = users.some(
-      (u) => u.email.toLowerCase() === String(email).toLowerCase()
-    );
-    if (exists) {
-      throw new Error("An account with this email already exists");
+    const res = await api.post("/auth/register", { name, email, password, role, schoolId });
+    const data = res.data;
+    if (data?.token) {
+      localStorage.setItem("token", data.token);
     }
-
-    const newUser = {
-      id: crypto?.randomUUID ? crypto.randomUUID() : Date.now().toString(),
-      name,
-      email,
-      password, // Note: in real apps never store plain passwords
-      role,
-    };
-    users.push(newUser);
-    setStoredUsers(users);
-    return { id: newUser.id, name, email, role };
+    const userData = { _id: data._id, name: data.name, email: data.email, role: data.role, schoolId: data.schoolId };
+    setUser(userData);
+    localStorage.setItem("authUser", JSON.stringify(userData));
+    return userData;
   };
 
-  // login function (mock): validates credentials against stored users
-  const login = async ({ email, password, role }) => {
-    if (!email || !password || !role) {
-      throw new Error("Please provide email, password, and role");
+  // login function (backend)
+  const login = async ({ email, password }) => {
+    if (!email || !password) {
+      throw new Error("Please provide email and password");
     }
-
-    const users = getStoredUsers();
-    const found = users.find(
-      (u) => u.email.toLowerCase() === String(email).toLowerCase()
-    );
-    if (!found) {
-      throw new Error("No account found for this email");
+    const res = await api.post("/auth/login", { email, password });
+    const data = res.data;
+    if (data?.token) {
+      localStorage.setItem("token", data.token);
     }
-    if (found.password !== password) {
-      throw new Error("Incorrect password");
-    }
-    if (found.role !== role) {
-      throw new Error("Selected role does not match account role");
-    }
-
-    const userData = { id: found.id, name: found.name, email: found.email, role: found.role };
+    const userData = { _id: data._id, name: data.name, email: data.email, role: data.role, schoolId: data.schoolId };
     setUser(userData);
     localStorage.setItem("authUser", JSON.stringify(userData));
     return userData;
@@ -88,6 +71,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem("token");
+    localStorage.removeItem("authUser");
   };
 
   return (

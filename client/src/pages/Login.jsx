@@ -11,6 +11,7 @@ export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [role, setRole] = useState("teacher"); // default role
+    const [schoolId, setSchoolId] = useState("");
 
     // Helper states
     const [error, setError] = useState("");
@@ -33,11 +34,11 @@ export default function Login() {
         if (isSignUp) {
             // --- SIGN UP LOGIC ---
             try {
-                if (!name || !email || !password) {
+                if (!name || !email || !password || !role || !schoolId) {
                     setError("Please fill in all fields");
                     return;
                 }
-                await signup({ name, email, password, role });
+                await signup({ name, email, password, role, schoolId: Number(schoolId) });
                 setSuccess("Account created successfully! Please log in.");
                 setIsSignUp(false); // Switch back to login form after successful signup
             } catch (err) {
@@ -51,7 +52,7 @@ export default function Login() {
                     setError("Please fill in all fields");
                     return;
                 }
-                const userData = await login({ email, password, role });
+                const userData = await login({ email, password });
                 if (userData.role === "teacher") {
                     navigate("/teacher");
                 } else {
@@ -126,6 +127,22 @@ export default function Login() {
                                     placeholder="Full Name"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
+                                    className="w-full rounded-lg border bg-[var(--primary-background)] py-2 pl-10 pr-4 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
+                                />
+                            </div>
+                        )}
+
+                        {/* School ID (Sign Up only) */}
+                        {isSignUp && (
+                            <div className="relative mb-4">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[var(--secondary-text)]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a1 1 0 01.894.553l7 14A1 1 0 0119 18H5a1 1 0 01-.894-1.447l7-14A1 1 0 0112 2z" /><path d="M11 13h2v5h-2z" /></svg>
+                                </span>
+                                <input
+                                    type="number"
+                                    placeholder="School ID"
+                                    value={schoolId}
+                                    onChange={(e) => setSchoolId(e.target.value)}
                                     className="w-full rounded-lg border bg-[var(--primary-background)] py-2 pl-10 pr-4 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
                                 />
                             </div>
