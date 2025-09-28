@@ -32,16 +32,15 @@ export default function ClassroomPage() {
     const [students, setStudents] = useState([]);
     const [studentsLoading, setStudentsLoading] = useState(false);
     const [studentsError, setStudentsError] = useState("");
-    
-    // Mock data for attendance records
-    const [attendanceRecords, setAttendanceRecords] = useState([
-        { id: 101, name: 'Aarav Patel', rollNo: '01', status: 'P' },
-        { id: 102, name: 'Priya Sharma', rollNo: '02', status: 'A' },
-        { id: 103, name: 'Rohan Mehta', rollNo: '03', status: 'P' },
-    ]);
 
-    // Track if attendance has been taken (to show Download button)
-    const [attendanceTaken, setAttendanceTaken] = useState(false);
+    // ===== Attendance (backend) =====
+    const [attendanceRecord, setAttendanceRecord] = useState(null); // full record doc
+    const [attendanceLoading, setAttendanceLoading] = useState(false);
+    const [attendanceError, setAttendanceError] = useState("");
+    const [uploadingAttendance, setUploadingAttendance] = useState(false);
+    const [recognizedNames, setRecognizedNames] = useState([]);
+    const attendanceEntries = attendanceRecord?.entries || [];
+    const attendanceTaken = !!attendanceRecord;
 
     // Modal and form state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -68,6 +67,17 @@ export default function ClassroomPage() {
     const [photoPreview, setPhotoPreview] = useState("");
     const [photoDataUrl, setPhotoDataUrl] = useState("");
     const [error, setError] = useState("");
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setNewStudentName("");
+        setNewStudentRollNo("");
+        setNewStudentGender("Male");
+        setNewStudentPhoto(null);
+        setPhotoPreview("");
+        setPhotoDataUrl("");
+        setError("");
+    };
 
     // --- Handlers ---
     const readFileAsDataURL = (file) => new Promise((resolve, reject) => {
@@ -225,55 +235,63 @@ export default function ClassroomPage() {
         }
     };
 
-    const handleAttendancePhotoUpload = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        console.log("Attendance photo selected:", file.name);
-        setAttendanceTaken(true);
-        setIsAttendanceModalOpen(false);
-    };
-
-    const handleUploadFromGalleryClick = () => {
-        attendanceFileInputRef.current.click();
-    };
-
-    const closeModal = () => {
-        setIsModalOpen(false);
-        setNewStudentName(""); setNewStudentRollNo(""); setNewStudentGender("Male"); setNewStudentPhoto(null); setPhotoPreview(""); setError("");
-    };
-
-    const openEditStudentModal = (student) => {
-        setEditingStudentId(student.id);
-        setEditStudentName(student.name || "");
-        setEditStudentRollNo(String(student.rollNo || ""));
-        setEditStudentGender(student.gender || "Male");
-        setEditStudentPhoto(null);
-        setEditPhotoPreview(student.photoUrl || "");
-        setEditPhotoDataUrl("");
-        setEditStudentError("");
-        setIsEditStudentModalOpen(true);
-    };
-
-    const handleUpdateStudent = async (e) => {
-        e.preventDefault();
-        if (!editingStudentId) return;
+    // Replace previous attendance upload handler
+    const handleAttendancePhotoUpload = async (e) => {
+        const files = Array.from(e.target.files || []);
+        const classObjectId = currentClassroom?.id; // only true Mongo _id
+        if (!files.length || !classObjectId) return; // guard: avoid /attendance/ 404
+        setUploadingAttendance(true);
+        setAttendanceError("");
         try {
-            setEditStudentError("");
-            const payload = {
-                name: editStudentName.trim(),
-                rollNo: Number(editStudentRollNo),
-                gender: editStudentGender,
-            };
-            if (editPhotoDataUrl) payload.photo = editPhotoDataUrl;
-            await api.put(`/students/${editingStudentId}`, payload);
-            await fetchStudents();
-            setIsEditStudentModalOpen(false);
+            const form = new FormData();
+            files.forEach(f => form.append('images', f));
+            const res = await api.post(`/attendance/${classObjectId}`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+            setAttendanceRecord(res.data?.record || null);
+            setRecognizedNames(res.data?.recognized || []);
+            setIsAttendanceModalOpen(false);
         } catch (err) {
-            setEditStudentError(err?.response?.data?.error || err?.message || 'Failed to update student');
+            setAttendanceError(err?.response?.data?.msg || err?.message || 'Failed to mark attendance');
+        } finally {
+            setUploadingAttendance(false);
+            if (attendanceFileInputRef.current) attendanceFileInputRef.current.value = '';
         }
     };
 
-    // Date helpers
+    // Fetch today's attendance (uses only actual classroom id)
+    const fetchTodayAttendance = async () => {
+        const classObjectId = currentClassroom?.id;
+        if (!classObjectId) return; // guard: classroom not yet resolved
+        setAttendanceLoading(true);
+        setAttendanceError("");
+        setRecognizedNames([]);
+        try {
+            const iso = new Date().toISOString().split('T')[0];
+            const res = await api.get(`/attendance/${classObjectId}`, { params: { date: iso } });
+            setAttendanceRecord(res.data || null);
+        } catch (err) {
+            if (err?.response?.status === 404) {
+                setAttendanceRecord(null);
+            } else {
+                setAttendanceError(err?.response?.data?.msg || err?.message || 'Failed to load attendance');
+            }
+        } finally {
+            setAttendanceLoading(false);
+        }
+    };
+
+    // Toggle status patch
+    const toggleStudentStatus = async (entry) => {
+        if (!attendanceRecord?._id) return;
+        const next = entry.status === 'present' ? 'absent' : 'present';
+        try {
+            const res = await api.patch(`/attendance/${attendanceRecord._id}/entry/${entry.studentId?._id || entry.studentId}`, { status: next });
+            setAttendanceRecord(res.data?.record || null);
+        } catch (err) {
+            alert(err?.response?.data?.msg || err?.message || 'Failed to update status');
+        }
+    };
+
+    // Date helpers (re-added)
     const formatDate = (date) => {
         const d = new Date(date);
         const dd = String(d.getDate()).padStart(2, '0');
@@ -283,29 +301,28 @@ export default function ClassroomPage() {
     };
     const weekdayName = (date) => new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date(date));
 
-    // Download CSV of attendance
+    // Update download to use real data
     const handleDownloadAttendance = () => {
-        const today = new Date();
+        if (!attendanceRecord) return;
+        const dateVal = attendanceRecord.date || new Date();
         const headers = ['Roll No', 'Name', 'Status', 'Date'];
-        const rows = attendanceRecords.map(r => [
-            r.rollNo,
-            r.name,
-            r.status === 'P' ? 'Present' : 'Absent',
-            formatDate(today)
+        const rows = attendanceEntries.map(e => [
+            e.studentId?.rollNo || '',
+            e.studentId?.name || '',
+            e.status === 'present' ? 'Present' : 'Absent',
+            formatDate(dateVal)
         ]);
         const csv = [headers, ...rows]
-            .map(row => row.map(field => String(field).replace(/"/g, '""')).map(f => `"${f}"`).join(','))
+            .map(r => r.map(f => String(f).replace(/"/g, '""')).map(f => `"${f}"`).join(','))
             .join('\r\n');
-
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        const fileSlug = String(classId).toUpperCase();
-        link.href = url;
-        link.download = `Attendance_${fileSlug}_${formatDate(today)}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Attendance_${String(classId).toUpperCase()}_${formatDate(dateVal)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
         URL.revokeObjectURL(url);
     };
 
@@ -347,6 +364,9 @@ export default function ClassroomPage() {
         fetchStudents();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentClassroom?.id]);
+
+    // Fetch attendance when view changes
+    useEffect(() => { if (activeView === 'attendance' && currentClassroom?.id) fetchTodayAttendance(); /* eslint-disable-next-line */ }, [activeView, currentClassroom?.id]);
 
     // Always render with a friendly title, even if context data isn't loaded yet
 
@@ -403,18 +423,18 @@ export default function ClassroomPage() {
                                             <th className="p-3">Roll No.</th>
                                             <th className="p-3">Name</th>
                                             <th className="p-3">Gender</th>
-                                            <th className="p-3 text-right">Actions</th>
+                                            <th className="p-3 text-center">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {students.map((student) => (
                                             <tr key={student.id} className="border-b border-b-[var(--primary-background)] text-[var(--primary-text)]">
-                                                <td className="p-3"><img src={student.photoUrl || 'https://via.placeholder.com/48'} alt={student.name} className="h-12 w-12 rounded-full object-cover" /></td>
+                                                <td className="p-3"><img src={student.photoUrl || 'https://via.placeholder.com/48'} alt={student.name} className="h-16 w-14  object-cover" /></td>
                                                 <td className="p-3 font-medium">{student.rollNo}</td>
                                                 <td className="p-3">{student.name}</td>
                                                 <td className="p-3 text-[var(--secondary-text)]">{student.gender}</td>
-                                                <td className="p-3 text-right space-x-2">
-                                                    <button onClick={() => openEditStudentModal(student)} className="cursor-pointer rounded-md p-2 text-[var(--secondary-text)] transition-colors hover:bg-[var(--primary-background)]" title="Edit Student"><FaEdit /></button>
+                                                <td className="p-3 text-center space-x-2">
+                                                    <button onClick={() => openEditStudentModal(student)} className="cursor-pointer rounded-md p-2 text-[var(--secondary-text)] transition-colors hover:bg-green-100" title="Edit Student"><FaEdit /></button>
                                                     <button onClick={() => handleDeleteStudent(student.id)} className="cursor-pointer rounded-md p-2 text-[var(--secondary-text)] transition-colors hover:bg-red-100 hover:text-red-500" title="Delete Student"><FaTrash /></button>
                                                 </td>
                                             </tr>
@@ -429,48 +449,56 @@ export default function ClassroomPage() {
 
                     {activeView === 'attendance' && (
                         <div>
-                            <div className="mb-4 flex items-center justify-between">
-                                <h2 className="text-xl font-semibold text-[var(--primary-text)]">Attendance Details</h2>
-                                <div className="text-right text-sm">
-                                    <p className="text-[var(--primary-text)]">{formatDate(new Date())}</p>
-                                    <p className="text-[var(--secondary-text)]">{weekdayName(new Date())}</p>
+                            {!currentClassroom?.id && (
+                                <p className="mb-4 text-sm text-[var(--secondary-text)]">Loading classroom info...</p>
+                            )}
+                            {currentClassroom?.id && (
+                                <>
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h2 className="text-xl font-semibold text-[var(--primary-text)]">Attendance Details</h2>
+                                    <div className="text-right text-sm">
+                                        <p className="text-[var(--primary-text)]">{formatDate(new Date())}</p>
+                                        <p className="text-[var(--secondary-text)]">{weekdayName(new Date())}</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="mb-4">
-                                <button onClick={() => setIsAttendanceModalOpen(true)} className="flex items-center gap-2 rounded-lg bg-[var(--accent-color)] px-4 py-2 font-semibold text-white shadow-md transition-transform duration-200 hover:opacity-90">
-                                    <FaCamera /> Take Attendance
-                                </button>
-                                {attendanceTaken && attendanceRecords.length > 0 && (
-                                    <button onClick={handleDownloadAttendance} className="ml-3 inline-flex items-center gap-2 rounded-lg border border-[var(--accent-color)] bg-[var(--secondary-background)] px-4 py-2 font-semibold text-[var(--primary-text)] shadow-sm transition-colors duration-200 hover:bg-[var(--primary-background)]">
-                                        Download
+                                <div className="mb-4 flex flex-wrap items-center gap-3">
+                                    <button onClick={() => setIsAttendanceModalOpen(true)} disabled={uploadingAttendance} className="flex items-center gap-2 rounded-lg bg-[var(--accent-color)] px-4 py-2 font-semibold text-white shadow-md transition-transform duration-200 disabled:opacity-60 hover:opacity-90">
+                                        <FaCamera /> {uploadingAttendance ? 'Uploading...' : 'Take Attendance'}
                                     </button>
-                                )}
-                            </div>
-                            {attendanceRecords.length > 0 ? (
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="border-b-2 border-b-[var(--primary-background)] text-[var(--secondary-text)]">
-                                            <th className="p-3">Roll No.</th>
-                                            <th className="p-3">Name</th>
-                                            <th className="p-3 text-center">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {attendanceRecords.map((record) => (
-                                            <tr key={record.id} className="border-b border-b-[var(--primary-background)] text-[var(--primary-text)]">
-                                                <td className="p-3 font-medium">{record.rollNo}</td>
-                                                <td className="p-3">{record.name}</td>
-                                                <td className="p-3 text-center">
-                                                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${record.status === 'P' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
-                                                        {record.status === 'P' ? 'Present' : 'Absent'}
-                                                    </span>
-                                                </td>
+                                    {attendanceTaken && attendanceEntries.length > 0 && (
+                                        <button onClick={handleDownloadAttendance} className="inline-flex items-center gap-2 rounded-lg border border-[var(--accent-color)] bg-[var(--secondary-background)] px-4 py-2 font-semibold text-[var(--primary-text)] shadow-sm transition-colors duration-200 hover:bg-[var(--primary-background)]">Download</button>
+                                    )}
+                                    <button onClick={fetchTodayAttendance} disabled={attendanceLoading} className="inline-flex items-center gap-2 rounded-lg border border-[var(--secondary-text)] bg-[var(--primary-background)] px-4 py-2 text-sm font-semibold text-[var(--primary-text)] shadow-sm transition-colors duration-200 hover:bg-[var(--primary-background)] disabled:opacity-60">Refresh</button>
+                                </div>
+                                {attendanceError && <p className="mb-3 text-sm text-red-500">{attendanceError}</p>}
+                                {recognizedNames.length > 0 && <p className="mb-3 text-xs text-green-600">Recognized: {recognizedNames.join(', ')}</p>}
+                                {attendanceLoading ? (
+                                    <p className="mt-4 text-center text-[var(--secondary-text)]">Loading attendance...</p>
+                                ) : attendanceEntries.length > 0 ? (
+                                    <table className="w-full text-left">
+                                        <thead>
+                                            <tr className="border-b-2 border-b-[var(--primary-background)] text-[var(--secondary-text)]">
+                                                <th className="p-3">Roll No.</th>
+                                                <th className="p-3">Name</th>
+                                                <th className="p-3 text-center">Status (click to toggle)</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            ) : (
-                                <p className="mt-4 text-center text-[var(--secondary-text)]">No attendance records found.</p>
+                                        </thead>
+                                        <tbody>
+                                            {attendanceEntries.map(entry => (
+                                                <tr key={entry._id || (entry.studentId?._id || entry.studentId)} className="border-b border-b-[var(--primary-background)] text-[var(--primary-text)]">
+                                                    <td className="p-3 font-medium">{entry.studentId?.rollNo}</td>
+                                                    <td className="p-3">{entry.studentId?.name}</td>
+                                                    <td className="p-3 text-center">
+                                                        <button onClick={() => toggleStudentStatus(entry)} className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${entry.status === 'present' ? 'bg-green-200 text-green-800 hover:bg-green-300' : 'bg-red-200 text-red-800 hover:bg-red-300'}`}>{entry.status === 'present' ? 'Present' : 'Absent'}</button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <p className="mt-4 text-center text-[var(--secondary-text)]">No attendance taken yet today.</p>
+                                )}
+                                </>
                             )}
                         </div>
                     )}
@@ -536,13 +564,14 @@ export default function ClassroomPage() {
                             <button onClick={() => setIsAttendanceModalOpen(false)} className="cursor-pointer rounded-full p-1 text-[var(--secondary-text)] transition-colors hover:bg-red-600 hover:text-white"><IoClose className="h-6 w-6" /></button>
                         </div>
                         <div className="space-y-4">
-                            <button className="flex w-full items-center justify-center gap-3 rounded-lg bg-[var(--secondary-background)] px-4 py-3 font-semibold text-[var(--primary-text)] transition hover:opacity-90" onClick={() => alert("Camera functionality will be added next!")}>
+                            <button className="flex w-full items-center justify-center gap-3 rounded-lg bg-[var(--secondary-background)] px-4 py-3 font-semibold text-[var(--primary-text)] transition hover:opacity-90" onClick={() => alert('Camera functionality will be added next!')}>
                                 <FaCamera className="text-xl" /> Use Camera
                             </button>
-                            <button className="flex w-full items-center justify-center gap-3 rounded-lg bg-[var(--secondary-background)] px-4 py-3 font-semibold text-[var(--primary-text)] transition hover:opacity-90" onClick={handleUploadFromGalleryClick}>
-                                <FaImage className="text-xl" /> Upload from Gallery
+                            <button className="flex w-full items-center justify-center gap-3 rounded-lg bg-[var(--secondary-background)] px-4 py-3 font-semibold text-[var(--primary-text)] transition hover:opacity-90" onClick={() => attendanceFileInputRef.current?.click()} disabled={uploadingAttendance}>
+                                <FaImage className="text-xl" /> {uploadingAttendance ? 'Uploading...' : 'Upload from Gallery'}
                             </button>
-                            <input type="file" ref={attendanceFileInputRef} className="hidden" accept="image/*" onChange={handleAttendancePhotoUpload} />
+                            <input type="file" ref={attendanceFileInputRef} className="hidden" accept="image/*" multiple onChange={handleAttendancePhotoUpload} />
+                            <p className="text-xs text-[var(--secondary-text)]">Select one or more images. The AI service will detect present students.</p>
                         </div>
                     </div>
                 </div>

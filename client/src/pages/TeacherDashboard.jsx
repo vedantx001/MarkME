@@ -63,15 +63,15 @@ export default function TeacherDashboard() {
                     </button>
                 </header>
 
-                <h2 className="mb-4 text-xl font-semibold text-[var(--secondary-text)]">Your Classrooms</h2>
+                <h2 className="mb-4 ml-4 text-xl font-semibold text-[var(--secondary-text)]">Your Classroom</h2>
                 {myClassrooms.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-8 pl-8 pt-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {myClassrooms.map((classroom) => (
                             // 👇 4. Added onClick handler to this div
                             <div 
                                 key={classroom.id} 
                                 onClick={() => handleClassClick(classroom)}
-                                className="cursor-pointer rounded-lg bg-[var(--secondary-background)] p-6 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                                className="cursor-pointer rounded-lg bg-[var(--secondary-background)] p-6 shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
                             >
                                 <h3 className="text-lg font-bold text-[var(--primary-text)]">{classroom.name}</h3>
                                 <p className="mt-2 text-sm text-[var(--secondary-text)]">Manage students and attendance.</p>

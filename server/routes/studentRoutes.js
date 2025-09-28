@@ -24,7 +24,7 @@ router.post('/', authMiddleware, async (req, res) => {
       name,
       rollNo,
       gender,
-      classroomId,
+      classroomId: new mongoose.Types.ObjectId(classroomId),
       className,
     });
 

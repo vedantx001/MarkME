@@ -116,6 +116,19 @@ export default function Login() {
                         {error && <p className="mb-4 text-center text-sm text-red-500">{error}</p>}
                         {success && <p className="mb-4 text-center text-sm text-green-500">{success}</p>}
 
+                        {/* Role Selection */}
+                        <div className="mb-6">
+                            <label className="mb-2 block text-sm font-semibold text-[var(--secondary-text)]">{isSignUp ? "Sign Up As" : "Login As"}</label>
+                            <select
+                                value={role}
+                                onChange={(e) => setRole(e.target.value)}
+                                className="w-full cursor-pointer rounded-lg border bg-[var(--secondary-background)] px-4 py-2 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
+                            >
+                                <option value="teacher">Teacher</option>
+                                <option value="principal">Principal</option>
+                            </select>
+                        </div>
+
                         {/* Name Input (Sign Up only) */}
                         {isSignUp && (
                             <div className="relative mb-4">
@@ -127,7 +140,7 @@ export default function Login() {
                                     placeholder="Full Name"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    className="w-full rounded-lg border bg-[var(--primary-background)] py-2 pl-10 pr-4 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
+                                    className="w-full rounded-lg border bg-[var(--secondary-background)] py-2 pl-10 pr-4 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
                                 />
                             </div>
                         )}
@@ -143,7 +156,7 @@ export default function Login() {
                                     placeholder="School ID"
                                     value={schoolId}
                                     onChange={(e) => setSchoolId(e.target.value)}
-                                    className="w-full rounded-lg border bg-[var(--primary-background)] py-2 pl-10 pr-4 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
+                                    className="w-full rounded-lg border bg-[var(--secondary-background)] py-2 pl-10 pr-4 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
                                 />
                             </div>
                         )}
@@ -158,7 +171,7 @@ export default function Login() {
                                 placeholder="Email Address"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                          className="w-full rounded-lg border bg-[var(--primary-background)] py-2 pl-10 pr-4 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
+                                          className="w-full rounded-lg border bg-[var(--secondary-background)] py-2 pl-10 pr-4 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
                             />
                         </div>
 
@@ -172,29 +185,18 @@ export default function Login() {
                                 placeholder="Password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                          className="w-full rounded-lg border bg-[var(--primary-background)] py-2 pl-10 pr-4 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
+                                          className="w-full rounded-lg border bg-[var(--secondary-background)] py-2 pl-10 pr-4 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
                             />
                         </div>
 
-                        {/* Role Selection */}
-                        <div className="mb-6">
-                            <label className="mb-2 block text-sm font-semibold text-[var(--secondary-text)]">{isSignUp ? "Sign Up As" : "Login As"}</label>
-                            <select
-                                value={role}
-                                onChange={(e) => setRole(e.target.value)}
-                                className="w-full cursor-pointer rounded-lg border bg-[var(--secondary-background)] px-4 py-2 text-[var(--primary-text)] focus:border-[var(--accent-color)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)]"
-                            >
-                                <option value="teacher">Teacher</option>
-                                <option value="principal">Principal</option>
-                            </select>
-                        </div>
+                        
 
                         {/* Submit Button */}
                         <button
                             type="submit"
                             className="w-full cursor-pointer rounded-lg bg-[var(--accent-color)] py-2.5 font-semibold text-white shadow-md transition-all duration-300 hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5"
                         >
-                            {isSignUp ? "Sign Up" : "Login"}
+                            {isSignUp ? "Register" : "Login"}
                         </button>
 
                         {/* Toggle Link */}
@@ -204,7 +206,7 @@ export default function Login() {
                                 onClick={toggleForm}
                                 className="ml-2 cursor-pointer font-semibold text-[var(--accent-color)] hover:underline"
                             >
-                                {isSignUp ? "Login" : "Sign Up"}
+                                {isSignUp ? "Login" : "Register"}
                             </span>
                         </p>
                     </form>
