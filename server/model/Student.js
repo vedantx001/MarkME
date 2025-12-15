@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+const { Schema, model } = mongoose;
 /*
  * 4. Student
  */

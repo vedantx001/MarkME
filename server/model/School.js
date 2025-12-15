@@ -29,8 +29,6 @@ const schoolSchema = new Schema(
   { timestamps: true }
 );
 
-schoolSchema.index({ schoolIdx: 1 }, { unique: true });
-
 const School = model('School', schoolSchema);
 
 module.exports = School;    
