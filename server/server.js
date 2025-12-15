@@ -14,6 +14,9 @@ const userController = require('./controllers/userController');
 const authMiddleware = require('./middlewares/authMiddleware');
 const classRoutes = require('./routes/classesRoutes.js');
 const studentRoutes = require('./routes/studentsRoutes.js');
+const attendanceSessionsRoutes = require('./routes/attendanceSessionsRoutes');
+const classroomImagesRoutes = require('./routes/classroomImagesRoutes');
+const attendanceRecordsRoutes = require('./routes/attendanceRecordsRoutes');
 
 const app = express();
 const PORT = process.env.NODE_PORT || 5000;
@@ -25,22 +28,11 @@ app.use(
   })
 );
 
-<<<<<<< HEAD
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Serve uploads folder (optional for debugging)
-=======
-const attendanceSessionsRoutes = require('./routes/attendanceSessionsRoutes');
-const classroomImagesRoutes = require('./routes/classroomImagesRoutes');
-const attendanceRecordsRoutes = require('./routes/attendanceRecordsRoutes');
 
-app.use('/api/attendance-sessions', attendanceSessionsRoutes);
-app.use('/api/classroom-images', classroomImagesRoutes);
-app.use('/api/attendance-records', attendanceRecordsRoutes);
-
->>>>>>> origin/feature/attendance-sessions
 
 app.get('/', (req, res) => {
     res.send('Server is running');
@@ -62,6 +54,9 @@ app.use('/api/admin', adminRoutes);     // admin-only endpoints (router already 
 app.get('/api/users/me', authMiddleware, userController.getMe); // profile
 app.use('/api/classes', classRoutes);
 app.use('/api/students', studentRoutes);
+app.use('/api/attendance-sessions', attendanceSessionsRoutes);
+app.use('/api/classroom-images', classroomImagesRoutes);
+app.use('/api/attendance-records', attendanceRecordsRoutes);
 
 // Generic error handler (minimal)
 app.use((err, req, res, next) => {
