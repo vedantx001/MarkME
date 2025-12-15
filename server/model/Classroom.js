@@ -1,9 +1,6 @@
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/feature/classes
 /*
  * 3. Class (Classroom)
  */
