@@ -29,6 +29,10 @@ const schoolSchema = new Schema(
   { timestamps: true }
 );
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/feature/classes
 const School = model('School', schoolSchema);
 
 module.exports = School;    
