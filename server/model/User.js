@@ -1,3 +1,5 @@
+const { Schema, model } = require('mongoose');
+
 /*
  * 2. User (Admin / Teacher / Principal)
  */
@@ -38,8 +40,7 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
-
-userSchema.index({ email: 1 }, { unique: true });
+// Unique index for email is already handled via the schema path's `unique: true`.
 userSchema.index({ schoolId: 1, role: 1 });
 
 const User = model('User', userSchema);

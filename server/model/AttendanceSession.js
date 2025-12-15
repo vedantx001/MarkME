@@ -1,3 +1,5 @@
+const { Schema, model } = require('mongoose');
+
 /*
  * 6. AttendanceSession (per class per day)
  */

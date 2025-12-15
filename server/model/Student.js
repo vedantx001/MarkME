@@ -1,3 +1,5 @@
+const { Schema, model } = require('mongoose');
+
 /*
  * 4. Student
  */

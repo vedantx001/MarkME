@@ -1,3 +1,5 @@
+const { Schema, model } = require('mongoose');
+
 /*
  * 8. AttendanceRecord (per student per session)
  */

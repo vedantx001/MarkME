@@ -1,3 +1,5 @@
+const { Schema, model } = require('mongoose');
+
 /*
  * 7. ClassroomImage (images used for a session)
  */

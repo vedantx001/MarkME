@@ -11,6 +11,14 @@ const PORT = process.env.NODE_PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+const attendanceSessionsRoutes = require('./routes/attendanceSessionsRoutes');
+const classroomImagesRoutes = require('./routes/classroomImagesRoutes');
+const attendanceRecordsRoutes = require('./routes/attendanceRecordsRoutes');
+
+app.use('/api/attendance-sessions', attendanceSessionsRoutes);
+app.use('/api/classroom-images', classroomImagesRoutes);
+app.use('/api/attendance-records', attendanceRecordsRoutes);
+
 
 app.get('/', (req, res) => {
     res.send('Server is running');

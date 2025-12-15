@@ -1,3 +1,5 @@
+const { Schema, model } = require('mongoose');
+
 /*
  * 5. StudentFaceData (optional, for embeddings)
  */
