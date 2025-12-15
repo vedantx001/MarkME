@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/feature/attendance-sessions
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URL, {
     useNewUrlParser: true,

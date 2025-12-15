@@ -25,11 +25,22 @@ app.use(
   })
 );
 
+<<<<<<< HEAD
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Serve uploads folder (optional for debugging)
+=======
+const attendanceSessionsRoutes = require('./routes/attendanceSessionsRoutes');
+const classroomImagesRoutes = require('./routes/classroomImagesRoutes');
+const attendanceRecordsRoutes = require('./routes/attendanceRecordsRoutes');
+
+app.use('/api/attendance-sessions', attendanceSessionsRoutes);
+app.use('/api/classroom-images', classroomImagesRoutes);
+app.use('/api/attendance-records', attendanceRecordsRoutes);
+
+>>>>>>> origin/feature/attendance-sessions
 
 app.get('/', (req, res) => {
     res.send('Server is running');

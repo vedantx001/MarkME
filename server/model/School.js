@@ -27,10 +27,13 @@ const schoolSchema = new Schema(
     },
   },
   { timestamps: true }
-);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+);
+>>>>>>> origin/feature/attendance-sessions
 
 >>>>>>> origin/feature/classes
 const School = model('School', schoolSchema);
