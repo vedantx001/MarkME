@@ -1,14 +1,5 @@
-<<<<<<< HEAD
-const mongoose = require('mongoose');
-const { Schema, model } = mongoose;
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/feature/classes
-=======
 const { Schema, model } = require('mongoose');
 
->>>>>>> origin/feature/attendance-sessions
 /*
  * 2. User (Admin / Teacher / Principal)
  */
@@ -49,11 +40,8 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
-<<<<<<< HEAD
 
-=======
 // Unique index for email is already handled via the schema path's `unique: true`.
->>>>>>> origin/feature/attendance-sessions
 userSchema.index({ schoolId: 1, role: 1 });
 
 const User = model('User', userSchema);
