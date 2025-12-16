@@ -1,41 +1,47 @@
-// /server/middlewares/uploadMiddleware.js
-const multer = require("multer");
+const multer = require('multer');
+const path = require('path');
 
+// Configure storage
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
 });
 
+// File filter
 const fileFilter = (req, file, cb) => {
-  if (!file.originalname.endsWith(".xlsx")) {
-    return cb(new Error("Only .xlsx Excel files allowed"), false);
+  const allowedMimeTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/jpg',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+    'application/vnd.ms-excel' // .xls
+  ];
+
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only JPG, PNG, and Excel files are allowed.'), false);
   }
-  cb(null, true);
 };
 
-const uploadExcel = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  fileFilter: (req, file, cb) => {
-    if (!file.originalname.match(/\.(xlsx)$/)) {
-      return cb(new Error("Only .xlsx Excel files allowed"), false);
-    }
-    cb(null, true);
+// Initialize multer
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
   }
 });
 
-const uploadImage = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  fileFilter: (req, file, cb) => {
-    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-      return cb(new Error("Only image files (jpg, jpeg, png) allowed"), false);
-    }
-    cb(null, true);
-  }
-});
+const uploadImage = upload.array('images', 4);
+const uploadExcel = upload.single('file');
 
 module.exports = {
-  uploadExcel,
-  uploadImage
+  uploadImage,
+  uploadExcel
 };

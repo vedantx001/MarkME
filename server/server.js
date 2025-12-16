@@ -17,6 +17,7 @@ const studentRoutes = require('./routes/studentsRoutes.js');
 const attendanceSessionsRoutes = require('./routes/attendanceSessionsRoutes');
 const classroomImagesRoutes = require('./routes/classroomImagesRoutes');
 const attendanceRecordsRoutes = require('./routes/attendanceRecordsRoutes');
+const reportRoutes = require('./routes/reportsRoutes');
 
 const app = express();
 const PORT = process.env.NODE_PORT || 5000;
@@ -35,15 +36,15 @@ app.use(cookieParser());
 
 
 app.get('/', (req, res) => {
-    res.send('Server is running');
+  res.send('Server is running');
 });
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 // Ensure /uploads exists for Excel uploads (multer)
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('Created uploads directory:', uploadsDir);
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('Created uploads directory:', uploadsDir);
 }
 
 app.use('/uploads', express.static(uploadsDir));
@@ -57,6 +58,7 @@ app.use('/api/students', studentRoutes);
 app.use('/api/attendance-sessions', attendanceSessionsRoutes);
 app.use('/api/classroom-images', classroomImagesRoutes);
 app.use('/api/attendance-records', attendanceRecordsRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Generic error handler (minimal)
 app.use((err, req, res, next) => {
