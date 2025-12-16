@@ -1,6 +1,9 @@
 /*
  * 4. Student
  */
+const mongoose = require('mongoose');
+const {Schema , model} = mongoose;
+
 const studentSchema = new Schema(
   {
     schoolId: {
@@ -46,7 +49,7 @@ studentSchema.index(
   { classId: 1, rollNumber: 1 },
   { unique: true }
 );
-studentSchema.index({ schoolId: 1, classId: 1 });
+// studentSchema.index({ schoolId: 1, classId: 1 });
 
 const Student = model('Student', studentSchema);
 module.exports = Student;

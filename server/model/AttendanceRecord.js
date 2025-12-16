@@ -1,6 +1,7 @@
 /*
  * 8. AttendanceRecord (per student per session)
  */
+const { Schema, model } = require('mongoose');
 const ATTENDANCE_STATUS = ['P', 'A'];
 const ATTENDANCE_SOURCE = ['SYSTEM', 'TEACHER'];
 

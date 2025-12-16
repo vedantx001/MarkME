@@ -1,6 +1,7 @@
 /*
  * 2. User (Admin / Teacher / Principal)
  */
+const { Schema, model } = require('mongoose');
 const USER_ROLES = ['ADMIN', 'TEACHER', 'PRINCIPAL'];
 
 const userSchema = new Schema(
@@ -39,7 +40,7 @@ const userSchema = new Schema(
   { timestamps: true }
 );
 
-userSchema.index({ email: 1 }, { unique: true });
+// userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ schoolId: 1, role: 1 });
 
 const User = model('User', userSchema);

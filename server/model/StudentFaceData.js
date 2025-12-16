@@ -1,6 +1,7 @@
 /*
  * 5. StudentFaceData (optional, for embeddings)
  */
+const { Schema, model } = require('mongoose');
 const studentFaceDataSchema = new Schema(
   {
     studentId: {
