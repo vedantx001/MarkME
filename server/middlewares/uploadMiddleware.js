@@ -1,58 +1,47 @@
-// /server/middlewares/uploadMiddleware.js
 const multer = require('multer');
 const path = require('path');
 
+// Configure storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
 
-const excelFilter = (req, file, cb) => {
-  if (!file || !file.originalname) {
-    return cb(new Error('Invalid file'), false);
+// File filter
+const fileFilter = (req, file, cb) => {
+  const allowedMimeTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/jpg',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+    'application/vnd.ms-excel' // .xls
+  ];
+
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only JPG, PNG, and Excel files are allowed.'), false);
   }
-  if (!file.originalname.toLowerCase().endsWith('.xlsx')) {
-    return cb(new Error('Only .xlsx Excel files allowed'), false);
-  }
-  cb(null, true);
 };
 
-const imageFilter = (req, file, cb) => {
-  if (!file || !file.originalname) {
-    return cb(new Error('Invalid file'), false);
+// Initialize multer
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
   }
-  const allowed = ['.png', '.jpg', '.jpeg'];
-  const ext = path.extname(file.originalname).toLowerCase();
-  if (!allowed.includes(ext)) {
-    return cb(new Error('Only image files (png, jpg, jpeg) allowed'), false);
-  }
-  cb(null, true);
-};
-
-const uploadExcel = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  fileFilter: excelFilter
 });
 
-const uploadImage = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  fileFilter: imageFilter
-});
-
-const uploadImages = multer({
-  storage,
-  fileFilter: imageFilter,
-  limits: { files: 4, fileSize: 5 * 1024 * 1024 }
-});
+const uploadImage = upload.array('images', 4);
+const uploadExcel = upload.single('file');
 
 module.exports = {
-  uploadExcel,
   uploadImage,
-  uploadImages
+  uploadExcel
 };

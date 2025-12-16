@@ -1,123 +1,124 @@
 const Student = require('../model/Student');
 const AttendanceSession = require('../model/AttendanceSession');
 const AttendanceRecord = require('../model/AttendanceRecord');
-const { generateCSV } = require('../utils/csvExport');
-const mongoose  = require('mongoose');
-// ---------------- SESSION SUMMARY ----------------
-exports.sessionSummary = async (req, res) => {
-  try {
-    const { sessionId } = req.params;
+const ClassroomImage = require('../model/ClassroomImage');
+const { generateMonthlyExcel } = require('../utils/csvExport');
+const path = require('path');
 
-    const records = await AttendanceRecord.find({ sessionId });
+// 1. Get Monthly Class Report
+const getMonthlyClassReport = async (req, res) => {
+    try {
+        let { classId, month, year, date } = { ...req.query, ...req.params };
 
-    let present = 0;
-    let absent = 0;
+        // Handle :date param (YYYY-MM)
+        if (date && !month && !year) {
+            const parts = date.split('-');
+            if (parts.length === 2) {
+                year = parseInt(parts[0]);
+                month = parseInt(parts[1]);
+            }
+        }
 
-    records.forEach(r => {
-      if (r.status === 'P') present++;
-      else absent++;
-    });
+        if (!classId || !month || !year) {
+            return res.status(400).json({ message: 'Missing required parameters: classId, month, year' });
+        }
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        present,
-        absent,
-        total: records.length
-      }
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      errors: error.message
-    });
-  }
-};
+        // Calculate Date Range
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0); // Last day of the month
 
-// ---------------- MONTHLY CLASS REPORT ----------------
-exports.classMonthlyReport = async (req, res) => {
-  try {
-    // const { classId, month } = req.params; // month = YYYY-MM
-    const classId = new mongoose.Types.ObjectId(req.params.classId.trim());
-    const month = req.params.month.trim();
-    // 1️⃣ Get all sessions for this class & month
-//     const startDate = new Date(`${month}-01`);
-// const endDate = new Date(startDate);
-// endDate.setMonth(endDate.getMonth() + 1);
-    const [year, monthNum] = month.split('-').map(Number);
+        // Fetch Students
+        const students = await Student.find({ classId }).sort({ rollNumber: 1 });
 
-    const startDate = new Date(Date.UTC(year, monthNum - 1, 1));
-    const endDate = new Date(Date.UTC(year, monthNum, 1));
-
-
-const sessions = await AttendanceSession.find({
-  classId,
-  date: {
-    $gte: startDate,
-    $lt: endDate
-  }
-}).sort({ date: 1 });
-
-
-    if (sessions.length === 0) {
-      return res.status(404).json({
-        success: false,
-        errors: 'No sessions found for this month'
-      });
-    }
-
-    // 2️⃣ Get all students of the class
-    const students = await Student.find({ classId });
-
-    // 3️⃣ Build CSV rows
-    const rows = [];
-
-    for (const student of students) {
-      let presentCount = 0;
-      const row = [student.rollNumber, student.name];
-
-      for (const session of sessions) {
-        const record = await AttendanceRecord.findOne({
-          sessionId: session._id,
-          studentId: student._id
+        // Fetch Sessions
+        const sessions = await AttendanceSession.find({
+            classId: classId,
+            date: { $gte: startDate, $lte: endDate }
         });
 
-        if (record && record.status === 'P') {
-          row.push('P');
-          presentCount++;
-        } else {
-          row.push('A');
+        if (sessions.length === 0) {
+            return res.status(404).json({ message: 'No sessions found for this month.' });
         }
-      }
 
-      row.push(presentCount);
-      rows.push(row);
+        const sessionIds = sessions.map(s => s._id);
+
+        // Fetch Records
+        const records = await AttendanceRecord.find({
+            sessionId: { $in: sessionIds }
+        });
+
+        // Generate Excel
+        const buffer = await generateMonthlyExcel(students, sessions, records);
+
+        // Send Response
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="Attendance_Report_${year}_${month}.xlsx"`);
+        res.send(buffer);
+
+    } catch (error) {
+        console.error('Error generating report:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
     }
+};
 
-    // 4️⃣ CSV headers
-    const headers = [
-      'Roll No',
-      'Name',
-      ...sessions.map(s => s.date),
-      'Total Present'
-    ];
+// 2. Get Session Summary
+const getSessionSummary = async (req, res) => {
+    try {
+        const { sessionId } = req.params;
 
-    // 5️⃣ Generate CSV
-    const csv = generateCSV(headers, rows);
+        if (!sessionId) {
+            return res.status(400).json({ message: 'Session ID is required' });
+        }
 
-    // 6️⃣ Send as file
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename=attendance-${month}.csv`
-    );
+        const presentCount = await AttendanceRecord.countDocuments({ sessionId, status: 'P' });
+        const absentCount = await AttendanceRecord.countDocuments({ sessionId, status: 'A' });
 
-    return res.send(csv);
+        res.json({
+            total: presentCount + absentCount,
+            present: presentCount,
+            absent: absentCount
+        });
 
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      errors: error.message
-    });
-  }
+    } catch (error) {
+        console.error('Error fetching session summary:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
+// 3. Get Image Metadata
+const getImageMetadata = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!id) {
+            return res.status(400).json({ message: 'Image ID is required' });
+        }
+
+        const image = await ClassroomImage.findById(id);
+
+        if (!image) {
+            return res.status(404).json({ message: 'Image not found' });
+        }
+
+        // Assuming ClassroomImage has an 'imageUrl' or 'path' field. 
+        // Based on typical schema, let's return the URL/path. 
+        // If the query asks for metadata, we can return the whole object or specific fields.
+        // Requirement says "Return the image URL/path".
+
+        res.json({
+            imageUrl: image.imageUrl,
+            // Including other metadata might be useful
+            uploadedAt: image.createdAt
+        });
+
+    } catch (error) {
+        console.error('Error fetching image metadata:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
+module.exports = {
+    getMonthlyClassReport,
+    getSessionSummary,
+    getImageMetadata
 };

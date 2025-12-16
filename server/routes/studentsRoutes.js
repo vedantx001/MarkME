@@ -56,7 +56,7 @@ router.post(
     "/bulk-upload",
     auth,
     requireAnyRole(["ADMIN", "TEACHER"]),
-    uploadExcel.single("file"),
+    uploadExcel,
     studentController.bulkUpload
 );
 

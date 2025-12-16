@@ -5,6 +5,6 @@ const classroomImageController = require('../controllers/classroomImageControlle
 const { uploadImage } = require('../middlewares/uploadMiddleware');
 
 // Route to upload session images
-router.post('/:sessionId/images', uploadImage.array('images', 4), classroomImageController.uploadSessionImages);
+router.post('/:sessionId/images', uploadImage, classroomImageController.uploadSessionImages);
 
 module.exports = router;

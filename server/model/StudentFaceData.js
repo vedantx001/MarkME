@@ -1,8 +1,9 @@
+const mongoose = require('mongoose');
+const { Schema, model } = mongoose;
 
 /*
  * 5. StudentFaceData (optional, for embeddings)
  */
-const { Schema, model } = require('mongoose');
 const studentFaceDataSchema = new Schema(
   {
     studentId: {

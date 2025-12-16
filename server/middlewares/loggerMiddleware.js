@@ -1,8 +1,6 @@
 const loggerMiddleware = (req, res, next) => {
-  console.log(
-    `[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`
-  );
-  next();
+    console.log(`${req.method} ${req.url} - ${new Date()}`);
+    next();
 };
 
 module.exports = loggerMiddleware;
