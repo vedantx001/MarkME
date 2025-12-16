@@ -1,14 +1,5 @@
-<<<<<<< HEAD
-const mongoose = require('mongoose');
-const { Schema, model } = mongoose;
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/feature/classes
-=======
 const { Schema, model } = require('mongoose');
 
->>>>>>> origin/feature/attendance-sessions
 /*
  * 4. Student
  */
@@ -21,7 +12,7 @@ const studentSchema = new Schema(
     },
     classId: {
       type: Schema.Types.ObjectId,
-      ref: 'Class',
+      ref: 'Classroom',
       required: true,
     },
     rollNumber: {

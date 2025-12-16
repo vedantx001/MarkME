@@ -50,7 +50,7 @@ exports.createStudent = async (req, res) => {
 
   } catch (err) {
     console.error("createStudent error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: err.message, stack: err.stack });
   }
 };
 

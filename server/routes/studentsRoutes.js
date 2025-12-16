@@ -4,7 +4,7 @@ const router = express.Router();
 
 const studentController = require("../controllers/studentController");
 const auth = require("../middlewares/authMiddleware");
-const role = require("../middlewares/roleMiddleware");
+const { requireRole, requireAnyRole } = require("../middlewares/roleMiddleware");
 const { uploadExcel } = require("../middlewares/uploadMiddleware");
 
 /*
@@ -23,7 +23,7 @@ router.get("/", auth, studentController.getStudents);
     @access  Teacher/Admin
     ================================
 */
-router.post("/", auth, role("ADMIN", "TEACHER"), studentController.createStudent);
+router.post("/", auth, requireAnyRole(["ADMIN", "TEACHER"]), studentController.createStudent);
 
 /*
     ================================
@@ -32,7 +32,7 @@ router.post("/", auth, role("ADMIN", "TEACHER"), studentController.createStudent
     @access  Teacher/Admin
     ================================
 */
-router.put("/:id", auth, role("ADMIN", "TEACHER"), studentController.updateStudent);
+router.put("/:id", auth, requireAnyRole(["ADMIN", "TEACHER"]), studentController.updateStudent);
 
 /*
     ================================
@@ -41,7 +41,7 @@ router.put("/:id", auth, role("ADMIN", "TEACHER"), studentController.updateStude
     @access  Admin
     ================================
 */
-router.delete("/:id", auth, role("ADMIN"), studentController.deleteStudent);
+router.delete("/:id", auth, requireRole("ADMIN"), studentController.deleteStudent);
 
 /*
     ================================================
@@ -55,7 +55,7 @@ router.delete("/:id", auth, role("ADMIN"), studentController.deleteStudent);
 router.post(
     "/bulk-upload",
     auth,
-    role("ADMIN", "TEACHER"),
+    requireAnyRole(["ADMIN", "TEACHER"]),
     uploadExcel.single("file"),
     studentController.bulkUpload
 );
