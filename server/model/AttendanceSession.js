@@ -1,8 +1,7 @@
-const { Schema, model } = require('mongoose');
-
 /*
  * 6. AttendanceSession (per class per day)
  */
+const { Schema, model } = require('mongoose');
 const SESSION_STATUS = ['PENDING', 'IN_REVIEW', 'FINALIZED'];
 
 const attendanceSessionSchema = new Schema(

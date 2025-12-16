@@ -1,8 +1,7 @@
-const { Schema, model } = require('mongoose');
-
 /*
  * 3. Class (Classroom)
  */
+const { Schema, model } = require('mongoose');
 const classSchema = new Schema(
   {
     schoolId: {

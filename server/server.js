@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -6,7 +7,6 @@ const fs = require('fs');
 const path = require('path');
 
 // const seedDummyData = require("./models/dummyData");
-require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -17,6 +17,8 @@ const studentRoutes = require('./routes/studentsRoutes.js');
 const attendanceSessionsRoutes = require('./routes/attendanceSessionsRoutes');
 const classroomImagesRoutes = require('./routes/classroomImagesRoutes');
 const attendanceRecordsRoutes = require('./routes/attendanceRecordsRoutes');
+const loggerMiddleware = require('./middlewares/loggerMiddleware');
+const reportRoutes  = require('./routes/reportsRoutes.js');
 
 const app = express();
 const PORT = process.env.NODE_PORT || 5000;
@@ -31,22 +33,21 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
+app.use(loggerMiddleware);
 
 
 app.get('/', (req, res) => {
-    res.send('Server is running');
+  res.send('Server is running');
 });
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 // Ensure /uploads exists for Excel uploads (multer)
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('Created uploads directory:', uploadsDir);
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('Created uploads directory:', uploadsDir);
 }
 
-app.use('/uploads', express.static(uploadsDir));
 
 // Routes
 app.use('/api/auth', authRoutes);       // register, login, refresh, verify, reset
@@ -57,6 +58,8 @@ app.use('/api/students', studentRoutes);
 app.use('/api/attendance-sessions', attendanceSessionsRoutes);
 app.use('/api/classroom-images', classroomImagesRoutes);
 app.use('/api/attendance-records', attendanceRecordsRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/uploads', express.static(uploadsDir));
 
 // Generic error handler (minimal)
 app.use((err, req, res, next) => {
@@ -64,5 +67,6 @@ app.use((err, req, res, next) => {
   const status = err.status || 500;
   res.status(status).json({ success: false, message: err.message || 'Server error' });
 });
+
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

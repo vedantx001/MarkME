@@ -3,6 +3,7 @@ const { Schema, model } = require('mongoose');
 /*
  * 7. ClassroomImage (images used for a session)
  */
+const { Schema, model } = require('mongoose');
 const classroomImageSchema = new Schema(
   {
     sessionId: {
