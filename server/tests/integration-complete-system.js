@@ -227,8 +227,13 @@ async function runTest() {
         if (error.response) {
             console.error(`Status: ${error.response.status}`);
             console.error('Data:', JSON.stringify(error.response.data, null, 2));
+        } else if (error.request) {
+            console.error('⚠️ No response received (Network Error)');
+            console.error(`Code: ${error.code}`);
+            console.error(`Message: ${error.message}`);
         } else {
-            console.error(error.message);
+            console.error(`Message: ${error.message}`);
+            console.error('Stack:', error.stack);
         }
         process.exit(1);
     } finally {
