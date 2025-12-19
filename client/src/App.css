@@ -1,0 +1,13 @@
+@import "tailwindcss";
+/* In index.css or App.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add this layer for the cleaner input styles */
+@layer components {
+  .form-input {
+    @apply w-full pl-14 pr-4 py-4 rounded-xl border-2 border-gray-100 bg-gray-50/50 text-gray-800 font-medium focus:outline-none focus:border-[#3182CE] focus:bg-white focus:ring-4 focus:ring-[#3182CE]/10 transition-all duration-300;
+    /* Note: I replaced the skyBlue focus color with the new primaryDark (#3182CE) for consistency */
+  }
+}
