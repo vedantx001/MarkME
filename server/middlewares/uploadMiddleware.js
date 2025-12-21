@@ -12,6 +12,8 @@ const storage = multer.diskStorage({
   }
 });
 
+const memoryStorage = multer.memoryStorage();
+
 // File filter
 const fileFilter = (req, file, cb) => {
   const allowedMimeTypes = [
@@ -29,6 +31,24 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+const zipFileFilter = (req, file, cb) => {
+  const allowedZipTypes = [
+    'application/zip',
+    'application/x-zip-compressed',
+    'application/x-zip',
+    'application/octet-stream' // Sometimes zips come as this
+  ];
+
+  // Also check extension as fallback
+  const ext = path.extname(file.originalname).toLowerCase();
+
+  if (allowedZipTypes.includes(file.mimetype) || ext === '.zip') {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only ZIP files are allowed.'), false);
+  }
+};
+
 // Initialize multer
 const upload = multer({
   storage: storage,
@@ -38,10 +58,21 @@ const upload = multer({
   }
 });
 
+// Initialize upload for zip (memory)
+const uploadZipStorage = multer({
+  storage: memoryStorage,
+  fileFilter: zipFileFilter,
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB limit for bulk zip
+  }
+});
+
 const uploadImage = upload.array('images', 4);
 const uploadExcel = upload.single('file');
+const uploadZip = uploadZipStorage.single('file');
 
 module.exports = {
   uploadImage,
-  uploadExcel
+  uploadExcel,
+  uploadZip
 };

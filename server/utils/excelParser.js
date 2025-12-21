@@ -17,7 +17,6 @@ module.exports = function parseExcel(filePath) {
         rollNumber: row.rollNumber || "",
         dob: row.dob || "",
         gender: row.gender || "",
-        profileImageUrl: row.profileImageUrl || ""
       });
 
       rowIndex++;

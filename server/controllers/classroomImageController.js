@@ -1,6 +1,11 @@
+const fs = require('fs').promises;
+const path = require('path');
 const ClassroomImage = require('../model/ClassroomImage');
 const AttendanceSession = require('../model/AttendanceSession');
+const Classroom = require('../model/Classroom');
+const School = require('../model/School');
 const aiClient = require('../utils/aiClient');
+const { uploadToCloudinary } = require('../utils/cloudinaryHelper');
 
 /**
  * Upload images for a session and trigger AI attendance
@@ -21,7 +26,11 @@ exports.uploadSessionImages = async (req, res) => {
             return res.status(400).json({ message: 'No images uploaded' });
         }
 
-        // 3. Check Image Limit (Max 4 per session)
+        if (req.files.length > 4) {
+            return res.status(400).json({ message: 'Max 4 images allowed per request.' });
+        }
+
+        // 3. Check Image Limit (Max 4 per session total)
         const existingCount = await ClassroomImage.countDocuments({ sessionId });
         const newCount = req.files.length;
 
@@ -31,50 +40,97 @@ exports.uploadSessionImages = async (req, res) => {
             });
         }
 
-        // 4. Save Images to Database
-        const savedImages = [];
-        const imageUrls = [];
-
-        for (const file of req.files) {
-            // In a real app, file.path or file.location (S3) would be used. 
-            // Assuming multer saves locally or provides a path.
-            const imageUrl = file.path || file.location || file.url;
-
-            const newImage = new ClassroomImage({
-                sessionId,
-                imageUrl: imageUrl,
-                meta: {
-                    width: 0, // placeholders as we aren't processing image dimensions here
-                    height: 0,
-                    deviceInfo: 'Unknown'
-                }
-            });
-
-            const savedDocs = await newImage.save();
-            savedImages.push(savedDocs);
-            imageUrls.push(imageUrl);
+        // 4. Fetch Context (Classroom & School) for Cloudinary Path
+        const classroom = await Classroom.findById(session.classId);
+        if (!classroom) {
+            return res.status(404).json({ message: 'Classroom not found for this session.' });
         }
 
-        // 5. Trigger AI Face Recognition
-        // We await this to ensure records are generated before returning, 
-        // or we could fire-and-forget if we wanted it async. 
-        // Given the prompt "AFTER saving, await aiClient...", we await it.
+        const school = await School.findById(classroom.schoolId);
+        if (!school) {
+            return res.status(404).json({ message: 'School not found for this classroom.' });
+        }
+
+        const schoolName = school.name.trim();
+        const className = classroom.name.trim();
+        const timestamp = Date.now();
+
+        // Path: <schoolName>/classrooms/<className>/sessions/<sessionId>/<timestamp>
+        const folderPath = `${schoolName}/classrooms/${className}/sessions/${sessionId}/${timestamp}`;
+
+        // 5. Upload Images to Cloudinary
+        const savedImages = [];
+        const imageUrls = [];
+        const successfulUploads = [];
+        const failedUploads = [];
+
+        for (const file of req.files) {
+            try {
+                // Read file buffer from disk (since middleware saved it)
+                const fileBuffer = await fs.readFile(file.path);
+
+                // Upload to Cloudinary
+                // we pass null/undefined as publicId to let Cloudinary generate one (or use generic name), 
+                // but requirements say "Do NOT provide a public_id (to prevent overwriting)"
+                const secureUrl = await uploadToCloudinary(fileBuffer, folderPath, undefined);
+
+                // Save to DB
+                const newImage = new ClassroomImage({
+                    sessionId,
+                    imageUrl: secureUrl,
+                    uploadedBy: req.user ? req.user.id : null, // Teacher ID
+                    meta: {
+                        width: 0, // Cloudinary result could provide this if we refined helper return
+                        height: 0,
+                        deviceInfo: 'Unknown',
+                        originalName: file.originalname
+                    }
+                });
+
+                const savedDoc = await newImage.save();
+                savedImages.push(savedDoc);
+                imageUrls.push(secureUrl);
+                successfulUploads.push({ file: file.originalname, url: secureUrl });
+
+                // Cleanup local file immediately
+                await fs.unlink(file.path).catch(err => console.error("Failed to delete temp file:", err));
+
+            } catch (err) {
+                console.error(`Failed to upload ${file.originalname}:`, err);
+                failedUploads.push({ file: file.originalname, error: err.message });
+                // Try to clean up local file anyway
+                await fs.unlink(file.path).catch(() => { });
+            }
+        }
+
+        if (savedImages.length === 0 && failedUploads.length > 0) {
+            return res.status(500).json({ message: "All image uploads failed.", errors: failedUploads });
+        }
+
+        // 6. Trigger AI Face Recognition
         try {
-            await aiClient.triggerFaceRecognition(sessionId, session.classId, imageUrls);
+            if (imageUrls.length > 0) {
+                await aiClient.triggerFaceRecognition(sessionId, session.classId, imageUrls);
+            }
         } catch (aiError) {
             console.error('AI Trigger Failed:', aiError);
-            // We probably still want to return success for the image upload, 
-            // but maybe warn about the AI failure? 
-            // For now, let's just log it and proceed as the images *were* saved.
+            // Non-blocking error for response, but worth logging
         }
 
         return res.status(201).json({
             message: 'Images uploaded and AI processing triggered successfully',
+            totalImagesReceived: req.files.length,
+            successfullyUploaded: successfulUploads.length,
+            failedUploads: failedUploads,
             images: savedImages
         });
 
     } catch (error) {
         console.error('Error in uploadSessionImages:', error);
+        // Clean up any remaining files if crash happened mid-loop
+        if (req.files) {
+            req.files.forEach(f => fs.unlink(f.path).catch(() => { }));
+        }
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
