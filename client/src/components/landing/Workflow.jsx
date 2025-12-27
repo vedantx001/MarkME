@@ -1,3 +1,4 @@
+// src/components/landing/Workflow.jsx
 import React from 'react';
 import { Database, Users, Cpu, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';

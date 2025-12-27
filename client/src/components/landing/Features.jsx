@@ -1,3 +1,4 @@
+// src/components/landing/Features.jsx
 import React from 'react';
 import { ScanFace, FileSpreadsheet, BarChart3, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
