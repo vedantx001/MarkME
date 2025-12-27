@@ -5,6 +5,7 @@ const Student = require("../model/Student");
 const Classroom = require("../model/Classroom");
 const School = require("../model/School");
 const { uploadToCloudinary } = require("../utils/cloudinaryHelper");
+const aiClient = require("../utils/aiClient");
 
 /**
  * Bulk upload student profile photos from a ZIP file.
@@ -99,6 +100,12 @@ exports.uploadBulkPhotos = async (req, res) => {
                     // Update Student
                     student.profileImageUrl = secureUrl;
                     await student.save();
+
+                    // Trigger AI (Non-blocking)
+                    try {
+                        aiClient.generateEmbedding(student._id.toString(), student.classId.toString(), secureUrl)
+                            .catch(e => console.error(`AI Trigger failed for ${rollNumber}:`, e.message));
+                    } catch (e) { console.error("AI Sync Error", e); }
 
                     results.successful.push({ rollNumber, url: secureUrl });
 

@@ -4,6 +4,7 @@ const Classroom = require("../model/Classroom");
 const School = require("../model/School");
 const excelParser = require("../utils/excelParser");
 const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryHelper");
+const aiClient = require("../utils/aiClient");
 
 exports.getStudents = async (req, res) => {
   try {
@@ -245,6 +246,20 @@ exports.updateStudentProfileImage = async (req, res) => {
     // 5. Update Student
     student.profileImageUrl = imageUrl;
     await student.save();
+
+    // 7. Trigger AI Learning (Non-blocking)
+    try {
+      // We pass the student ID, class ID, and the new secure URL
+      // explicit string conversion for IDs to be safe
+      await aiClient.generateEmbedding(student._id.toString(), student.classId.toString(), imageUrl);
+      console.log(`AI embedding generation triggered for student: ${student.rollNumber}`);
+    } catch (aiError) {
+      // Log warning but DO NOT fail the request
+      console.warn("AI Service Warning: Failed to trigger embedding generation.", {
+        studentId: student._id,
+        error: aiError.message
+      });
+    }
 
     // 6. Return updated student
     res.json(student);
