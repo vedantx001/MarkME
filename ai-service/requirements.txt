@@ -1,15 +1,14 @@
 fastapi
-uvicorn[standard]      # add [standard] for autoreload & extras
-deepface
-mtcnn
-opencv-python-headless # use headless for servers (no GUI needed)
-pandas
-numpy
-pillow
-tensorflow             # make sure version matches your DeepFace support (2.x)
-tf-keras
-python-multipart       # required for FastAPI file uploads
-openpyxl               # Excel export
-pymongo
+uvicorn
+pydantic
+python-dotenv
+python-multipart
+
 requests
-python-dotenv          # NEW: to load .env (Mongo URI)
+numpy
+opencv-python-headless
+
+onnxruntime
+insightface
+
+pymongo

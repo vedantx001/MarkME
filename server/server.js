@@ -62,9 +62,9 @@ app.use('/api/reports', reportRoutes);
 
 // Generic error handler (minimal)
 app.use((err, req, res, next) => {
-  console.error(err); // developer-only console logging
+  console.error("Global Error Handler:", err); // Log full error
   const status = err.status || 500;
-  res.status(status).json({ success: false, message: err.message || 'Server error' });
+  res.status(status).json({ success: false, message: err.message || 'Server error', errorField: err.field });
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
