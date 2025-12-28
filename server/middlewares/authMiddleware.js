@@ -20,7 +20,10 @@ async function authMiddleware(req, res, next) {
     }
 
     // Attach user minimal info
-    const user = await User.findById(payload.sub).select('-passwordHash').lean();
+    const user = await User.findById(payload.sub)
+      .select('-passwordHash')
+      .populate('schoolId', 'name schoolIdx')
+      .lean();
     if (!user) return res.status(401).json({ success: false, message: 'User not found' });
 
     req.user = {
@@ -28,7 +31,9 @@ async function authMiddleware(req, res, next) {
       name: user.name,
       email: user.email,
       role: user.role,
-      schoolId: user.schoolId?.toString(),
+      // When populated, schoolId is an object. Keep a stable id string and also expose the full populated school.
+      schoolId: user.schoolId?._id ? user.schoolId._id.toString() : user.schoolId?.toString(),
+      school: user.schoolId && typeof user.schoolId === 'object' ? user.schoolId : null,
       raw: user, // full user doc (without passwordHash) for controllers if needed
     };
 

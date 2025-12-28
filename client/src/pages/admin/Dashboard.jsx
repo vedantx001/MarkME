@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   Users,
   School,
@@ -85,21 +85,27 @@ const Dashboard = () => {
 
   if (!admin) return null;
 
-  const {
-    teachers = [],
-    classrooms = [],
-    studentsCount = 0
-  } = admin;
+  const { teachers = [], classrooms = [], studentsCount = 0, loading, error } = admin;
 
   return (
     <div className="max-w-7xl mx-auto">
+      {error && (
+        <div className="mb-6 text-sm font-semibold rounded-xl px-4 py-3 bg-red-50 text-red-700">
+          {error}
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <StatCard title="Total Teachers" value={teachers.length} icon={Users} trend="+12%" />
-        <StatCard title="Total Students" value={studentsCount} icon={GraduationCap} trend="+5%" />
+        <StatCard title="Total Teachers" value={teachers.length} icon={Users} />
+        <StatCard title="Total Students" value={studentsCount} icon={GraduationCap} />
         <StatCard title="Classrooms" value={classrooms.length} icon={School} />
-        <StatCard title="Attendance" value="94%" icon={TrendingUp} trend="+2%" />
+        <StatCard title="Attendance" value="—" icon={TrendingUp} />
       </div>
+
+      {loading && (
+        <div className="mb-8 text-sm text-[#2D3748]/60">Refreshing data…</div>
+      )}
 
       {/* Main Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -118,11 +124,11 @@ const Dashboard = () => {
           </div>
 
           <div className="p-4">
-            {teachers.map(teacher => (
+            {teachers.slice(0, 8).map((teacher) => (
               <RecentListItem
-                key={teacher._id || teacher.id}
+                key={teacher.id}
                 title={teacher.name}
-                subtitle={teacher.subject}
+                subtitle={teacher.email}
                 status={teacher.status}
               />
             ))}
@@ -141,35 +147,33 @@ const Dashboard = () => {
             </div>
 
             <div className="space-y-4">
-              {classrooms.map(room => {
-                const occupancy = useMemo(
-                  () => room.occupancy ?? Math.floor(Math.random() * 80 + 10),
-                  [room.occupancy]
-                );
+              {classrooms.slice(0, 6).map((room) => {
+                const occupancy = room.occupancy ?? Math.floor(Math.random() * 80 + 10);
 
                 return (
                   <div
-                    key={room._id || room.id}
+                    key={room.id}
                     className="group p-4 rounded-2xl bg-[#F2F8FF] hover:border-[#85C7F2] transition-all cursor-pointer"
                   >
                     <div className="flex justify-between items-center mb-2">
                       <h4 className="font-semibold text-[#2D3748]">
-                        {room.name}
+                        {room.name || `Std ${room.std}-${room.div}`}
                       </h4>
                       <span className="text-xs font-bold text-[#2D3748]/50 bg-[#FBFDFF] px-2 py-1 rounded-md shadow-sm">
-                        Cap: {room.capacity}
+                        {room.year}
                       </span>
                     </div>
 
                     <div className="w-full bg-[#FBFDFF] rounded-full h-1.5 overflow-hidden">
-                      <div
-                        className="bg-[#2D3748] h-full rounded-full"
-                        style={{ width: `${occupancy}%` }}
-                      />
+                      <div className="bg-[#2D3748] h-full rounded-full" style={{ width: `${occupancy}%` }} />
                     </div>
                   </div>
                 );
               })}
+
+              {classrooms.length === 0 && (
+                <div className="text-sm text-[#2D3748]/60">No classrooms yet.</div>
+              )}
             </div>
           </div>
 

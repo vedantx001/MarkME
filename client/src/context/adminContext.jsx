@@ -1,5 +1,13 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { createSchoolUserApi, listSchoolUsersApi } from '../api/admin.api';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createSchoolUserApi,
+  listSchoolUsersApi,
+  updateSchoolUserApi,
+  deleteSchoolUserApi,
+  listClassesApi,
+  createClassApi,
+  updateClassApi,
+} from '../api/admin.api';
 import { useAuth } from './authContext';
 
 const AdminContext = createContext();
@@ -9,17 +17,21 @@ export const AdminProvider = ({ children }) => {
 
   const [teachers, setTeachers] = useState([]);
   const [principal, setPrincipal] = useState(null);
+  const [classrooms, setClassrooms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Keep existing UI placeholders (backend currently has no school details endpoint).
-  const schoolDetails = useMemo(
-    () => ({
-      name: 'School Dashboard',
-      index: user?.schoolId ? String(user.schoolId).slice(-8).toUpperCase() : '—',
-    }),
-    [user?.schoolId]
-  );
+  // Lightweight polling for "real-time" dashboard updates.
+  const pollRef = useRef(null);
+
+  // Prefer real school details from /users/me (schoolId may be populated or just id)
+  const schoolDetails = useMemo(() => {
+    const s = user?.school;
+    return {
+      name: s?.name || 'School Dashboard',
+      index: s?.schoolIdx || (user?.schoolId ? String(user.schoolId).slice(-8).toUpperCase() : '—'),
+    };
+  }, [user?.school?.name, user?.school?.schoolIdx, user?.schoolId]);
 
   const adminProfile = useMemo(
     () => ({
@@ -30,54 +42,44 @@ export const AdminProvider = ({ children }) => {
     [user?.name, user?.email]
   );
 
-  // Existing classroom UI is still mock/local for now.
-  const [classrooms, setClassrooms] = useState([
-    { id: 101, year: '2025-26', std: '10', div: 'A', classTeacher: '—' },
-  ]);
-
-  const addClassroom = (classroomInput) => {
-    const newClassroom = {
-      id: Date.now(),
-      year: (classroomInput?.year || '').trim(),
-      std: (classroomInput?.std || '').trim(),
-      div: (classroomInput?.div || '').trim(),
-      classTeacher: (classroomInput?.classTeacher || '').trim(),
-    };
-
-    if (!newClassroom.year || !newClassroom.std || !newClassroom.div) return;
-    setClassrooms((prev) => [newClassroom, ...prev]);
-  };
-
-  const studentsCount = 0;
+  const normalizeUser = (u) => ({
+    id: u?._id || u?.id,
+    name: u?.name || '—',
+    email: u?.email || '—',
+    status: u?.isActive ? 'Active' : 'Disabled',
+  });
 
   const refreshTeachers = async () => {
-    const res = await listSchoolUsersApi({ role: 'TEACHER' });
+    const res = await listSchoolUsersApi({ role: 'TEACHER', limit: 200 });
     const list = Array.isArray(res?.data) ? res.data : [];
-    setTeachers(
-      list.map((u) => ({
-        id: u._id || u.id,
-        name: u.name,
-        email: u.email,
-        status: u.isActive ? 'Active' : 'Disabled',
-        subject: '—',
-      }))
-    );
+    setTeachers(list.map((u) => ({ ...normalizeUser(u), subject: '—' })));
   };
 
   const refreshPrincipal = async () => {
     const res = await listSchoolUsersApi({ role: 'PRINCIPAL', limit: 1 });
     const list = Array.isArray(res?.data) ? res.data : [];
     const p = list[0];
-    setPrincipal(
-      p
-        ? {
-            id: p._id || p.id,
-            name: p.name,
-            email: p.email,
-            status: p.isActive ? 'Active' : 'Disabled',
-          }
-        : null
-    );
+    setPrincipal(p ? normalizeUser(p) : null);
+  };
+
+  const normalizeClassroom = (c) => ({
+    id: c?._id || c?.id,
+    year: c?.educationalYear || c?.year || '—',
+    std: String(c?.std ?? '').trim(),
+    div: String(c?.division ?? c?.div ?? '').trim(),
+    name: c?.name || (c?.std && c?.division && c?.educationalYear ? `${c.std}-${c.division} (${c.educationalYear})` : '—'),
+    classTeacherId: c?.classTeacherId?._id || c?.classTeacherId || null,
+    classTeacherName: c?.classTeacherId?.name || c?.classTeacherName || '—',
+  });
+
+  const refreshClassrooms = async () => {
+    const res = await listClassesApi();
+    const list = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
+    setClassrooms(list.map(normalizeClassroom));
+  };
+
+  const refreshAll = async () => {
+    await Promise.all([refreshTeachers(), refreshPrincipal(), refreshClassrooms()]);
   };
 
   const createTeacher = async ({ name, email, password }) => {
@@ -92,20 +94,68 @@ export const AdminProvider = ({ children }) => {
     await refreshPrincipal();
   };
 
-  // Editing principal is not supported by backend right now (no update endpoint).
-  const updatePrincipal = async () => {
-    return;
+  const createClassroom = async ({ year, std, div, classTeacherId, name }) => {
+    await createClassApi({
+      educationalYear: year,
+      std,
+      division: div,
+      classTeacherId,
+      name,
+    });
+    await refreshClassrooms();
   };
+
+  const updateTeacher = async (teacherId, payload) => {
+    await updateSchoolUserApi(teacherId, payload);
+    await refreshTeachers();
+  };
+
+  const deleteTeacher = async (teacherId) => {
+    await deleteSchoolUserApi(teacherId);
+    await refreshTeachers();
+  };
+
+  const updatePrincipal = async (payload) => {
+    if (!principal?.id) return;
+    await updateSchoolUserApi(principal.id, payload);
+    await refreshPrincipal();
+  };
+
+  const updateClassroom = async (classId, payload) => {
+    await updateClassApi(classId, {
+      educationalYear: payload.year,
+      std: payload.std,
+      division: payload.div,
+      classTeacherId: payload.classTeacherId,
+      name: payload.name,
+    });
+    await refreshClassrooms();
+  };
+
+  const deleteClassroom = async () => {};
+
+  const studentsCount = 0;
 
   useEffect(() => {
     let alive = true;
-    if (!user || user.role !== 'ADMIN') return;
+
+    const stopPolling = () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+
+    if (!user || user.role !== 'ADMIN') {
+      stopPolling();
+      return;
+    }
 
     (async () => {
       setLoading(true);
       setError('');
       try {
-        await Promise.all([refreshTeachers(), refreshPrincipal()]);
+        await refreshAll();
       } catch (e) {
         if (!alive) return;
         setError(e?.message || 'Failed to load admin data');
@@ -114,8 +164,15 @@ export const AdminProvider = ({ children }) => {
       }
     })();
 
+    // Poll every 15s to approximate realtime without sockets.
+    stopPolling();
+    pollRef.current = setInterval(() => {
+      refreshAll().catch(() => {});
+    }, 15000);
+
     return () => {
       alive = false;
+      stopPolling();
     };
   }, [user?.id, user?.role]);
 
@@ -125,12 +182,20 @@ export const AdminProvider = ({ children }) => {
         teachers,
         createTeacher,
         refreshTeachers,
+        updateTeacher,
+        deleteTeacher,
+
         principal,
         createPrincipal,
         refreshPrincipal,
         updatePrincipal,
+
         classrooms,
-        addClassroom,
+        refreshClassrooms,
+        createClassroom,
+        updateClassroom,
+        deleteClassroom,
+
         studentsCount,
         schoolDetails,
         adminProfile,

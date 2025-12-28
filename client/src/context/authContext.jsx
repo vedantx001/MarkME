@@ -38,12 +38,22 @@ export const AuthProvider = ({ children }) => {
     // server returns { success, data }
     const profile = me?.data || null;
     if (profile) {
+      const school =
+        profile.schoolId && typeof profile.schoolId === 'object'
+          ? {
+              id: profile.schoolId._id || profile.schoolId.id,
+              name: profile.schoolId.name,
+              schoolIdx: profile.schoolId.schoolIdx,
+            }
+          : null;
+
       const nextUser = {
         id: profile._id || profile.id,
         name: profile.name,
         email: profile.email,
         role: profile.role,
-        schoolId: profile.schoolId,
+        schoolId: typeof profile.schoolId === 'string' ? profile.schoolId : school?.id,
+        school,
       };
       setUser(nextUser);
       localStorage.setItem("authUser", JSON.stringify(nextUser));
@@ -79,11 +89,22 @@ export const AuthProvider = ({ children }) => {
   const login = async ({ email, password }) => {
     const data = await loginApi({ email, password });
     const nextUser = data?.user || null;
+
+    // Ensure we always end up with the same enriched shape as refreshProfile()
+    // (especially embedded school info used by AdminHeader / dashboard).
     if (nextUser) {
       setUser(nextUser);
       localStorage.setItem("authUser", JSON.stringify(nextUser));
+
+      try {
+        const enriched = await refreshProfile();
+        return enriched || nextUser;
+      } catch {
+        return nextUser;
+      }
     }
-    return nextUser;
+
+    return null;
   };
 
   const logout = async () => {

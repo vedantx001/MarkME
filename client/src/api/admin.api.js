@@ -20,3 +20,38 @@ export async function listSchoolUsersApi({ role, page = 1, limit = 50 } = {}) {
     auth: true,
   });
 }
+
+export async function updateSchoolUserApi(userId, payload) {
+  return apiFetch(`/admin/users/${userId}`, {
+    method: 'PUT',
+    auth: true,
+    body: payload,
+  });
+}
+
+export async function deleteSchoolUserApi(userId) {
+  return apiFetch(`/admin/users/${userId}`, {
+    method: 'DELETE',
+    auth: true,
+  });
+}
+
+export async function listClassesApi() {
+  return apiFetch('/classes', { method: 'GET', auth: true });
+}
+
+export async function createClassApi({ educationalYear, std, division, classTeacherId, name }) {
+  return apiFetch('/classes', {
+    method: 'POST',
+    auth: true,
+    body: { educationalYear, std, division, classTeacherId, name },
+  });
+}
+
+export async function updateClassApi(classId, payload) {
+  return apiFetch(`/classes/${classId}`, {
+    method: 'PUT',
+    auth: true,
+    body: payload,
+  });
+}

@@ -1,12 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { Search, Plus, School } from 'lucide-react';
+import { Search, Plus, School, Pencil } from 'lucide-react';
 import { useAdmin } from '../../context/adminContext';
 import AddClassroomForm from '../../components/forms/AddClassroomForm';
-import { Navigate } from 'react-router-dom';
+import EditClassroomForm from '../../components/forms/EditClassroomForm';
 
 const Classroom = () => {
   const { classrooms } = useAdmin();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedClassroom, setSelectedClassroom] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredClassrooms = useMemo(() => {
@@ -14,14 +16,20 @@ const Classroom = () => {
     if (!s) return classrooms;
 
     return classrooms.filter((c) => {
-      const key = `${c.year} ${c.std} ${c.div} ${c.classTeacher}`.toLowerCase();
+      const key = `${c.year} ${c.std} ${c.div} ${c.classTeacherName} ${c.name}`.toLowerCase();
       return key.includes(s);
     });
   }, [classrooms, searchTerm]);
 
+  const openEdit = (c) => {
+    setSelectedClassroom(c);
+    setIsEditOpen(true);
+  };
+
   return (
     <div className="max-w-7xl mx-auto">
       <AddClassroomForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <EditClassroomForm isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} classroom={selectedClassroom} />
 
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -62,6 +70,9 @@ const Classroom = () => {
               <div className="w-12 h-12 rounded-full bg-[#F2F8FF] border border-[#2D3748]/5 overflow-hidden flex items-center justify-center">
                 <School className="text-[#85C7F2]" size={20} />
               </div>
+              <button onClick={() => openEdit(c)} className="text-[#2D3748]/30 hover:text-[#2D3748] transition-colors" title="Edit">
+                <Pencil size={18} />
+              </button>
             </div>
 
             <h3 className="text-lg font-bold text-[#0E0E11] mb-1">
@@ -71,7 +82,7 @@ const Classroom = () => {
 
             <div className="text-sm text-[#2D3748]/60 mb-4 bg-[#F2F8FF] p-2 rounded-lg">
               <span className="font-semibold text-[#2D3748]">Class Teacher:</span>{' '}
-              <span className="truncate">{c.classTeacher || '—'}</span>
+              <span className="truncate">{c.classTeacherName || '—'}</span>
             </div>
 
             <div className="flex justify-between items-center pt-4 border-t border-[#2D3748]/5">

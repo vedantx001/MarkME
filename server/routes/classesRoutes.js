@@ -26,4 +26,13 @@ router.get("/", auth, classController.getClasses);
 */
 router.post("/", auth, role("ADMIN"), classController.createClass);
 
+/*
+    ================================
+    @route   PUT /api/classes/:id
+    @desc    Update a class
+    @access  Admin
+    ================================
+*/
+router.put("/:id", auth, role("ADMIN"), classController.updateClass);
+
 module.exports = router;
