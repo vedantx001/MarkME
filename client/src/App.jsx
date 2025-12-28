@@ -1,12 +1,8 @@
-import './App.css'
-import AuthPage from './pages/AuthPage'
+// src/App.jsx
 
-function App() {
-  return (
-    <>
-      <AuthPage />
-    </>
-  )
+import "./App.css";
+import AppRoutes from "./routes/AppRoutes";
+
+export default function App() {
+  return <AppRoutes />;
 }
-
-export default App
