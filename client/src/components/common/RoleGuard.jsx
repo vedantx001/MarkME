@@ -1,19 +1,24 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
+import Loader from "./Loader";
 
 const RoleGuard = ({ allowedRoles, children }) => {
   const { user, loading } = useAuth();
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader label="Loading" size="small" />
+      </div>
+    );
+  }
 
-  console.log("ROLE GUARD USER:", user);
-
-  if(!user) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized" replace />;
+  if (allowedRoles?.length && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />;
   }
 
   return children;

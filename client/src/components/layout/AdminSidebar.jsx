@@ -1,6 +1,7 @@
 import React from 'react';
-import { Users, School, GraduationCap, LayoutDashboard, Settings, LogOut } from 'lucide-react';
+import { Users, School, LayoutDashboard, Settings, LogOut } from 'lucide-react';
 import { useAdmin } from '../../context/adminContext';
+import { useAuth } from '../../context/authContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const SidebarItem = ({ icon: Icon, label, active = false, onClick }) => (
@@ -19,6 +20,7 @@ const SidebarItem = ({ icon: Icon, label, active = false, onClick }) => (
 
 const AdminSidebar = ({ isMobile, isMobileMenuOpen }) => {
   const { adminProfile } = useAdmin();
+  const { logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -67,7 +69,13 @@ const AdminSidebar = ({ isMobile, isMobileMenuOpen }) => {
       </nav>
 
       <div className="mt-auto pt-6 border-t border-[#2D3748]/5">
-        <button className="flex items-center gap-3 px-4 py-3 text-[#2D3748]/60 hover:text-[#0E0E11] hover:bg-[#F2F8FF] rounded-xl w-full transition-colors">
+        <button
+          onClick={async () => {
+            await logout();
+            navigate('/login', { replace: true });
+          }}
+          className="flex items-center gap-3 px-4 py-3 text-[#2D3748]/60 hover:text-[#0E0E11] hover:bg-[#F2F8FF] rounded-xl w-full transition-colors"
+        >
           <LogOut size={20} />
           <span className="font-medium">Sign Out</span>
         </button>

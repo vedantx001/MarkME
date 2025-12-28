@@ -1,37 +1,38 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createSchoolUserApi, listSchoolUsersApi } from '../api/admin.api';
+import { useAuth } from './authContext';
 
 const AdminContext = createContext();
 
 export const AdminProvider = ({ children }) => {
-  // Mock Data
-  const [teachers, setTeachers] = useState([
-    { id: 1, name: "Sarah Connor", subject: "Cybernetics", status: "Active", email: "sarah.connor@school.edu" },
-    { id: 2, name: "Dr. Emmet Brown", subject: "Physics", status: "Active", email: "emmet.brown@school.edu" },
-    { id: 3, name: "Walter White", subject: "Chemistry", status: "On Leave", email: "walter.white@school.edu" },
-    { id: 4, name: "Minerva McGonagall", subject: "Transfiguration", status: "Active", email: "minerva.mcgonagall@school.edu" },
-    { id: 5, name: "Charles Xavier", subject: "Genetics", status: "Active", email: "charles.xavier@school.edu" },
-  ]);
+  const { user } = useAuth();
 
-  const addTeacher = (teacherInput) => {
-    const newTeacher = {
-      id: Date.now(),
-      name: (teacherInput?.name || '').trim(),
-      email: (teacherInput?.email || '').trim(),
-      subject: (teacherInput?.subject || '').trim() || '—',
-      status: 'Active',
-    };
+  const [teachers, setTeachers] = useState([]);
+  const [principal, setPrincipal] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-    // basic guard: don't add empty names
-    if (!newTeacher.name) return;
+  // Keep existing UI placeholders (backend currently has no school details endpoint).
+  const schoolDetails = useMemo(
+    () => ({
+      name: 'School Dashboard',
+      index: user?.schoolId ? String(user.schoolId).slice(-8).toUpperCase() : '—',
+    }),
+    [user?.schoolId]
+  );
 
-    setTeachers((prev) => [newTeacher, ...prev]);
-  };
+  const adminProfile = useMemo(
+    () => ({
+      name: user?.name || 'Admin',
+      email: user?.email || '—',
+      avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.name || 'Admin')}`,
+    }),
+    [user?.name, user?.email]
+  );
 
-  // Make classrooms mutable (same logic pattern as teachers)
+  // Existing classroom UI is still mock/local for now.
   const [classrooms, setClassrooms] = useState([
-    { id: 101, year: "2025-26", std: "10", div: "A", classTeacher: "Sarah Connor" },
-    { id: 102, year: "2025-26", std: "10", div: "B", classTeacher: "Dr. Emmet Brown" },
-    { id: 103, year: "2025-26", std: "9", div: "A", classTeacher: "Walter White" },
+    { id: 101, year: '2025-26', std: '10', div: 'A', classTeacher: '—' },
   ]);
 
   const addClassroom = (classroomInput) => {
@@ -44,71 +45,97 @@ export const AdminProvider = ({ children }) => {
     };
 
     if (!newClassroom.year || !newClassroom.std || !newClassroom.div) return;
-
     setClassrooms((prev) => [newClassroom, ...prev]);
   };
 
-  const studentsCount = 842;
+  const studentsCount = 0;
 
-  const schoolDetails = {
-    name: "Springfield High Academy",
-    index: "SCH-8829-X"
+  const refreshTeachers = async () => {
+    const res = await listSchoolUsersApi({ role: 'TEACHER' });
+    const list = Array.isArray(res?.data) ? res.data : [];
+    setTeachers(
+      list.map((u) => ({
+        id: u._id || u.id,
+        name: u.name,
+        email: u.email,
+        status: u.isActive ? 'Active' : 'Disabled',
+        subject: '—',
+      }))
+    );
   };
 
-  const adminProfile = {
-    name: "Alex Mercer",
-    email: "alex.mercer@admin.edu",
-    avatar: "https://api.dicebear.com/9.x/avataaars/svg?seed=Alex"
+  const refreshPrincipal = async () => {
+    const res = await listSchoolUsersApi({ role: 'PRINCIPAL', limit: 1 });
+    const list = Array.isArray(res?.data) ? res.data : [];
+    const p = list[0];
+    setPrincipal(
+      p
+        ? {
+            id: p._id || p.id,
+            name: p.name,
+            email: p.email,
+            status: p.isActive ? 'Active' : 'Disabled',
+          }
+        : null
+    );
   };
 
-  // Single principal (null = not created yet)
-  const [principal, setPrincipal] = useState(null);
+  const createTeacher = async ({ name, email, password }) => {
+    await createSchoolUserApi({ name, email, password, role: 'TEACHER' });
+    await refreshTeachers();
+  };
 
-  const createPrincipal = (principalInput) => {
-    // Only one principal allowed
+  const createPrincipal = async ({ name, email, password }) => {
+    // Client enforces single principal.
     if (principal) return;
+    await createSchoolUserApi({ name, email, password, role: 'PRINCIPAL' });
+    await refreshPrincipal();
+  };
 
-    const newPrincipal = {
-      id: Date.now(),
-      name: (principalInput?.name || '').trim(),
-      email: (principalInput?.email || '').trim(),
-      phone: (principalInput?.phone || '').trim(),
-      qualification: (principalInput?.qualification || '').trim(),
-      status: 'Active',
+  // Editing principal is not supported by backend right now (no update endpoint).
+  const updatePrincipal = async () => {
+    return;
+  };
+
+  useEffect(() => {
+    let alive = true;
+    if (!user || user.role !== 'ADMIN') return;
+
+    (async () => {
+      setLoading(true);
+      setError('');
+      try {
+        await Promise.all([refreshTeachers(), refreshPrincipal()]);
+      } catch (e) {
+        if (!alive) return;
+        setError(e?.message || 'Failed to load admin data');
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
     };
-
-    if (!newPrincipal.name || !newPrincipal.email) return;
-
-    setPrincipal(newPrincipal);
-  };
-
-  const updatePrincipal = (patch) => {
-    setPrincipal((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        ...patch,
-        name: (patch?.name ?? prev.name).trim?.() ?? prev.name,
-        email: (patch?.email ?? prev.email).trim?.() ?? prev.email,
-        phone: (patch?.phone ?? prev.phone).trim?.() ?? prev.phone,
-        qualification: (patch?.qualification ?? prev.qualification).trim?.() ?? prev.qualification,
-      };
-    });
-  };
+  }, [user?.id, user?.role]);
 
   return (
     <AdminContext.Provider
       value={{
         teachers,
-        addTeacher,
+        createTeacher,
+        refreshTeachers,
+        principal,
+        createPrincipal,
+        refreshPrincipal,
+        updatePrincipal,
         classrooms,
         addClassroom,
         studentsCount,
         schoolDetails,
         adminProfile,
-        principal,
-        createPrincipal,
-        updatePrincipal,
+        loading,
+        error,
       }}
     >
       {children}

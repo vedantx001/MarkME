@@ -38,16 +38,34 @@ const AppRoutes = () => {
         {/* Backward compatibility */}
         <Route path="/auth" element={<Navigate to="/login" replace />} />
 
-        {/* Teacher */}
-        <Route path="/teacher" element={<TeacherLayout />}>
+        {/* Teacher (Protected) */}
+        <Route
+          path="/teacher"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["TEACHER"]}>
+                <TeacherLayout />
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<Navigate to="classroom" replace />} />
           <Route path="classroom" element={<TeacherClassroom />} />
           <Route path="attendance" element={<TeacherAttendance />} />
           <Route path="student/:id" element={<TeacherStudentDetail />} />
         </Route>
 
-        {/* Principal */}
-        <Route path="/principal" element={<PrincipalLayout />}>
+        {/* Principal (Protected) */}
+        <Route
+          path="/principal"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["PRINCIPAL"]}>
+                <PrincipalLayout />
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<PrincipalDashboard />} />
           <Route path="teachers" element={<PrincipalTeachers />} />

@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { X, User, Mail, Phone, GraduationCap, ShieldCheck } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { X, User, Mail, Lock, ShieldCheck } from 'lucide-react';
 import { useAdmin } from '../../context/adminContext';
 
 /**
@@ -7,30 +7,21 @@ import { useAdmin } from '../../context/adminContext';
  * - "onboarding": first-time after admin register (full-page, skippable)
  * - "modal": from admin panel (no full-page)
  *
- * intent:
- * - "create": create principal (only if none exists)
- * - "edit": edit principal (only if principal exists)
+ * Note: backend currently supports create + list only for principal.
  */
 const AddPrincipalForm = ({
   isOpen = true,
   onClose,
   onComplete,
   mode = 'modal',
-  intent,
   allowSkip = false,
 }) => {
-  const { principal, createPrincipal, updatePrincipal } = useAdmin();
-
-  const resolvedIntent = useMemo(() => {
-    if (intent) return intent;
-    return principal ? 'edit' : 'create';
-  }, [intent, principal]);
+  const { principal, createPrincipal } = useAdmin();
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
-    qualification: '',
+    password: '',
   });
 
   // Prevent overwriting user typing by hydrating only once per open (or when principal changes)
@@ -43,23 +34,22 @@ const AddPrincipalForm = ({
       return;
     }
 
-    if (resolvedIntent === 'edit' && principal && !hydratedRef.current) {
+    if (principal && !hydratedRef.current) {
       setFormData({
         name: principal.name || '',
         email: principal.email || '',
-        phone: principal.phone || '',
-        qualification: principal.qualification || '',
+        password: '',
       });
       hydratedRef.current = true;
       return;
     }
 
-    if (resolvedIntent === 'create' && !hydratedRef.current) {
+    if (!principal && !hydratedRef.current) {
       // ensure empty form when creating
-      setFormData({ name: '', email: '', phone: '', qualification: '' });
+      setFormData({ name: '', email: '', password: '' });
       hydratedRef.current = true;
     }
-  }, [resolvedIntent, principal, isOpen, mode]);
+  }, [principal, isOpen, mode]);
 
   // For modal usage
   if (mode === 'modal' && !isOpen) return null;
@@ -67,11 +57,8 @@ const AddPrincipalForm = ({
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (resolvedIntent === 'create') {
-      createPrincipal(formData);
-    } else {
-      updatePrincipal(formData);
-    }
+    // Only create supported (single principal)
+    if (!principal) createPrincipal(formData);
 
     // reset for next open
     hydratedRef.current = false;
@@ -112,7 +99,7 @@ const AddPrincipalForm = ({
       <div className="bg-[#2D3748] p-6 flex justify-between items-center text-[#FBFDFF]">
         <div>
           <h3 className="text-xl font-bold">
-            {resolvedIntent === 'create' ? 'Create Principal' : 'Edit Principal'}
+            {principal ? 'Principal' : 'Create Principal'}
           </h3>
           <p className="text-[#85C7F2] text-sm opacity-90">
             Principal is required for school operations.
@@ -172,36 +159,25 @@ const AddPrincipalForm = ({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-[#2D3748]">Phone (optional)</label>
-            <div className="relative">
-              <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#2D3748]/40" />
-              <input
-                type="tel"
-                className="w-full bg-[#F2F8FF] border border-[#2D3748]/10 rounded-xl py-2.5 pl-10 pr-4 text-[#0E0E11] focus:outline-none focus:border-[#85C7F2] focus:ring-1 focus:ring-[#85C7F2] transition-all"
-                placeholder="+91 98xxxxxx"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
+          {!principal && (
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-[#2D3748]">Password</label>
+              <div className="relative">
+                <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#2D3748]/40" />
+                <input
+                  type="password"
+                  required
+                  className="w-full bg-[#F2F8FF] border border-[#2D3748]/10 rounded-xl py-2.5 pl-10 pr-4 text-[#0E0E11] focus:outline-none focus:border-[#85C7F2] focus:ring-1 focus:ring-[#85C7F2] transition-all"
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
+              </div>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-[#2D3748]">Qualification (optional)</label>
-            <div className="relative">
-              <GraduationCap size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#2D3748]/40" />
-              <input
-                type="text"
-                className="w-full bg-[#F2F8FF] border border-[#2D3748]/10 rounded-xl py-2.5 pl-10 pr-4 text-[#0E0E11] focus:outline-none focus:border-[#85C7F2] focus:ring-1 focus:ring-[#85C7F2] transition-all"
-                placeholder="M.Ed / PhD"
-                value={formData.qualification}
-                onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
-              />
-            </div>
-          </div>
+          )}
 
           <div className={isFullPage ? 'md:col-span-2 pt-2 flex flex-col sm:flex-row gap-3' : 'pt-4 flex gap-3'}>
-            {allowSkip && resolvedIntent === 'create' && (
+            {allowSkip && !principal && (
               <button
                 type="button"
                 onClick={handleSkip}
@@ -215,7 +191,7 @@ const AddPrincipalForm = ({
               type="submit"
               className="flex-1 px-4 py-2.5 rounded-xl bg-[#2D3748] text-[#FBFDFF] font-bold shadow-lg shadow-[#2D3748]/20 hover:bg-[#0E0E11] transition-all hover:-translate-y-0.5"
             >
-              {resolvedIntent === 'create' ? 'Save Principal' : 'Save Changes'}
+              {principal ? 'Close' : 'Save Principal'}
             </button>
           </div>
         </form>

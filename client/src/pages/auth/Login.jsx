@@ -1,40 +1,92 @@
-// src/pages/AuthPage.jsx
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from "../../context/authContext.jsx";
-import { useAdmin } from "../../context/adminContext.jsx";
-import { useNavigate } from 'react-router-dom';
+import { registerAdminApi } from "../../api/auth.api.js";
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Eye, EyeOff, Mail, Lock, User, School, ArrowRight,
   ShieldCheck, Hash, ScanFace, BarChart3, WifiOff, Workflow
 } from 'lucide-react';
 
-const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
+const AuthPage = ({ initialMode = 'login' }) => {
+  const [isLogin, setIsLogin] = useState(initialMode !== 'register');
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState('ADMIN');
-  const roles = ['ADMIN', 'TEACHER', 'PRINCIPAL'];
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [registerForm, setRegisterForm] = useState({
+    adminName: '',
+    schoolName: '',
+    schoolIdx: '',
+    address: '',
+    adminEmail: '',
+    password: '',
+  });
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+
+  const fromPath = useMemo(() => {
+    const from = location?.state?.from;
+    return typeof from === 'string' && from.startsWith('/') ? from : null;
+  }, [location]);
+
+  useEffect(() => {
+    // If coming from RegisterAdmin redirect, prefill email.
+    const prefill = location?.state?.prefillEmail;
+    if (prefill && typeof prefill === 'string') {
+      setLoginForm((p) => ({ ...p, email: prefill }));
+    }
+  }, [location?.state]);
 
   const toggleMode = () => {
-    setIsLogin(!isLogin);
-    // Reset role to admin when switching back to signup just in case
-    if (isLogin) setRole('ADMIN');
+    const nextIsLogin = !isLogin;
+    setIsLogin(nextIsLogin);
+    setError('');
+    setSuccess('');
   };
-  
-  const navigate = useNavigate();
-  const { login } = useAuth();
-  const { principal } = useAdmin();
 
-  const handleLogin = (e) => {
+  const redirectByRole = (role) => {
+    if (role === 'ADMIN') return '/admin/dashboard';
+    if (role === 'TEACHER') return '/teacher/classroom';
+    if (role === 'PRINCIPAL') return '/principal/dashboard';
+    return '/';
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    login({
-      name: "Demo Admin",
-      email: "admin@school.edu",
-      role: role,
-    });
+    setError('');
+    setSuccess('');
+    setSubmitting(true);
 
-    // Login should always redirect to dashboard.
-    navigate('/admin/dashboard');
+    try {
+      if (isLogin) {
+        const nextUser = await login({ email: loginForm.email, password: loginForm.password });
+        const target = fromPath || redirectByRole(nextUser?.role);
+        navigate(target, { replace: true });
+        return;
+      }
+
+      const payload = {
+        schoolIdx: registerForm.schoolIdx,
+        schoolName: registerForm.schoolName,
+        address: registerForm.address || undefined,
+        adminName: registerForm.adminName,
+        adminEmail: registerForm.adminEmail,
+        password: registerForm.password,
+      };
+
+      await registerAdminApi(payload);
+      setSuccess('Admin registered. Please login to continue.');
+      navigate('/login', { replace: true, state: { prefillEmail: registerForm.adminEmail } });
+    } catch (err) {
+      setError(err?.message || 'Something went wrong');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
 
@@ -130,57 +182,80 @@ const AuthPage = () => {
                   </p>
                 </div>
 
-                {/* Animated Role Selector (Login Only) */}
-                {isLogin && (
-                  <div className="relative flex bg-gray-100 p-1 rounded-xl mb-8">
-                    {roles.map((r) => {
-                      const isActive = role === r;
-                      return (
-                        <button
-                          key={r}
-                          onClick={() => setRole(r)}
-                          className={`flex-1 py-3 text-sm font-bold rounded-lg relative z-10 transition-colors duration-300 ${isActive ? 'text-[#2D3748]' : 'text-gray-400 hover:text-gray-500'
-                            }`}
-                        >
-                          {r}
-                          {isActive && (
-                            <motion.div
-                              layoutId="activeRole"
-                              className="absolute inset-0 bg-white shadow-sm rounded-lg -z-10"
-                              transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                            />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
                 {/* Form Inputs */}
-                <form className="space-y-5">
+                <form className="space-y-5" onSubmit={handleSubmit}>
+                  {(error || success) && (
+                    <div className={`text-sm font-semibold rounded-xl px-4 py-3 ${error ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
+                      {error || success}
+                    </div>
+                  )}
+
                   {!isLogin && (
                     <>
                       <div className="relative group">
                         <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3182CE] transition-colors" size={22} />
-                        <input type="text" placeholder="Full Name" className="form-input" />
+                        <input
+                          type="text"
+                          placeholder="Admin Full Name"
+                          className="form-input"
+                          value={registerForm.adminName}
+                          onChange={(e) => setRegisterForm((p) => ({ ...p, adminName: e.target.value }))}
+                          required
+                        />
                       </div>
                       {/* Grid for School Details */}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="relative group">
                           <School className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3182CE] transition-colors" size={22} />
-                          <input type="text" placeholder="School Name" className="form-input" />
+                          <input
+                            type="text"
+                            placeholder="School Name"
+                            className="form-input"
+                            value={registerForm.schoolName}
+                            onChange={(e) => setRegisterForm((p) => ({ ...p, schoolName: e.target.value }))}
+                            required
+                          />
                         </div>
                         <div className="relative group">
                           <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3182CE] transition-colors" size={22} />
-                          <input type="text" placeholder="IDX-001" className="form-input" />
+                          <input
+                            type="text"
+                            placeholder="IDX-001"
+                            className="form-input"
+                            value={registerForm.schoolIdx}
+                            onChange={(e) => setRegisterForm((p) => ({ ...p, schoolIdx: e.target.value }))}
+                            required
+                          />
                         </div>
+                      </div>
+
+                      <div className="relative group">
+                        <School className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3182CE] transition-colors" size={22} />
+                        <input
+                          type="text"
+                          placeholder="Address (optional)"
+                          className="form-input"
+                          value={registerForm.address}
+                          onChange={(e) => setRegisterForm((p) => ({ ...p, address: e.target.value }))}
+                        />
                       </div>
                     </>
                   )}
 
                   <div className="relative group">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3182CE] transition-colors" size={22} />
-                    <input type="email" placeholder="name@school.edu" className="form-input" />
+                    <input
+                      type="email"
+                      placeholder="name@school.edu"
+                      className="form-input"
+                      value={isLogin ? loginForm.email : registerForm.adminEmail}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (isLogin) setLoginForm((p) => ({ ...p, email: v }));
+                        else setRegisterForm((p) => ({ ...p, adminEmail: v }));
+                      }}
+                      required
+                    />
                   </div>
 
                   <div className="relative group">
@@ -189,6 +264,13 @@ const AuthPage = () => {
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       className="form-input pr-12"
+                      value={isLogin ? loginForm.password : registerForm.password}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (isLogin) setLoginForm((p) => ({ ...p, password: v }));
+                        else setRegisterForm((p) => ({ ...p, password: v }));
+                      }}
+                      required
                     />
                     <button
                       type="button"
@@ -209,11 +291,12 @@ const AuthPage = () => {
 
                   {/* Submit Button with Darker Color */}
                   <button
+                    type="submit"
                     className="w-full py-4 rounded-xl font-bold text-lg text-white shadow-md hover:shadow-xl transform active:scale-[0.98] transition-all flex items-center justify-center gap-3 group cursor-pointer"
                     style={{ backgroundColor: '#3182CE' }}
-                    onClick={handleLogin}
+                    disabled={submitting}
                   >
-                    {isLogin ? 'Login Dashboard' : 'Create Admin Account'}
+                    {submitting ? 'Please wait...' : (isLogin ? 'Login Dashboard' : 'Create Admin Account')}
                     <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                 </form>
