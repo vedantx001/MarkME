@@ -27,7 +27,7 @@ const Navbar = () => {
                     <a href="#features" className="text-sm font-medium hover:text-[#85C7F2] transition-colors cursor-pointer">Features</a>
                     <a href="#roles" className="text-sm font-medium hover:text-[#85C7F2] transition-colors cursor-pointer">Solutions</a>
                     <button
-                        onClick={() => navigate('/auth')}
+                        onClick={() => navigate('/login')}
                         className="px-5 py-2.5 bg-[#2D3748] text-white text-sm font-semibold rounded-lg hover:bg-[#1a202c] transition-all cursor-pointer"
                     >
                         Request Demo

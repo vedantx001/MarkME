@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { useAuth } from "../../context/authContext.jsx";
+import { useAdmin } from "../../context/adminContext.jsx";
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Eye, EyeOff, Mail, Lock, User, School, ArrowRight,
@@ -8,14 +11,31 @@ import {
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState('admin');
-  const roles = ['Admin', 'Teacher', 'Principal'];
+  const [role, setRole] = useState('ADMIN');
+  const roles = ['ADMIN', 'TEACHER', 'PRINCIPAL'];
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
     // Reset role to admin when switching back to signup just in case
-    if (isLogin) setRole('admin');
+    if (isLogin) setRole('ADMIN');
   };
+  
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const { principal } = useAdmin();
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    login({
+      name: "Demo Admin",
+      email: "admin@school.edu",
+      role: role,
+    });
+
+    // Login should always redirect to dashboard.
+    navigate('/admin/dashboard');
+  };
+
 
   const FeatureCard = ({ icon: Icon, title, description }) => (
     <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/10 hover:bg-white/20 transition-all duration-300 group">
@@ -113,11 +133,11 @@ const AuthPage = () => {
                 {isLogin && (
                   <div className="relative flex bg-gray-100 p-1 rounded-xl mb-8">
                     {roles.map((r) => {
-                      const isActive = role === r.toLowerCase();
+                      const isActive = role === r;
                       return (
                         <button
                           key={r}
-                          onClick={() => setRole(r.toLowerCase())}
+                          onClick={() => setRole(r)}
                           className={`flex-1 py-3 text-sm font-bold rounded-lg relative z-10 transition-colors duration-300 ${isActive ? 'text-[#2D3748]' : 'text-gray-400 hover:text-gray-500'
                             }`}
                         >
@@ -190,6 +210,7 @@ const AuthPage = () => {
                   <button
                     className="w-full py-4 rounded-xl font-bold text-lg text-white shadow-md hover:shadow-xl transform active:scale-[0.98] transition-all flex items-center justify-center gap-3 group cursor-pointer"
                     style={{ backgroundColor: '#3182CE' }}
+                    onClick={handleLogin}
                   >
                     {isLogin ? 'Login Dashboard' : 'Create Admin Account'}
                     <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
