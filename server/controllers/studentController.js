@@ -1,7 +1,10 @@
 // /server/controllers/studentController.js
 const Student = require("../model/Student");
 const Classroom = require("../model/Classroom");
+const School = require("../model/School");
 const excelParser = require("../utils/excelParser");
+const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryHelper");
+const aiClient = require("../utils/aiClient");
 
 exports.getStudents = async (req, res) => {
   try {
@@ -82,8 +85,50 @@ exports.deleteStudent = async (req, res) => {
   try {
     const studentId = req.params.id;
 
-    const deleted = await Student.findByIdAndDelete(studentId);
-    if (!deleted) return res.status(404).json({ message: "Student not found." });
+    // 1. Find Student
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found." });
+    }
+
+    // 2. Handle Cloudinary Image Deletion
+    if (student.profileImageUrl) {
+      try {
+        // Extract public_id from secure URL
+        // Example: https://res.cloudinary.com/demo/image/upload/v1570979139/folder/sample.jpg
+
+        // 1. Split by '/upload/'
+        const parts = student.profileImageUrl.split('/upload/');
+
+        if (parts.length === 2) {
+          let publicIdWithVersion = parts[1];
+
+          // 2. Remove version if present (e.g., v123456789/)
+          // Cloudinary versions start with 'v' followed by numbers and a slash
+          const versionRegex = /^v\d+\//;
+          let publicIdWithExt = publicIdWithVersion.replace(versionRegex, '');
+
+          // 3. Remove file extension
+          const lastDotIndex = publicIdWithExt.lastIndexOf('.');
+          let publicId = publicIdWithExt;
+          if (lastDotIndex !== -1) {
+            publicId = publicIdWithExt.substring(0, lastDotIndex);
+          }
+
+          if (publicId) {
+            await deleteFromCloudinary(publicId);
+            console.log(`Deleted Cloudinary image: ${publicId}`);
+          }
+        }
+
+      } catch (cloudErr) {
+        // Non-blocking error
+        console.error("Cloudinary deletion failed, but proceeding with student deletion:", cloudErr);
+      }
+    }
+
+    // 3. Delete Student from MongoDB
+    await Student.findByIdAndDelete(studentId);
 
     res.json({ message: "Student deleted." });
 
@@ -154,5 +199,73 @@ exports.bulkUpload = async (req, res) => {
   } catch (err) {
     console.error("bulkUpload error:", err);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+exports.updateStudentProfileImage = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided." });
+    }
+
+    // 1. Find Student
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found." });
+    }
+
+    // 2. Fetch related data for path: School Name & Class Name
+    // req.user.schoolId should match student.schoolId usually, but let's use the student's data source of truth or req.user as reliable context.
+    // The requirement says: "Use req.user.schoolId (or schoolName if available)"
+    // And path: <schoolName>/students/<className>/face-images/
+
+    // We need the School Name
+    const school = await School.findById(req.user.schoolId);
+    if (!school) return res.status(404).json({ message: "School not found." });
+
+    // We need the Class Name
+    const classroom = await Classroom.findById(student.classId);
+    if (!classroom) return res.status(404).json({ message: "Classroom not found (linked to student)." });
+
+    const schoolName = school.name.trim(); // Sanitize if needed? Cloudinary handles spaces usually, but allow standard string
+    const className = classroom.name.trim();
+
+    // 3. Construct Path
+    // Pattern: <schoolName>/students/<className>/face-images/
+    const folderPath = `${schoolName}/students/${className}/face-images/`;
+
+    // 4. Upload to Cloudinary
+    // Use rollNumber as public_id
+    const publicId = student.rollNumber; // Ensure this is string
+
+    const imageUrl = await uploadToCloudinary(req.file.buffer, folderPath, publicId.toString());
+
+    // 5. Update Student
+    student.profileImageUrl = imageUrl;
+    await student.save();
+
+    // 7. Trigger AI Learning (Non-blocking)
+    try {
+      // We pass the student ID, class ID, and the new secure URL
+      // explicit string conversion for IDs to be safe
+      await aiClient.generateEmbedding(student._id.toString(), student.classId.toString(), imageUrl);
+      console.log(`AI embedding generation triggered for student: ${student.rollNumber}`);
+    } catch (aiError) {
+      // Log warning but DO NOT fail the request
+      console.warn("AI Service Warning: Failed to trigger embedding generation.", {
+        studentId: student._id,
+        error: aiError.message
+      });
+    }
+
+    // 6. Return updated student
+    res.json(student);
+
+  } catch (err) {
+    console.error("updateStudentProfileImage error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
