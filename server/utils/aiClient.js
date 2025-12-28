@@ -1,65 +1,73 @@
-const Student = require('../model/Student');
-const AttendanceRecord = require('../model/AttendanceRecord');
+const axios = require('axios');
+
+// Get AI Service URL from environment variables
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL;
+
+// Create a single axios instance with timeout
+const apiClient = axios.create({
+    baseURL: AI_SERVICE_URL,
+    timeout: 30000, // 30 seconds
+});
 
 /**
- * Mock Face Recognition Trigger
- * Simulates AI processing by assigning random attendance status to students.
- * 
- * @param {string} sessionId - The ID of the attendance session
- * @param {string} classId - The ID of the class
- * @param {Array<string>} imageUrls - List of uploaded image URLs (unused in mock)
+ * Helper to handle and log axios errors before re-throwing
  */
-const triggerFaceRecognition = async (sessionId, classId, imageUrls) => {
-    try {
-        console.log(`[Mock AI] Triggered for Session: ${sessionId}, Class: ${classId}`);
-
-        // 1. Find all students in the class
-        const students = await Student.find({ classId: classId, isActive: true });
-
-        if (!students || students.length === 0) {
-            console.log(`[Mock AI] No students found for Class: ${classId}`);
-            return;
-        }
-
-        console.log(`[Mock AI] Found ${students.length} students. Processing...`);
-
-        const recordsToInsert = [];
-
-        // 2. Loop through students and prepare attendance records
-        for (const student of students) {
-            // Randomly assign 'P' (Present) or 'A' (Absent)
-            // Let's bias it slightly towards Present (e.g., 80% chance)
-            const isPresent = Math.random() < 0.8;
-            const status = isPresent ? 'P' : 'A';
-            const confidence = isPresent ? 0.98 : 0.0;
-
-            recordsToInsert.push({
-                sessionId: sessionId,
-                studentId: student._id,
-                status: status,
-                source: 'SYSTEM',
-                confidence: confidence,
-                edited: false
-            });
-        }
-
-        // 3. Bulk insert for efficiency
-        if (recordsToInsert.length > 0) {
-            // Use insertMany, but might need to handle potential duplicates if re-run 
-            // (though logic implies new session). 
-            // For safety in this mock, we can use a loop or insertMany with ordered:false to ignore dupes if desired,
-            // but standard insertMany is fine for a fresh session context.
-            await AttendanceRecord.insertMany(recordsToInsert);
-        }
-
-        console.log(`[Mock AI] Successfully created ${recordsToInsert.length} attendance records.`);
-
-    } catch (error) {
-        console.error('[Mock AI] Error triggering face recognition:', error);
-        // In a real system, we might update the session status to 'FAILED' here
+const handleAxiosError = (error, context) => {
+    if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error(`AI Service Error [${context}]:`, {
+            status: error.response.status,
+            data: error.response.data,
+        });
+    } else if (error.request) {
+        // The request was made but no response was received
+        console.error(`AI Service Network Error [${context}]: No response received`, error.message);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error(`AI Service Client Error [${context}]:`, error.message);
     }
+    throw error;
 };
 
-module.exports = {
-    triggerFaceRecognition
+const aiClient = {
+    /**
+     * Generates a face embedding for a student by calling the AI service.
+     * @param {string} studentId - The ID of the student.
+     * @param {string} classId - The ID of the class (required for saving embedding).
+     * @param {string} imageUrl - The URL of the student's face image.
+     * @returns {Promise<Object>} - The response data from the AI service.
+     */
+    generateEmbedding: async (studentId, classId, imageUrl) => {
+        try {
+            const response = await apiClient.post('/api/ai/generate-embedding', {
+                studentId,
+                classId,
+                imageUrl,
+            });
+            return response.data;
+        } catch (error) {
+            handleAxiosError(error, 'generateEmbedding');
+        }
+    },
+
+    /**
+     * Recognizes students in classroom images by calling the AI service.
+     * @param {string} classId - The ID of the class.
+     * @param {string[]} imageUrls - Array of image URLs to process (max 4).
+     * @returns {Promise<Object>} - The response data containing presentStudentIds.
+     */
+    recognizeAttendance: async (classId, imageUrls) => {
+        try {
+            const response = await apiClient.post('/api/ai/recognize', {
+                classId,
+                imageUrls,
+            });
+            return response.data;
+        } catch (error) {
+            handleAxiosError(error, 'recognizeAttendance');
+        }
+    },
 };
+
+module.exports = aiClient;

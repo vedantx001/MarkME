@@ -3,9 +3,10 @@ const express = require("express");
 const router = express.Router();
 
 const studentController = require("../controllers/studentController");
+const bulkPhotoController = require("../controllers/bulkPhotoController");
 const auth = require("../middlewares/authMiddleware");
 const { requireRole, requireAnyRole } = require("../middlewares/roleMiddleware");
-const { uploadExcel } = require("../middlewares/uploadMiddleware");
+const { uploadExcel, uploadZip } = require("../middlewares/uploadMiddleware");
 
 /*
     ================================
@@ -58,6 +59,22 @@ router.post(
     requireAnyRole(["ADMIN", "TEACHER"]),
     uploadExcel,
     studentController.bulkUpload
+);
+
+/*
+    ================================================
+    @route   POST /api/students/bulk-photo-upload
+    @desc    Upload ZIP file of student photos
+             Expects ZIP file with images named by rollNumber (e.g., 101.jpg)
+    @access  Teacher/Admin
+    ================================================
+*/
+router.post(
+    "/bulk-photo-upload",
+    auth,
+    requireAnyRole(["ADMIN", "TEACHER"]),
+    uploadZip,
+    bulkPhotoController.uploadBulkPhotos
 );
 
 module.exports = router;
