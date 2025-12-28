@@ -1,3 +1,4 @@
+// src/pages/AuthPage.jsx
 import React, { useState } from 'react';
 import { useAuth } from "../../context/authContext.jsx";
 import { useAdmin } from "../../context/adminContext.jsx";

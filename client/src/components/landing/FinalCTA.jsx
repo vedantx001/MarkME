@@ -1,3 +1,4 @@
+// src/components/landing/FinalCTA.jsx
 import React from 'react';
 import { Shield } from 'lucide-react';
 import { motion } from 'framer-motion';

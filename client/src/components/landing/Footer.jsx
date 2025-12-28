@@ -1,3 +1,4 @@
+// src/components/landing/Footer.jsx
 import React from 'react';
 import { Cpu } from 'lucide-react';
 

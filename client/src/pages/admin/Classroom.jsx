@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Search, Plus, School } from 'lucide-react';
 import { useAdmin } from '../../context/adminContext';
 import AddClassroomForm from '../../components/forms/AddClassroomForm';
+import { Navigate } from 'react-router-dom';
 
 const Classroom = () => {
   const { classrooms } = useAdmin();

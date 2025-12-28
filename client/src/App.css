@@ -1,8 +1,7 @@
+/* src/App.css */
 @import "tailwindcss";
 /* In index.css or App.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+
 
 /* Add this layer for the cleaner input styles */
 @layer components {

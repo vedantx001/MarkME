@@ -1,3 +1,4 @@
+// src/components/landing/Institutions.jsx
 import React from 'react';
 import { CheckCircle2, School } from 'lucide-react';
 import { motion } from 'framer-motion';
