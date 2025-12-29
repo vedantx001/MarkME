@@ -218,7 +218,7 @@ const ClassroomDetail = () => {
 
                 <div className="mt-3 flex justify-between items-center">
                   <button
-                    onClick={() => navigate(`/teacher/student/${s.id}`)}
+                    onClick={() => navigate(`/admin/student/${s.id}`)}
                     className="text-sm font-semibold text-[#2D3748]"
                   >
                     View Student

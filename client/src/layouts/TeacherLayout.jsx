@@ -1,17 +1,11 @@
 // src/layouts/TeacherLayout.jsx
-import { Outlet, Navigate } from "react-router-dom";
-import { useState } from "react";
-import Sidebar from "../components/common/Sidebar";
-import Navbar from "../components/common/Navbar";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/authContext";
+import AdminLayout from "../components/layout/AdminLayout";
+import { Users, ClipboardCheck } from "lucide-react";
 
 const TeacherLayout = () => {
   const { isAuthenticated, role, loading } = useAuth();
-
-  // Sidebar visibility state
-  // Default to open on desktop, closed on mobile
-  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   if (loading) {
     return (
@@ -25,22 +19,13 @@ const TeacherLayout = () => {
     return <Navigate to="/login" replace />;
   }
 
+  const teacherSidebarItems = [
+    { icon: Users, label: "Students", to: "/teacher/classroom", activePrefixes: ["/teacher/classroom", "/teacher/student"] },
+    { icon: ClipboardCheck, label: "Attendance", to: "/teacher/attendance", activePrefixes: ["/teacher/attendance"] },
+  ];
+
   return (
-    <div className="flex min-h-screen bg-(--secondary-bg) font-inter">
-      {/* Sidebar */}
-      <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-
-      {/* Main Content */}
-      <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Navbar */}
-        <Navbar toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
-
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-(--secondary-bg) p-6">
-          <Outlet />
-        </main>
-      </div>
-    </div>
+    <AdminLayout sidebarItems={teacherSidebarItems} brandLabel="EduAdmin" showSettings={true} />
   );
 };
 

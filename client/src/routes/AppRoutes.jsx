@@ -99,6 +99,8 @@ const AppRoutes = () => {
             element={<AdminClassroomDetail />}
           />
 
+          <Route path="student/:id" element={<TeacherStudentDetail />} />
+
           <Route path="principal" element={<AdminPrincipal />} />
         </Route>
 

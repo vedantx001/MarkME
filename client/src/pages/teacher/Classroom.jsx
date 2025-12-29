@@ -92,19 +92,19 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 font-inter">
+    <div className="max-w-7xl mx-auto space-y-8">
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-(--primary-bg) p-6 rounded-2xl border border-(--secondary-bg) shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#FBFDFF] p-6 rounded-2xl shadow-sm border border-[#2D3748]/5">
         <div>
-          <h1 className="font-jakarta text-2xl md:text-3xl font-bold text-(--primary-text)">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#0E0E11] tracking-tight">
             {activeClass?.name || "Classroom"}
           </h1>
-          <div className="flex items-center gap-2 mt-2 text-(--primary-text)/60 text-sm">
-            <GraduationCap size={16} className="text-(--secondary-accent)" />
-            <span>Academic Year: {activeClass?.educationalYear || "—"}</span>
+          <div className="flex items-center gap-2 mt-2 text-[#2D3748]/60 text-sm">
+            <GraduationCap size={16} className="text-[#85C7F2]" />
+            <span className="font-medium">Academic Year: {activeClass?.educationalYear || "—"}</span>
             <span className="hidden md:inline mx-2">•</span>
-            <span className="bg-(--secondary-bg) px-2 py-0.5 rounded text-(--primary-accent) font-medium">
+            <span className="bg-[#F2F8FF] px-2 py-0.5 rounded text-[#2D3748] font-semibold border border-[#85C7F2]/20">
               {students.length} Students
             </span>
           </div>
@@ -112,11 +112,11 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
 
         {/* Search Bar */}
         <div className="relative w-full md:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-(--primary-text)/40" size={18} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#2D3748]/40" size={18} />
           <input
             type="text"
             placeholder="Search students..."
-            className="w-full pl-10 pr-4 py-2.5 bg-(--primary-bg) border border-(--secondary-bg) rounded-xl focus:outline-none focus:border-(--secondary-accent) transition-colors"
+            className="w-full pl-10 pr-4 py-2.5 bg-[#FBFDFF] border border-[#2D3748]/10 rounded-xl focus:outline-none focus:border-[#85C7F2] transition-colors"
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
@@ -124,10 +124,10 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
 
       {/* Grid Header */}
       <div className="flex items-center gap-3 px-2">
-        <div className="p-2 rounded-lg bg-(--secondary-accent)/10 text-(--secondary-accent)">
+        <div className="p-2 rounded-lg bg-[#F2F8FF] text-[#2D3748] border border-[#2D3748]/5">
           <Users size={20} />
         </div>
-        <h2 className="font-jakarta text-xl font-bold text-(--primary-accent)">Student Directory</h2>
+        <h2 className="text-xl font-bold text-[#0E0E11]">Student Directory</h2>
       </div>
 
       {/* Responsive Students Grid */}
@@ -140,7 +140,7 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
             transition={{ delay: index * 0.05 }}
             whileHover={{ y: -6 }}
             style={{ cursor: 'pointer' }}
-            className="group bg-(--primary-bg) border border-(--secondary-bg) overflow-hidden hover:shadow-xl transition-all duration-300 min-h-40 rounded-md"
+            className="group bg-[#FBFDFF] border border-[#2D3748]/5 overflow-hidden rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
             onClick={() => navigate(`${basePath}/student/${student.id}`)}
           >
             <div className="flex flex-row items-stretch">
@@ -149,28 +149,28 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
                 <img
                   src={student.photo}
                   alt={student.name}
-                  className="w-full h-full object-cover transition-transform duration-500 py-5 pl-3"
+                  className="w-full h-full object-cover transition-transform duration-500"
                 />
               </div>
 
               {/* Details (Right) */}
               <div className="flex flex-col flex-1 p-4 sm:p-5">
                 <div className="flex items-start gap-2 flex-wrap">
-                  <h3 className="min-w-0 font-jakarta text-base sm:text-lg font-bold text-(--primary-text) truncate">
+                  <h3 className="min-w-0 text-base sm:text-lg font-bold text-[#0E0E11] truncate">
                     {student.name}
                   </h3>
-                  <div className="ml-auto shrink-0 bg-(--secondary-bg) px-2 py-0.5 rounded-full text-[10px] font-bold text-(--primary-accent)">
+                  <div className="ml-auto shrink-0 bg-[#F2F8FF] px-2.5 py-1 rounded-full text-[10px] font-bold text-[#2D3748] border border-[#85C7F2]/20">
                     ROLL {student.rollNo}
                   </div>
                 </div>
                 <div className="mt-3 space-y-2">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-(--primary-text)/50">Gender</span>
-                    <span className="text-(--primary-accent) font-medium">{student.gender}</span>
+                    <span className="text-[#2D3748]/60">Gender</span>
+                    <span className="text-[#0E0E11] font-semibold">{student.gender}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-(--primary-text)/50">Birth Date</span>
-                    <span className="text-(--primary-accent) font-medium">{student.dob}</span>
+                    <span className="text-[#2D3748]/60">Birth Date</span>
+                    <span className="text-[#0E0E11] font-semibold">{student.dob}</span>
                   </div>
                 </div>
               </div>
@@ -181,8 +181,8 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
 
       {/* Empty State */}
       {filteredStudents.length === 0 && (
-        <div className="text-center py-20 bg-(--primary-bg) rounded-2xl border border-dashed border-(--secondary-accent)/30">
-          <p className="text-(--primary-text)/40 font-medium">No students found matching "{searchTerm}"</p>
+        <div className="text-center py-20 bg-[#FBFDFF] rounded-2xl border border-dashed border-[#2D3748]/20">
+          <p className="text-[#2D3748]/60 font-medium">No students found matching "{searchTerm}"</p>
         </div>
       )}
     </div>

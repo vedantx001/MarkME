@@ -2,9 +2,17 @@
 const Student = require("../model/Student");
 const Classroom = require("../model/Classroom");
 const School = require("../model/School");
+const AttendanceRecord = require("../model/AttendanceRecord");
 const excelParser = require("../utils/excelParser");
 const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryHelper");
 const aiClient = require("../utils/aiClient");
+
+function dateOnlyISO(value) {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString().split("T")[0];
+}
 
 exports.getStudents = async (req, res) => {
   try {
@@ -18,6 +26,65 @@ exports.getStudents = async (req, res) => {
 
   } catch (err) {
     console.error("getStudents error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+// GET ONE STUDENT
+// Route: GET /api/students/:id
+exports.getStudentById = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+
+    const student = await Student.findById(studentId);
+    if (!student) return res.status(404).json({ message: "Student not found." });
+
+    // Basic school scoping
+    if (req.user?.schoolId && student.schoolId?.toString() !== req.user.schoolId) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    res.json(student);
+  } catch (err) {
+    console.error("getStudentById error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+// GET STUDENT ATTENDANCE HISTORY
+// Route: GET /api/students/:id/attendance-history
+exports.getStudentAttendanceHistory = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+
+    const student = await Student.findById(studentId).select("schoolId");
+    if (!student) return res.status(404).json({ message: "Student not found." });
+
+    if (req.user?.schoolId && student.schoolId?.toString() !== req.user.schoolId) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const records = await AttendanceRecord.find({ studentId })
+      .select("status sessionId")
+      .populate("sessionId", "date")
+      .lean();
+
+    // Map to UI expected { date: 'YYYY-MM-DD', status: 'P'|'A' }
+    const history = (records || [])
+      .map((r) => ({
+        date: dateOnlyISO(r?.sessionId?.date),
+        status: r?.status,
+      }))
+      .filter((x) => x.date && (x.status === "P" || x.status === "A"));
+
+    // Sort ascending by date
+    history.sort((a, b) => a.date.localeCompare(b.date));
+
+    res.json(history);
+  } catch (err) {
+    console.error("getStudentAttendanceHistory error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

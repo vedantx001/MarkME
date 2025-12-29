@@ -8,6 +8,7 @@ import {
   createClassApi,
   updateClassApi,
 } from '../api/admin.api';
+import { fetchClassroomStudentsCount } from '../api/student.api';
 import { useAuth } from './authContext';
 
 const AdminContext = createContext();
@@ -18,6 +19,7 @@ export const AdminProvider = ({ children }) => {
   const [teachers, setTeachers] = useState([]);
   const [principal, setPrincipal] = useState(null);
   const [classrooms, setClassrooms] = useState([]);
+  const [studentsCount, setStudentsCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -75,11 +77,30 @@ export const AdminProvider = ({ children }) => {
   const refreshClassrooms = async () => {
     const res = await listClassesApi();
     const list = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
-    setClassrooms(list.map(normalizeClassroom));
+    const normalized = list.map(normalizeClassroom);
+    setClassrooms(normalized);
+    return normalized;
+  };
+
+  const refreshStudentsCount = async (rooms) => {
+    const list = Array.isArray(rooms) ? rooms : Array.isArray(classrooms) ? classrooms : [];
+    const ids = list.map((c) => c?.id).filter(Boolean);
+
+    if (ids.length === 0) {
+      setStudentsCount(0);
+      return 0;
+    }
+
+    const results = await Promise.allSettled(ids.map((id) => fetchClassroomStudentsCount(id)));
+    const total = results.reduce((sum, r) => sum + (r.status === 'fulfilled' ? Number(r.value || 0) : 0), 0);
+    setStudentsCount(total);
+    return total;
   };
 
   const refreshAll = async () => {
-    await Promise.all([refreshTeachers(), refreshPrincipal(), refreshClassrooms()]);
+    // Ensure we have classrooms before counting students.
+    const [_, __, rooms] = await Promise.all([refreshTeachers(), refreshPrincipal(), refreshClassrooms()]);
+    await refreshStudentsCount(rooms);
   };
 
   const createTeacher = async ({ name, email, password }) => {
@@ -133,8 +154,6 @@ export const AdminProvider = ({ children }) => {
   };
 
   const deleteClassroom = async () => {};
-
-  const studentsCount = 0;
 
   useEffect(() => {
     let alive = true;
@@ -197,6 +216,7 @@ export const AdminProvider = ({ children }) => {
         deleteClassroom,
 
         studentsCount,
+        refreshStudentsCount,
         schoolDetails,
         adminProfile,
         loading,

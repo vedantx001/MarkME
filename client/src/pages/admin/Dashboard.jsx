@@ -176,19 +176,6 @@ const Dashboard = () => {
               )}
             </div>
           </div>
-
-          {/* Promo */}
-          <div className="relative overflow-hidden rounded-3xl bg-[#2D3748] p-8 text-[#FBFDFF] shadow-xl shadow-[#2D3748]/20">
-            <h3 className="text-xl font-bold mb-2">Premium Features</h3>
-            <p className="text-[#85C7F2] text-sm mb-6">
-              Unlock advanced analytics and reporting tools.
-            </p>
-
-            <button className="flex items-center gap-2 bg-[#85C7F2] text-[#0E0E11] px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-[#FBFDFF] transition-colors shadow-md">
-              Upgrade Now
-              <ArrowRight size={16} />
-            </button>
-          </div>
         </div>
       </div>
     </div>

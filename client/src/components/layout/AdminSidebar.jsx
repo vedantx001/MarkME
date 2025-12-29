@@ -18,7 +18,23 @@ const SidebarItem = ({ icon: Icon, label, active = false, onClick }) => (
   </button>
 );
 
-const AdminSidebar = ({ isMobile, isMobileMenuOpen }) => {
+const DEFAULT_ADMIN_ITEMS = [
+  { icon: LayoutDashboard, label: "Dashboard", to: "/admin/dashboard" },
+  { icon: Users, label: "Teachers", to: "/admin/teachers" },
+  { icon: School, label: "Classrooms", to: "/admin/classrooms" },
+  { icon: Users, label: "Principal", to: "/admin/principal" },
+];
+
+const isItemActive = (currentPath, item) => {
+  if (!item) return false;
+  const prefixes = Array.isArray(item.activePrefixes) ? item.activePrefixes : null;
+  if (prefixes && prefixes.length > 0) {
+    return prefixes.some((p) => currentPath === p || currentPath.startsWith(`${p}/`));
+  }
+  return currentPath === item.to || (item.to === '/admin/dashboard' && currentPath === '/admin');
+};
+
+const AdminSidebar = ({ isMobile, isMobileMenuOpen, items, brandLabel = 'EduAdmin', showSettings = true }) => {
   const { adminProfile } = useAdmin();
   const { logout } = useAuth();
   const location = useLocation();
@@ -36,14 +52,11 @@ const AdminSidebar = ({ isMobile, isMobileMenuOpen }) => {
     }
   };
 
-  const navItems = [
-    { icon: LayoutDashboard, label: "Dashboard", to: "/admin/dashboard" },
-    { icon: Users, label: "Teachers", to: "/admin/teachers" },
-    { icon: School, label: "Classrooms", to: "/admin/classrooms" },
-    { icon: Users, label: "Principal", to: "/admin/principal" },
-  ].map((item) => ({
+  const resolvedItems = Array.isArray(items) && items.length > 0 ? items : DEFAULT_ADMIN_ITEMS;
+
+  const navItems = resolvedItems.map((item) => ({
     ...item,
-    active: currentPath === item.to || (item.to === '/admin/dashboard' && currentPath === '/admin'),
+    active: isItemActive(currentPath, item),
     onClick: () => goTo(item.to),
   }));
 
@@ -54,7 +67,7 @@ const AdminSidebar = ({ isMobile, isMobileMenuOpen }) => {
           <School className="text-[#85C7F2]" size={20} />
         </div>
         <span className="text-xl font-bold text-[#0E0E11]">
-          EduAdmin
+          {brandLabel}
         </span>
       </div>
 
@@ -62,10 +75,14 @@ const AdminSidebar = ({ isMobile, isMobileMenuOpen }) => {
         {navItems.map((item) => (
           <SidebarItem key={item.label} {...item} />
         ))}
-        <div className="pt-8 pb-2 px-4 text-xs font-bold text-[#2D3748]/40 uppercase tracking-wider">
-          System
-        </div>
-        <SidebarItem icon={Settings} label="Settings" />
+        {showSettings && (
+          <>
+            <div className="pt-8 pb-2 px-4 text-xs font-bold text-[#2D3748]/40 uppercase tracking-wider">
+              System
+            </div>
+            <SidebarItem icon={Settings} label="Settings" />
+          </>
+        )}
       </nav>
 
       <div className="mt-auto pt-6 border-t border-[#2D3748]/5">
@@ -84,11 +101,11 @@ const AdminSidebar = ({ isMobile, isMobileMenuOpen }) => {
       {isMobile && (
         <div className="mt-6 border-t border-[#2D3748]/10 pt-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-[#2D3748] overflow-hidden">
-            <img src={adminProfile.avatar} alt="Mobile Profile" />
+            <img src={adminProfile?.avatar} alt="Mobile Profile" />
           </div>
           <div>
-            <p className="font-bold text-[#0E0E11]">{adminProfile.name}</p>
-            <p className="text-xs text-[#2D3748]/60">{adminProfile.email}</p>
+            <p className="font-bold text-[#0E0E11]">{adminProfile?.name}</p>
+            <p className="text-xs text-[#2D3748]/60">{adminProfile?.email}</p>
           </div>
         </div>
       )}

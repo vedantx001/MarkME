@@ -114,11 +114,11 @@ const Attendance = () => {
       <div className="flex items-center justify-center gap-4 mb-8">
         {steps.map((s, i) => (
           <div key={s} className="flex items-center gap-2">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${i <= activeIdx ? 'bg-(--secondary-accent) text-white' : 'bg-(--secondary-bg) text-(--primary-text)/40'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${i <= activeIdx ? 'bg-[#2D3748] text-[#FBFDFF]' : 'bg-[#FBFDFF] text-[#2D3748]/40 border border-[#2D3748]/10'}`}>
               {i + 1}
             </div>
-            <span className={`text-sm font-medium ${i <= activeIdx ? 'text-(--primary-accent)' : 'text-(--primary-text)/40'}`}>{s}</span>
-            {i < 2 && <div className="w-8 h-0.5 bg-(--secondary-bg) ml-2" />}
+            <span className={`text-sm font-semibold ${i <= activeIdx ? 'text-[#0E0E11]' : 'text-[#2D3748]/40'}`}>{s}</span>
+            {i < 2 && <div className="w-8 h-0.5 bg-[#2D3748]/10 ml-2" />}
           </div>
         ))}
       </div>
@@ -126,11 +126,11 @@ const Attendance = () => {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto font-inter">
+    <div className="max-w-6xl mx-auto">
       {/* Header Section */}
       <div className="mb-8 text-center md:text-left">
-        <h1 className="font-jakarta text-2xl md:text-3xl font-bold text-(--primary-text)">Take Attendance</h1>
-        <p className="text-(--primary-text)/60 mt-1">
+        <h1 className="text-2xl md:text-3xl font-bold text-[#0E0E11] tracking-tight">Take Attendance</h1>
+        <p className="text-[#2D3748]/60 mt-1 font-medium">
           Our AI will detect faces from your classroom photos.
           {activeClass?.name ? ` (Class: ${activeClass.name})` : ""}
         </p>
@@ -146,7 +146,7 @@ const Attendance = () => {
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
             className="space-y-6"
           >
-            <div className="bg-(--primary-bg) p-6 rounded-2xl border border-(--secondary-bg) shadow-sm">
+            <div className="bg-[#FBFDFF] p-6 rounded-2xl shadow-sm border border-[#2D3748]/5">
               <ImageUpload images={images} setImages={setImages} />
 
               <div className="mt-8 flex flex-col items-center gap-4">
@@ -155,12 +155,12 @@ const Attendance = () => {
                   onClick={handleProcessImages}
                   style={{ cursor: images.length > 0 && !classesLoading && activeClass?.id ? 'pointer' : 'not-allowed' }}
                   className={`w-full md:w-auto px-10 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 
-                    ${images.length === 0 || classesLoading || !activeClass?.id ? "bg-(--secondary-bg) text-(--primary-text)/40" : "bg-(--primary-accent) text-white hover:bg-(--primary-text) shadow-lg"}`}
+                    ${images.length === 0 || classesLoading || !activeClass?.id ? "bg-[#F2F8FF] text-[#2D3748]/40 border border-[#2D3748]/10" : "bg-[#2D3748] text-[#FBFDFF] hover:bg-[#0E0E11] shadow-lg shadow-[#2D3748]/20"}`}
                 >
                   <Sparkles size={18} />
                   Start AI Recognition
                 </button>
-                <p className="text-xs text-(--primary-text)/40">Upload 1 to 4 images for best accuracy</p>
+                <p className="text-xs text-[#2D3748]/50">Upload 1 to 4 images for best accuracy</p>
                 {!classesLoading && !activeClass?.id && (
                   <p className="text-xs text-rose-500/80">No class assigned to this teacher.</p>
                 )}
@@ -174,12 +174,12 @@ const Attendance = () => {
           <motion.div
             key="processing"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="bg-(--primary-bg) rounded-2xl border border-(--secondary-bg) p-16 flex flex-col items-center gap-6 shadow-sm"
+            className="bg-[#FBFDFF] rounded-2xl shadow-sm border border-[#2D3748]/5 p-16 flex flex-col items-center gap-6"
           >
             <Loader size="large" />
             <div className="text-center">
-              <h3 className="font-jakarta text-xl font-bold text-(--primary-accent)">Analyzing Classroom...</h3>
-              <p className="text-(--primary-text)/60 mt-1">Identifying students and matching records.</p>
+              <h3 className="text-xl font-bold text-[#0E0E11]">Analyzing Classroom...</h3>
+              <p className="text-[#2D3748]/60 mt-1 font-medium">Identifying students and matching records.</p>
             </div>
           </motion.div>
         )}
@@ -196,24 +196,24 @@ const Attendance = () => {
               <button
                 onClick={resetFlow}
                 style={{ cursor: 'pointer' }}
-                className="flex items-center gap-2 text-sm font-medium text-(--primary-text)/60 hover:text-(--primary-accent) transition-colors"
+                className="flex items-center gap-2 text-sm font-semibold text-[#2D3748]/60 hover:text-[#0E0E11] transition-colors"
               >
                 <RotateCcw size={16} /> Re-upload Images
               </button>
             </div>
 
-            <div className="bg-(--primary-bg) rounded-2xl border border-(--secondary-bg) p-4 md:p-5 shadow-sm">
+            <div className="bg-[#FBFDFF] rounded-2xl shadow-sm border border-[#2D3748]/5 p-4 md:p-5">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-(--primary-text)/40">Summary</div>
-                  <div className="text-sm text-(--primary-text)/70 mt-1">
-                    Total: <span className="font-bold text-(--primary-text)">{summary.total}</span> &nbsp;•&nbsp; Present:{" "}
-                    <span className="font-bold text-(--secondary-accent)">{summary.present.length}</span> &nbsp;•&nbsp; Absent:{" "}
+                  <div className="text-xs font-bold uppercase tracking-widest text-[#2D3748]/40">Summary</div>
+                  <div className="text-sm text-[#2D3748]/70 mt-1">
+                    Total: <span className="font-bold text-[#0E0E11]">{summary.total}</span> &nbsp;•&nbsp; Present:{" "}
+                    <span className="font-bold text-[#2D3748]">{summary.present.length}</span> &nbsp;•&nbsp; Absent:{" "}
                     <span className="font-bold text-rose-500/80">{summary.absent.length}</span>
                   </div>
                 </div>
 
-                <div className="text-xs text-(--primary-text)/50">
+                <div className="text-xs text-[#2D3748]/50">
                   Detected (P) roll nos: {summary.present.map((s) => s.rollNo).filter(Boolean).join(", ") || "—"}
                   <br />
                   Absent (A) roll nos: {summary.absent.map((s) => s.rollNo).filter(Boolean).join(", ") || "—"}
@@ -221,7 +221,7 @@ const Attendance = () => {
               </div>
             </div>
 
-            <div className="bg-(--primary-bg) rounded-2xl border border-(--secondary-bg) overflow-hidden shadow-sm overflow-x-auto">
+            <div className="rounded-2xl overflow-hidden overflow-x-auto">
               <AttendanceTable data={attendanceData} onToggle={toggleStudentStatus} />
             </div>
 
@@ -229,7 +229,7 @@ const Attendance = () => {
               <button
                 onClick={handleSubmit}
                 style={{ cursor: 'pointer' }}
-                className="px-8 py-3 rounded-xl bg-(--secondary-accent) text-(--primary-text) font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg"
+                className="px-8 py-3 rounded-xl bg-[#2D3748] text-[#FBFDFF] font-bold hover:bg-[#0E0E11] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#2D3748]/20"
               >
                 <ShieldCheck size={18} />
                 Confirm & Submit
@@ -243,19 +243,19 @@ const Attendance = () => {
           <motion.div
             key="submitted"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="bg-(--primary-bg) rounded-2xl border border-(--secondary-bg) p-12 text-center space-y-6 shadow-sm max-w-md mx-auto"
+            className="bg-[#FBFDFF] rounded-2xl shadow-sm border border-[#2D3748]/5 p-12 text-center space-y-6 max-w-md mx-auto"
           >
-            <div className="w-20 h-20 bg-(--secondary-bg) text-(--secondary-accent) rounded-full flex items-center justify-center mx-auto">
+            <div className="w-20 h-20 bg-[#F2F8FF] text-[#2D3748] rounded-full flex items-center justify-center mx-auto border border-[#2D3748]/10">
               <CheckCircle2 size={40} />
             </div>
             <div>
-              <h2 className="font-jakarta text-2xl font-bold text-(--primary-accent)">Submission Complete!</h2>
-              <p className="text-(--primary-text)/60 mt-2">Attendance for Class 10-A has been recorded and synced.</p>
+              <h2 className="text-2xl font-bold text-[#0E0E11]">Submission Complete!</h2>
+              <p className="text-[#2D3748]/60 mt-2 font-medium">Attendance for Class 10-A has been recorded and synced.</p>
             </div>
             <button
               onClick={resetFlow}
               style={{ cursor: 'pointer' }}
-              className="w-full py-3 bg-(--secondary-bg) text-(--primary-accent) font-bold rounded-xl hover:opacity-90 transition-colors"
+              className="w-full py-3 bg-[#2D3748] text-[#FBFDFF] font-bold rounded-xl hover:bg-[#0E0E11] transition-colors"
             >
               Take Another Attendance
             </button>

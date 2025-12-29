@@ -106,19 +106,19 @@ const ImageUpload = ({ images, setImages }) => {
           className={`
             border-2 border-dashed rounded-2xl p-8 md:p-12 
             flex flex-col items-center justify-center transition-all
-            ${isDragActive ? 'border-(--secondary-accent) bg-(--secondary-bg)' : 'border-(--secondary-accent)/20 bg-white'}
-            ${images.length >= 4 ? 'opacity-50 cursor-not-allowed' : 'hover:border-(--secondary-accent)/50 cursor-pointer'}
+            ${isDragActive ? 'border-[#85C7F2] bg-[#F2F8FF]' : 'border-[#2D3748]/15 bg-[#FBFDFF]'}
+            ${images.length >= 4 ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#85C7F2] cursor-pointer'}
           `}
           style={{ cursor: images.length < 4 ? 'pointer' : 'not-allowed' }}
         >
           <input {...getInputProps()} />
-          <div className="p-4 rounded-full bg-(--secondary-bg) text-(--secondary-accent) mb-4">
+          <div className="p-4 rounded-full bg-[#F2F8FF] text-[#2D3748] mb-4 border border-[#2D3748]/10">
             <ImagePlus size={32} />
           </div>
-          <h3 className="font-jakarta font-bold text-(--primary-text) text-center">
+          <h3 className="font-bold text-[#0E0E11] text-center">
             {isDragActive ? "Drop the images here" : "Upload Classroom Photos"}
           </h3>
-          <p className="text-sm text-(--primary-text)/50 text-center mt-1">
+          <p className="text-sm text-[#2D3748]/60 text-center mt-1 font-medium">
             Drag & drop or click to select (Max 4 photos)
           </p>
         </div>
@@ -133,7 +133,7 @@ const ImageUpload = ({ images, setImages }) => {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="relative group aspect-square rounded-xl overflow-hidden border border-(--secondary-bg) shadow-sm"
+              className="relative group aspect-square rounded-xl overflow-hidden border border-[#2D3748]/10 shadow-sm bg-[#FBFDFF]"
               onPointerDown={handlePressStart(index)}
               onPointerUp={handlePressEnd}
               onPointerCancel={handlePressEnd}
@@ -164,7 +164,7 @@ const ImageUpload = ({ images, setImages }) => {
               
               {/* Delete action: hover (desktop) + long-press (mobile) */}
               <div
-                className={`absolute inset-0 bg-(--primary-accent)/40 transition-opacity flex items-center justify-center ${
+                className={`absolute inset-0 bg-[#2D3748]/35 transition-opacity flex items-center justify-center ${
                   deleteArmedIndex === index ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                 }`}
               >
@@ -179,7 +179,7 @@ const ImageUpload = ({ images, setImages }) => {
               </div>
 
               {/* Tag */}
-              <div className="absolute bottom-2 left-2 px-2 py-1 bg-white/90 backdrop-blur-sm rounded text-[10px] font-bold text-(--primary-accent)">
+              <div className="absolute bottom-2 left-2 px-2 py-1 bg-white/90 backdrop-blur-sm rounded text-[10px] font-bold text-[#2D3748]">
                 IMG_0{index + 1}
               </div>
             </motion.div>
@@ -195,7 +195,7 @@ const ImageUpload = ({ images, setImages }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-(--primary-text)/80 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-[#0E0E11]/80 backdrop-blur-sm flex items-center justify-center p-4"
             onClick={closeLightbox}
             role="dialog"
             aria-modal="true"
@@ -210,14 +210,14 @@ const ImageUpload = ({ images, setImages }) => {
             >
               <button
                 onClick={closeLightbox}
-                className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-(--primary-bg) border border-(--secondary-bg) shadow-sm flex items-center justify-center text-(--primary-accent)"
+                className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-[#FBFDFF] border border-[#2D3748]/10 shadow-sm flex items-center justify-center text-[#2D3748]"
                 aria-label="Close preview"
                 style={{ cursor: 'pointer' }}
               >
                 <X size={18} />
               </button>
 
-              <div className="w-full max-h-[80vh] rounded-2xl overflow-hidden border border-(--secondary-bg) bg-(--primary-bg)">
+              <div className="w-full max-h-[80vh] rounded-2xl overflow-hidden border border-[#2D3748]/10 bg-[#FBFDFF]">
                 <img
                   src={images[lightboxIndex].preview}
                   alt={`Preview ${lightboxIndex + 1}`}
@@ -232,7 +232,7 @@ const ImageUpload = ({ images, setImages }) => {
 
       {/* Empty States placeholders for remaining slots */}
       {images.length > 0 && images.length < 4 && (
-        <div className="flex items-center gap-2 text-[10px] font-bold text-(--primary-text)/30 uppercase tracking-widest mt-2">
+        <div className="flex items-center gap-2 text-[10px] font-bold text-[#2D3748]/40 uppercase tracking-widest mt-2">
           <Camera size={12} />
           <span>{4 - images.length} slots remaining</span>
         </div>

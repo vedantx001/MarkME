@@ -1,9 +1,9 @@
 // src/pages/teacher/StudentDetail.jsx
 
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, UserCheck } from "lucide-react";
+import { Calendar, UserCheck } from "lucide-react";
 import { fetchStudentDetail, fetchStudentStreak } from "../../api/student.api";
 import Loader from "../../components/common/Loader";
 
@@ -68,16 +68,17 @@ const groupDaysByMonth = (days) => {
 
 const StudentDetail = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
 
   const [student, setStudent] = useState(null);
   const [streak, setStreak] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const load = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         const [detail, history] = await Promise.all([
           fetchStudentDetail(id),
           fetchStudentStreak(id),
@@ -86,6 +87,9 @@ const StudentDetail = () => {
         setStreak(history);
       } catch (err) {
         console.error("Failed to load student", err);
+        setStudent(null);
+        setStreak([]);
+        setError(err?.message || "Failed to load student details");
       } finally {
         setIsLoading(false);
       }
@@ -110,7 +114,7 @@ const StudentDetail = () => {
     [days]
   );
 
-  if (isLoading || !student) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <Loader size="medium" label="Loading Student..." />
@@ -118,25 +122,46 @@ const StudentDetail = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="max-w-5xl mx-auto">
+        <div className="bg-[#FBFDFF] rounded-2xl shadow-sm border border-[#2D3748]/5 p-6">
+          <h1 className="text-lg font-bold text-[#0E0E11]">Unable to load student</h1>
+          <p className="text-sm text-[#2D3748]/60 mt-2 font-medium">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!student) {
+    return (
+      <div className="max-w-5xl mx-auto">
+        <div className="bg-[#FBFDFF] rounded-2xl shadow-sm border border-[#2D3748]/5 p-6">
+          <h1 className="text-lg font-bold text-[#0E0E11]">Student not found</h1>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto font-inter space-y-8">      
+    <div className="max-w-5xl mx-auto space-y-8">
       {/* Profile Card */}
-      <div className="bg-(--primary-bg) rounded-2xl border border-(--secondary-bg) p-6 md:p-8 shadow-sm flex gap-6">
+      <div className="bg-[#FBFDFF] rounded-2xl shadow-sm border border-[#2D3748]/5 p-6 md:p-8 flex gap-6">
         <img
-          src="https://i.pravatar.cc/300?img=11"
+          src={student.photo}
           alt={student.name}
-          className="w-28 h-28 rounded-2xl object-cover"
+          className="w-28 h-28 rounded-2xl object-cover border border-[#2D3748]/10"
         />
 
         <div className="flex-1 space-y-3">
-          <h1 className="text-2xl font-bold text-(--primary-text)">
+          <h1 className="text-2xl font-bold text-[#0E0E11] tracking-tight">
             {student.name}
           </h1>
-          <p className="text-sm font-semibold text-(--secondary-accent)">
+          <p className="text-sm font-semibold text-[#2D3748]">
             Roll No: {student.rollNo}
           </p>
 
-          <div className="flex gap-4 text-sm text-(--primary-text)/60">
+          <div className="flex gap-4 text-sm text-[#2D3748]/60 font-medium">
             <span className="flex items-center gap-1">
               <UserCheck size={14} />
               {student.gender ?? "—"}
@@ -150,8 +175,8 @@ const StudentDetail = () => {
       </div>
 
       {/* Attendance History */}
-      <div className="bg-(--primary-bg) rounded-xl border border-(--secondary-bg) p-6 shadow-sm">
-        <h3 className="font-jakarta text-lg font-bold text-(--primary-text) mb-6">
+      <div className="bg-[#FBFDFF] rounded-2xl shadow-sm border border-[#2D3748]/5 p-6">
+        <h3 className="text-lg font-bold text-[#0E0E11] mb-6">
           Attendance History
         </h3>
 
@@ -178,7 +203,7 @@ const StudentDetail = () => {
                       key={day.date}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className={`w-6 h-6 rounded-sm flex items-center justify-center text-[9px] font-medium text-(--primary-text) ${bg}`}
+                      className={`w-6 h-6 rounded-sm flex items-center justify-center text-[9px] font-bold text-[#0E0E11] ${bg}`}
                       title={day.date}
                     >
                       {day.dayNumber}
@@ -191,7 +216,7 @@ const StudentDetail = () => {
         </div>
 
         {/* Legend */}
-        <div className="flex justify-end gap-4 mt-4 text-[10px] text-(--primary-text)/50">
+        <div className="flex justify-end gap-4 mt-4 text-[10px] text-[#2D3748]/50 font-semibold">
           <div className="flex items-center gap-1">
             <span className="w-3 h-3 bg-green-400 rounded-sm" /> Present
           </div>

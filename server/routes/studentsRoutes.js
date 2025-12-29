@@ -19,6 +19,24 @@ router.get("/", auth, studentController.getStudents);
 
 /*
     ================================
+    @route   GET /api/students/:id
+    @desc    Get a single student by id
+    @access  Authenticated (Teacher/Admin)
+    ================================
+*/
+router.get("/:id", auth, requireAnyRole(["ADMIN", "TEACHER"]), studentController.getStudentById);
+
+/*
+    ====================================================
+    @route   GET /api/students/:id/attendance-history
+    @desc    Get attendance history for a student
+    @access  Authenticated (Teacher/Admin)
+    ====================================================
+*/
+router.get("/:id/attendance-history", auth, requireAnyRole(["ADMIN", "TEACHER"]), studentController.getStudentAttendanceHistory);
+
+/*
+    ================================
     @route   POST /api/students
     @desc    Add a single student
     @access  Teacher/Admin

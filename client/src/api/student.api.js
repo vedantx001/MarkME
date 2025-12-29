@@ -45,6 +45,12 @@ export const fetchClassroomStudents = async (classId) => {
   return list.map(toUiStudent);
 };
 
+export const fetchClassroomStudentsCount = async (classId) => {
+  const data = await apiFetch(`/students?classId=${encodeURIComponent(classId)}`, { method: "GET", auth: true });
+  const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+  return list.length;
+};
+
 // ------------ Student CRUD (admin/teacher) ------------
 export const createStudent = async ({ classId, name, rollNumber, dob, gender, profileImageUrl }) => {
   const created = await apiFetch("/students", {
@@ -83,66 +89,17 @@ export const bulkUploadStudentPhotosZip = async ({ classId, file }) => {
   return apiFetch("/students/bulk-photo-upload", { method: "POST", auth: true, body: form });
 };
 
-// ------------ Teacher Student detail page helpers ------------
-// NOTE: The UI currently expects these functions. Server does not yet expose detailed student + streak endpoints.
-// Keeping them mocked so pages don't break; can be swapped to real endpoints later.
-
-const MOCK_STUDENT_DETAIL = {
-  id: "1",
-  name: "Aarav Patel",
-  rollNo: 1,
-  email: "aarav.patel@school.com",
-  phone: "+91 98765 43210",
-  attendancePercentage: 88,
-  totalPresents: 22,
-  totalAbsents: 3,
-};
-
-// Generator for Academic Year 2025-26 (June 1, 2025 to April 30, 2026)
-const generateAcademicYearHistory = () => {
-  const result = [];
-  const start = new Date("2025-06-01");
-  const end = new Date("2026-04-30");
-  const today = new Date();
-
-  const absences = ["2025-07-10", "2025-08-15", "2025-09-02", "2025-11-20", "2025-12-18", "2026-01-15"];
-  const absenceSet = new Set(absences);
-
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const dateStr = d.toISOString().split("T")[0];
-    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-
-    let status = null;
-    if (d <= today && !isWeekend) {
-      status = absenceSet.has(dateStr) ? "A" : "P";
-    }
-
-    result.push({
-      date: dateStr,
-      status,
-      day: d.getDate(),
-      month: d.toLocaleString("default", { month: "long" }),
-      year: d.getFullYear(),
-      dayOfWeek: d.getDay(),
-    });
-  }
-  return result;
-};
-
 export const fetchStudentDetail = async (studentId) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ ...MOCK_STUDENT_DETAIL, id: studentId });
-    }, 250);
-  });
+  const data = await apiFetch(`/students/${encodeURIComponent(studentId)}`, { method: "GET", auth: true });
+  return toUiStudent(data);
 };
 
-export const fetchStudentStreak = async () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(generateAcademicYearHistory());
-    }, 250);
-  });
+export const fetchStudentStreak = async (studentId) => {
+  const data = await apiFetch(`/students/${encodeURIComponent(studentId)}/attendance-history`, { method: "GET", auth: true });
+  const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+  return list
+    .map((x) => ({ date: x?.date, status: x?.status }))
+    .filter((x) => x.date && (x.status === "P" || x.status === "A"));
 };
 
 // Browser-only helper: build a ZIP in-memory for the server's /bulk-photo-upload endpoint.
