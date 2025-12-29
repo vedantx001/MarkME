@@ -5,10 +5,12 @@ export const useAttendanceStore = create((set) => ({
     stage: 'upload', // upload | processing | preview | submitted
     images: [],
     attendanceData: [],
+    sessionId: null,
 
     setStage: (stage) => set({ stage }),
     setImages: (images) => set({ images }),
     setAttendanceData: (data) => set({ attendanceData: data }),
+    setSessionId: (sessionId) => set({ sessionId }),
 
     toggleStudentStatus: (studentId) => set((state) => ({
         attendanceData: state.attendanceData.map(s =>
@@ -16,5 +18,9 @@ export const useAttendanceStore = create((set) => ({
         )
     })),
 
-    resetFlow: () => set({ stage: 'upload', images: [], attendanceData: [] })
+    syncInitialStatuses: () => set((state) => ({
+        attendanceData: state.attendanceData.map(s => ({ ...s, initialStatus: s.status }))
+    })),
+
+    resetFlow: () => set({ stage: 'upload', images: [], attendanceData: [], sessionId: null })
 }));

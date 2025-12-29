@@ -92,11 +92,13 @@ const uploadClassroomStorage = multer({
 const uploadImage = upload.array('images', 4);
 const uploadExcel = upload.single('file');
 const uploadZip = uploadZipStorage.single('file');
-const uploadClassroomImage = uploadClassroomStorage.single('classroomImage'); // For attendance marking
+const uploadClassroomImage = uploadClassroomStorage.single('classroomImage'); // Backward compat (single image)
+const uploadClassroomImages = uploadClassroomStorage.array('classroomImages', 4); // Preferred (1-4 images)
 
 module.exports = {
   uploadImage,
   uploadExcel,
   uploadZip,
-  uploadClassroomImage
+  uploadClassroomImage,
+  uploadClassroomImages
 };

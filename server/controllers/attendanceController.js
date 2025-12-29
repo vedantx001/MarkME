@@ -12,39 +12,54 @@ exports.processAttendance = async (req, res) => {
         let { sessionId, classId, imageUrls } = req.body;
 
         // Normalize imageUrls to array
+        if (typeof imageUrls === 'string') {
+            // Allow sending JSON array as a string in multipart bodies
+            try {
+                const parsed = JSON.parse(imageUrls);
+                imageUrls = parsed;
+            } catch {
+                // fall through to treat as single url
+            }
+        }
         imageUrls = imageUrls ? (Array.isArray(imageUrls) ? imageUrls : [imageUrls]) : [];
 
-        // 0. Handle File Upload (req.file from middleware)
-        if (req.file) {
+        // Normalize uploaded files: multer array -> req.files
+        const uploadedFiles = Array.isArray(req.files) ? req.files : [];
+
+        if (!classId) {
+            return res.status(400).json({ message: "classId is required." });
+        }
+
+        // 0. Handle File Upload(s) (req.files from middleware)
+        if (uploadedFiles.length > 0) {
             try {
-                // We need school info for folder path, but minimal is OK. 
-                // Let's use generic or fetch class if possible.
-                // Fetching class is good for session creation anyway.
                 const classroom = await Classroom.findById(classId).populate('schoolId');
                 const schoolName = classroom?.schoolId?.name?.trim() || 'Undefined_School';
                 const className = classroom?.name?.trim() || 'Undefined_Class';
                 const dateStr = new Date().toISOString().split('T')[0];
 
                 const folderPath = `${schoolName}/attendance/${className}/${dateStr}`;
-                const publicId = `cls_img_${Date.now()}`;
 
-                const secureUrl = await uploadToCloudinary(req.file.buffer, folderPath, publicId);
+                for (const file of uploadedFiles) {
+                    const publicId = `cls_img_${Date.now()}_${Math.round(Math.random() * 1e9)}`;
+                    const secureUrl = await uploadToCloudinary(file.buffer, folderPath, publicId);
 
-                if (!secureUrl || typeof secureUrl !== 'string' || secureUrl.trim() === '') {
-                    console.error('❌ Cloudinary FAILURE: Invalid URL returned.');
-                    return res.status(500).json({ message: "Error: Image could not be uploaded to the cloud. Recognition aborted." });
+                    if (!secureUrl || typeof secureUrl !== 'string' || secureUrl.trim() === '') {
+                        console.error('❌ Cloudinary FAILURE: Invalid URL returned.');
+                        return res.status(500).json({ message: "Error: Image could not be uploaded to the cloud. Recognition aborted." });
+                    }
+
+                    console.log(`✅ Cloudinary SUCCESS: ${secureUrl}`);
+                    imageUrls.push(secureUrl);
                 }
-
-                console.log(`✅ Cloudinary SUCCESS: ${secureUrl}`);
-                imageUrls.push(secureUrl);
             } catch (uploadErr) {
                 console.error(`❌ Cloudinary FAILURE: ${uploadErr.message}`);
                 return res.status(500).json({ message: "Error: Image could not be uploaded to the cloud. Recognition aborted.", error: uploadErr.message });
             }
         }
 
-        if (!classId || imageUrls.length === 0) {
-            return res.status(400).json({ message: "classId and at least one image (URL or file) are required." });
+        if (imageUrls.length === 0) {
+            return res.status(400).json({ message: "At least one image (URL or upload) is required." });
         }
 
         // 0.5 Auto-Session Management
@@ -84,14 +99,18 @@ exports.processAttendance = async (req, res) => {
         }
 
         // Save ClassroomImage record for history
-        if (req.file && imageUrls.length > 0) {
-            // Use the last added URL (the file)
-            const lastUrl = imageUrls[imageUrls.length - 1];
-            await new ClassroomImage({
-                sessionId,
-                imageUrl: lastUrl,
-                uploadedAt: new Date()
-            }).save();
+        if (uploadedFiles.length > 0 && imageUrls.length > 0) {
+            // Persist only the URLs that came from uploads in this request (the most recent ones)
+            const uploadedUrls = imageUrls.slice(-uploadedFiles.length);
+            await Promise.all(
+                uploadedUrls.map((url) =>
+                    new ClassroomImage({
+                        sessionId,
+                        imageUrl: url,
+                        uploadedAt: new Date(),
+                    }).save()
+                )
+            );
         }
 
         // 1. Call AI Service
@@ -184,12 +203,18 @@ exports.processAttendance = async (req, res) => {
         const presentCount = finalRecords.filter(r => r.status === 'P').length;
         const absentCount = finalRecords.filter(r => r.status === 'A').length;
 
-        // 7. Response
+        // 7. Response (hydrate client UI)
+        const records = await AttendanceRecord.find({ sessionId })
+            .populate('studentId', 'name rollNumber profileImageUrl');
+
         res.json({
+            sessionId,
+            classId,
             present: presentCount,
             absent: absentCount,
             total: students.length,
-            processed: bulkOpsDefaults.length + bulkOpsPresents.length
+            processed: bulkOpsDefaults.length + bulkOpsPresents.length,
+            records
         });
 
     } catch (err) {

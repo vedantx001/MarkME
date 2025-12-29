@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const attendanceSessionController = require('../controllers/attendanceSessionController');
 const attendanceController = require('../controllers/attendanceController');
-const { uploadClassroomImage } = require('../middlewares/uploadMiddleware');
+const { uploadClassroomImages } = require('../middlewares/uploadMiddleware');
 const authMiddleware = require('../middlewares/authMiddleware');
 
 
@@ -13,6 +13,6 @@ router.post('/', attendanceSessionController.fetchOrCreateSession);
 router.get('/:id', attendanceSessionController.getSessionDetails);
 
 // Process attendance via AI
-router.post('/process', authMiddleware, uploadClassroomImage, attendanceController.processAttendance);
+router.post('/process', authMiddleware, uploadClassroomImages, attendanceController.processAttendance);
 
 module.exports = router;

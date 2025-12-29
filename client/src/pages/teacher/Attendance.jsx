@@ -8,26 +8,76 @@ import AttendanceTable from "../../components/attendance/AttendanceTable";
 import Loader from "../../components/common/Loader";
 import { useAttendanceStore } from "../../app/store";
 import { uploadClassroomImages, submitAttendance } from "../../api/attendance.api";
+import { listMyClassesApi } from "../../api/classes.api";
+import { useEffect, useMemo, useState } from "react";
 
 const Attendance = () => {
   // Access global state
   const {
     stage, images, attendanceData,
     setStage, setImages, setAttendanceData,
-    toggleStudentStatus, resetFlow
+    sessionId,
+    setSessionId,
+    toggleStudentStatus, resetFlow,
+    syncInitialStatuses
   } = useAttendanceStore();
+
+  const [activeClass, setActiveClass] = useState(null);
+  const [classesLoading, setClassesLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+
+    const loadClasses = async () => {
+      try {
+        setClassesLoading(true);
+        const classes = await listMyClassesApi();
+        if (!alive) return;
+        setActiveClass(classes?.[0] || null);
+      } catch (error) {
+        console.error("Failed to load classes", error);
+        if (alive) setActiveClass(null);
+      } finally {
+        if (alive) setClassesLoading(false);
+      }
+    };
+
+    loadClasses();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const summary = useMemo(() => {
+    const present = (attendanceData || []).filter((s) => s.status === "P");
+    const absent = (attendanceData || []).filter((s) => s.status === "A");
+    return {
+      total: (attendanceData || []).length,
+      present,
+      absent,
+    };
+  }, [attendanceData]);
 
   const handleProcessImages = async () => {
     if (images.length === 0) return;
+    if (classesLoading) return;
+    if (!activeClass?.id) {
+      console.error("No class available for attendance.");
+      return;
+    }
 
     setStage("processing");
 
     try {
-      const response = await uploadClassroomImages(new FormData()); // Mock upload
-      if (response.success) {
-        setAttendanceData(response.detectedStudents);
-        setStage("preview");
-      }
+      const response = await uploadClassroomImages({
+        classId: activeClass.id,
+        files: images,
+        sessionId,
+      });
+
+      setSessionId(response.sessionId || null);
+      setAttendanceData(response.records || []);
+      setStage("preview");
     } catch (error) {
       console.error("Failed to process images", error);
       setStage("upload"); // Revert on error
@@ -36,7 +86,19 @@ const Attendance = () => {
 
   const handleSubmit = async () => {
     try {
-      await submitAttendance("class-10-a", "2024-12-24", attendanceData);
+      if (!sessionId) {
+        console.error("Missing sessionId; cannot submit attendance edits.");
+        return;
+      }
+
+      const updates = (attendanceData || [])
+        .filter((r) => r?.id && r?.status && r?.initialStatus && r.status !== r.initialStatus)
+        .map((r) => ({ recordId: r.id, status: r.status }));
+
+      if (updates.length > 0) {
+        await submitAttendance(sessionId, updates);
+        syncInitialStatuses();
+      }
       setStage("submitted");
     } catch (error) {
       console.error("Submission failed");
@@ -68,7 +130,10 @@ const Attendance = () => {
       {/* Header Section */}
       <div className="mb-8 text-center md:text-left">
         <h1 className="font-jakarta text-2xl md:text-3xl font-bold text-(--primary-text)">Take Attendance</h1>
-        <p className="text-(--primary-text)/60 mt-1">Our AI will detect faces from your classroom photos.</p>
+        <p className="text-(--primary-text)/60 mt-1">
+          Our AI will detect faces from your classroom photos.
+          {activeClass?.name ? ` (Class: ${activeClass.name})` : ""}
+        </p>
       </div>
 
       <StepIndicator currentStage={stage} />
@@ -86,16 +151,19 @@ const Attendance = () => {
 
               <div className="mt-8 flex flex-col items-center gap-4">
                 <button
-                  disabled={images.length === 0}
+                  disabled={images.length === 0 || classesLoading || !activeClass?.id}
                   onClick={handleProcessImages}
-                  style={{ cursor: images.length > 0 ? 'pointer' : 'not-allowed' }}
+                  style={{ cursor: images.length > 0 && !classesLoading && activeClass?.id ? 'pointer' : 'not-allowed' }}
                   className={`w-full md:w-auto px-10 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 
-                    ${images.length === 0 ? "bg-(--secondary-bg) text-(--primary-text)/40" : "bg-(--primary-accent) text-white hover:bg-(--primary-text) shadow-lg"}`}
+                    ${images.length === 0 || classesLoading || !activeClass?.id ? "bg-(--secondary-bg) text-(--primary-text)/40" : "bg-(--primary-accent) text-white hover:bg-(--primary-text) shadow-lg"}`}
                 >
                   <Sparkles size={18} />
                   Start AI Recognition
                 </button>
                 <p className="text-xs text-(--primary-text)/40">Upload 1 to 4 images for best accuracy</p>
+                {!classesLoading && !activeClass?.id && (
+                  <p className="text-xs text-rose-500/80">No class assigned to this teacher.</p>
+                )}
               </div>
             </div>
           </motion.div>
@@ -132,6 +200,25 @@ const Attendance = () => {
               >
                 <RotateCcw size={16} /> Re-upload Images
               </button>
+            </div>
+
+            <div className="bg-(--primary-bg) rounded-2xl border border-(--secondary-bg) p-4 md:p-5 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-(--primary-text)/40">Summary</div>
+                  <div className="text-sm text-(--primary-text)/70 mt-1">
+                    Total: <span className="font-bold text-(--primary-text)">{summary.total}</span> &nbsp;•&nbsp; Present:{" "}
+                    <span className="font-bold text-(--secondary-accent)">{summary.present.length}</span> &nbsp;•&nbsp; Absent:{" "}
+                    <span className="font-bold text-rose-500/80">{summary.absent.length}</span>
+                  </div>
+                </div>
+
+                <div className="text-xs text-(--primary-text)/50">
+                  Detected (P) roll nos: {summary.present.map((s) => s.rollNo).filter(Boolean).join(", ") || "—"}
+                  <br />
+                  Absent (A) roll nos: {summary.absent.map((s) => s.rollNo).filter(Boolean).join(", ") || "—"}
+                </div>
+              </div>
             </div>
 
             <div className="bg-(--primary-bg) rounded-2xl border border-(--secondary-bg) overflow-hidden shadow-sm overflow-x-auto">
