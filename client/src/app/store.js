@@ -1,18 +1,6 @@
 // src/app/store.js
 import { create } from 'zustand';
 
-export const useAuthStore = create((set) => ({
-    user: {
-        id: 't-001',
-        name: 'Prof. Anderson',
-        role: 'teacher',
-        schoolId: 'IDX-001'
-    },
-    isAuthenticated: true,
-    login: (userData) => set({ user: userData, isAuthenticated: true }),
-    logout: () => set({ user: null, isAuthenticated: false })
-}));
-
 export const useAttendanceStore = create((set) => ({
     stage: 'upload', // upload | processing | preview | submitted
     images: [],

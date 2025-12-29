@@ -5,37 +5,67 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Users, Search, GraduationCap } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { fetchClassroomStudents } from "../../api/student.api";
+import { listMyClassesApi } from "../../api/classes.api";
+import { useAuth } from "../../context/authContext";
 import Loader from "../../components/common/Loader";
 
-const classroomMock = {
-  name: "Class 10 - Division A",
-  academicYear: "2024 – 2025",
-  totalStudents: 42
-};
-
-const CLASSROOM_META_BY_ID = {
-  "ce-a": { name: "CE-A", academicYear: "2024 – 2025" },
-  "ce-b": { name: "CE-B", academicYear: "2024 – 2025" },
-  "class-10-a": classroomMock,
+const FALLBACK_CLASSROOM = {
+  id: null,
+  name: "Classroom",
+  educationalYear: "—",
 };
 
 const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => {
   const navigate = useNavigate();
   const { classId } = useParams();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [students, setStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const effectiveClassId = classId ?? defaultClassId;
-  const classroomMeta = CLASSROOM_META_BY_ID[effectiveClassId] ?? {
-    name: effectiveClassId ?? "Classroom",
-    academicYear: classroomMock.academicYear,
-  };
+  const [activeClass, setActiveClass] = useState(FALLBACK_CLASSROOM);
+  const [classesLoading, setClassesLoading] = useState(true);
+
+  const effectiveClassId = classId ?? null;
+
+  useEffect(() => {
+    let alive = true;
+
+    const loadClass = async () => {
+      try {
+        setClassesLoading(true);
+        const classes = await listMyClassesApi();
+        if (!alive) return;
+
+        const selected =
+          (effectiveClassId && classes.find((c) => c.id === effectiveClassId)) ||
+          classes[0] ||
+          FALLBACK_CLASSROOM;
+
+        setActiveClass(selected);
+      } catch (error) {
+        console.error("Failed to load classes", error);
+        if (alive) setActiveClass(FALLBACK_CLASSROOM);
+      } finally {
+        if (alive) setClassesLoading(false);
+      }
+    };
+
+    loadClass();
+    return () => {
+      alive = false;
+    };
+  }, [effectiveClassId, user?.id]);
 
   useEffect(() => {
     const loadStudents = async () => {
       try {
-        const data = await fetchClassroomStudents(effectiveClassId);
+        if (!activeClass?.id) {
+          setStudents([]);
+          return;
+        }
+
+        const data = await fetchClassroomStudents(activeClass.id);
         setStudents(data);
       } catch (error) {
         console.error("Failed to load students", error);
@@ -43,8 +73,8 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
         setIsLoading(false);
       }
     };
-    loadStudents();
-  }, [effectiveClassId]);
+    if (!classesLoading) loadStudents();
+  }, [activeClass?.id, classesLoading]);
 
   const filteredStudents = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -53,7 +83,7 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
     return students.filter((s) => s.name.toLowerCase().includes(term));
   }, [students, searchTerm]);
 
-  if (isLoading) {
+  if (isLoading || classesLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <Loader size="medium" label="Loading Class..." />
@@ -68,11 +98,11 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-(--primary-bg) p-6 rounded-2xl border border-(--secondary-bg) shadow-sm">
         <div>
           <h1 className="font-jakarta text-2xl md:text-3xl font-bold text-(--primary-text)">
-            {classroomMeta.name}
+            {activeClass?.name || "Classroom"}
           </h1>
           <div className="flex items-center gap-2 mt-2 text-(--primary-text)/60 text-sm">
             <GraduationCap size={16} className="text-(--secondary-accent)" />
-            <span>Academic Year: {classroomMeta.academicYear}</span>
+            <span>Academic Year: {activeClass?.educationalYear || "—"}</span>
             <span className="hidden md:inline mx-2">•</span>
             <span className="bg-(--secondary-bg) px-2 py-0.5 rounded text-(--primary-accent) font-medium">
               {students.length} Students

@@ -2,6 +2,7 @@
 import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { LogOut, User, Bell, Menu } from "lucide-react";
+import { useAuth } from "../../context/authContext";
 
 const getPageTitle = (pathname) => {
   if (pathname.startsWith("/teacher/student/")) return "Student Details";
@@ -19,7 +20,9 @@ const Navbar = ({ toggleSidebar }) => {
   const location = useLocation();
   const title = getPageTitle(location.pathname);
 
-  const teacherName = "Prof. Anderson"; // Mock name
+  const { user, logout } = useAuth();
+  const displayName = user?.name || "—";
+  const roleLabel = user?.role ? String(user.role).toUpperCase() : "";
 
   return (
     <motion.header
@@ -48,10 +51,10 @@ const Navbar = ({ toggleSidebar }) => {
         <div className="flex items-center gap-3 pl-4 border-l border-(--secondary-bg)">
           <div className="text-right hidden md:block">
             <p className="text-sm font-bold text-(--primary-text) leading-none">
-              {teacherName}
+              {displayName}
             </p>
             <p className="text-[10px] text-(--primary-text)/40 uppercase font-black mt-1">
-              Main Faculty
+              {roleLabel || "USER"}
             </p>
           </div>
 
@@ -64,7 +67,7 @@ const Navbar = ({ toggleSidebar }) => {
             whileTap={{ scale: 0.95 }}
             className="ml-2 p-2 md:px-3 md:py-1.5 rounded-lg bg-(--primary-accent) text-white flex items-center gap-2 hover:bg-(--primary-text) transition-all shadow-sm"
             style={{ cursor: 'pointer' }}
-            onClick={() => console.log("Logout clicked")}
+            onClick={logout}
           >
             <LogOut size={16} />
             <span className="hidden md:inline text-xs font-bold uppercase tracking-wider">Logout</span>

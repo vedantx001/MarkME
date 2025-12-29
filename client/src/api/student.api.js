@@ -4,12 +4,36 @@ import { apiFetch } from "./http";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/300?img=11";
 
+function formatDateOnly(value) {
+  if (!value) return "—";
+
+  // Common case: ISO string -> "YYYY-MM-DDTHH:mm:ss..."
+  const asString = String(value);
+  if (asString.includes("T")) {
+    const datePart = asString.split("T")[0];
+    return datePart || "—";
+  }
+
+  // Already looks like YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(asString)) return asString;
+
+  // Fallback: try parsing, then format in a human-readable way.
+  const d = new Date(asString);
+  if (Number.isNaN(d.getTime())) return asString;
+
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  });
+}
+
 const toUiStudent = (s) => ({
   id: s?._id || s?.id,
   rollNo: s?.rollNumber ?? s?.rollNo,
   name: s?.name || "—",
   gender: s?.gender || "—",
-  dob: s?.dob || "—",
+  dob: formatDateOnly(s?.dob),
   photo: s?.profileImageUrl || s?.photo || DEFAULT_AVATAR,
   classId: s?.classId,
 });
