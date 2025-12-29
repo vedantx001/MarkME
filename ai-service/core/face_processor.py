@@ -1,76 +1,61 @@
-import os
 import numpy as np
 from insightface.app import FaceAnalysis
 
-# ------------------------------------------------------------------
-# Render / low-memory safety settings (MUST be before model loading)
-# ------------------------------------------------------------------
-os.environ["MPLBACKEND"] = "Agg"
-os.environ["MPLCONFIGDIR"] = "/tmp/matplotlib"
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
+# Initialize InsightFace App globally ONCE
 
-# ------------------------------------------------------------------
-# Lazy-loaded InsightFace app (singleton)
-# ------------------------------------------------------------------
-_face_app = None
+# Use below code when you are using CPU
+# using buffalo_l model and CPU provider as requested
+app = FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
 
 
-def get_face_app() -> FaceAnalysis:
-    """
-    Lazily initializes and returns the InsightFace FaceAnalysis app.
-    This prevents large memory usage at server startup.
-    """
-    global _face_app
+# Below code Use only when you are using GPU
+# app = FaceAnalysis(name="buffalo_l", providers=["CUDAExecutionProvider", "CPUExecutionProvider"])
+app.prepare(ctx_id=0, det_size=(640, 640))
 
-    if _face_app is None:
-        app = FaceAnalysis(
-            name="buffalo_l",  # keep accuracy; switch to buffalo_s if needed
-            providers=["CPUExecutionProvider"]
-        )
-        app.prepare(ctx_id=0, det_size=(640, 640))
-        _face_app = app
-
-    return _face_app
-
-
-# ------------------------------------------------------------------
-# Face embedding extraction
-# ------------------------------------------------------------------
 def get_embeddings_from_image(image_array: np.ndarray) -> list[np.ndarray]:
     """
-    Detect faces in the given image and extract embeddings.
-
+    Detects faces in the given image and extracts embeddings.
+    
     Args:
-        image_array (np.ndarray): RGB image array.
-
+        image_array (np.ndarray): Input image in RGB format.
+        
     Returns:
-        list[np.ndarray]: List of 512-D face embeddings.
+        list[np.ndarray]: A list of face embeddings (NumPy arrays).
+                          Returns an empty list if no faces are detected.
     """
-    face_app = get_face_app()
-    faces = face_app.get(image_array)
+    # Detect faces
+    faces = app.get(image_array)
+    
+    # Extract embeddings
+    embeddings = [face.embedding for face in faces]
+    
+    return embeddings
 
-    return [face.embedding for face in faces]
-
-
-# ------------------------------------------------------------------
-# Cosine similarity computation
-# ------------------------------------------------------------------
 def compute_similarity(feat1: np.ndarray, feat2: np.ndarray) -> float:
     """
-    Compute cosine similarity between two face embeddings.
-
+    Computes the cosine similarity between two face embeddings.
+    
+    Args:
+        feat1 (np.ndarray): First embedding vector.
+        feat2 (np.ndarray): Second embedding vector.
+        
     Returns:
-        float: Similarity score in range [-1, 1]
+        float: Cosine similarity score between -1 and 1.
     """
-    feat1 = feat1.astype(np.float32)
-    feat2 = feat2.astype(np.float32)
-
+    # Ensure inputs are float arrays
+    feat1 = feat1.astype(float)
+    feat2 = feat2.astype(float)
+    
+    # Compute dot product and norms
+    dot_product = np.dot(feat1, feat2)
     norm_a = np.linalg.norm(feat1)
     norm_b = np.linalg.norm(feat2)
-
-    if norm_a == 0.0 or norm_b == 0.0:
+    
+    # Avoid division by zero
+    if norm_a == 0 or norm_b == 0:
         return 0.0
-
-    similarity = np.dot(feat1, feat2) / (norm_a * norm_b)
+        
+    similarity = dot_product / (norm_a * norm_b)
+    
+    # Clamp result to [-1, 1] to handle potential floating point errors
     return float(np.clip(similarity, -1.0, 1.0))
