@@ -25,6 +25,7 @@ import AdminLayout from "../components/layout/AdminLayout";
 import AdminDashboard from "../pages/admin/Dashboard";
 import AdminTeachers from "../pages/admin/Teachers";
 import AdminClassroom from "../pages/admin/Classroom";
+import AdminClassroomDetail from "../pages/admin/ClassroomDetail"; // ✅ NEW
 import AdminPrincipal from "../pages/admin/Principal";
 
 const AppRoutes = () => {
@@ -35,10 +36,9 @@ const AppRoutes = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register-admin" element={<RegisterAdmin />} />
-        {/* Backward compatibility */}
         <Route path="/auth" element={<Navigate to="/login" replace />} />
 
-        {/* Teacher (Protected) */}
+        {/* Teacher */}
         <Route
           path="/teacher"
           element={
@@ -55,7 +55,7 @@ const AppRoutes = () => {
           <Route path="student/:id" element={<TeacherStudentDetail />} />
         </Route>
 
-        {/* Principal (Protected) */}
+        {/* Principal */}
         <Route
           path="/principal"
           element={
@@ -77,7 +77,7 @@ const AppRoutes = () => {
           <Route path="student/:id" element={<TeacherStudentDetail />} />
         </Route>
 
-        {/* Admin (Protected) */}
+        {/* Admin */}
         <Route
           path="/admin"
           element={
@@ -92,6 +92,13 @@ const AppRoutes = () => {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="teachers" element={<AdminTeachers />} />
           <Route path="classrooms" element={<AdminClassroom />} />
+
+          {/* ✅ THIS IS THE IMPORTANT PART */}
+          <Route
+            path="classrooms/:classId"
+            element={<AdminClassroomDetail />}
+          />
+
           <Route path="principal" element={<AdminPrincipal />} />
         </Route>
 

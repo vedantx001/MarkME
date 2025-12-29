@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { Search, Plus, School, Pencil } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../context/adminContext';
 import AddClassroomForm from '../../components/forms/AddClassroomForm';
 import EditClassroomForm from '../../components/forms/EditClassroomForm';
 
 const Classroom = () => {
+  const navigate = useNavigate();
   const { classrooms } = useAdmin();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -89,7 +91,11 @@ const Classroom = () => {
               <span className="text-xs font-bold px-2 py-1 rounded-md bg-emerald-50 text-emerald-600">
                 Active
               </span>
-              <button className="text-sm font-semibold text-[#2D3748] hover:text-[#85C7F2] transition-colors">
+              <button
+                type="button"
+                className="text-sm font-semibold text-[#2D3748] hover:text-[#85C7F2] transition-colors"
+                onClick={() => navigate(`/admin/classrooms/${c.id}`)}
+              >
                 View Details
               </button>
             </div>
