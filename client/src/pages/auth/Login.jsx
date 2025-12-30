@@ -11,6 +11,7 @@ import {
 const AuthPage = ({ initialMode = 'login' }) => {
   const [isLogin, setIsLogin] = useState(initialMode !== 'register');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -24,6 +25,7 @@ const AuthPage = ({ initialMode = 'login' }) => {
     adminEmail: '',
     password: '',
   });
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -47,6 +49,9 @@ const AuthPage = ({ initialMode = 'login' }) => {
     setIsLogin(nextIsLogin);
     setError('');
     setSuccess('');
+    setConfirmPassword('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   };
 
   const redirectByRole = (role) => {
@@ -60,6 +65,12 @@ const AuthPage = ({ initialMode = 'login' }) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    if (!isLogin && (registerForm.password || '') !== (confirmPassword || '')) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -81,6 +92,7 @@ const AuthPage = ({ initialMode = 'login' }) => {
 
       await registerAdminApi(payload);
       setSuccess('Admin registered. Please login to continue.');
+      setConfirmPassword('');
       navigate('/login', { replace: true, state: { prefillEmail: registerForm.adminEmail } });
     } catch (err) {
       setError(err?.message || 'Something went wrong');
@@ -228,17 +240,6 @@ const AuthPage = ({ initialMode = 'login' }) => {
                           />
                         </div>
                       </div>
-
-                      <div className="relative group">
-                        <School className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3182CE] transition-colors" size={22} />
-                        <input
-                          type="text"
-                          placeholder="Address (optional)"
-                          className="form-input"
-                          value={registerForm.address}
-                          onChange={(e) => setRegisterForm((p) => ({ ...p, address: e.target.value }))}
-                        />
-                      </div>
                     </>
                   )}
 
@@ -280,6 +281,27 @@ const AuthPage = ({ initialMode = 'login' }) => {
                       {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
                     </button>
                   </div>
+
+                  {!isLogin && (
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3182CE] transition-colors" size={22} />
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="Confirm Password"
+                        className="form-input pr-12"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff size={22} /> : <Eye size={22} />}
+                      </button>
+                    </div>
+                  )}
 
                   {isLogin && (
                     <div className="flex justify-end">

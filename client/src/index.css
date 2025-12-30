@@ -3,11 +3,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 
 :root {
-    --primary-bg: #FBFDFF;
+    --primary-bg: #fbfdff;
     --secondary-bg: #F2F8FF;
     --primary-accent: #2D3748;
     --secondary-accent: #85C7F2;
     --primary-text: #0E0E11;
+
+    /* RGB triplets for opacity-friendly usage: rgb(var(--*-rgb) / <alpha>) */
+    --primary-bg-rgb: 251 253 255;
+    --secondary-bg-rgb: 242 248 255;
+    --primary-accent-rgb: 45 55 72;
+    --secondary-accent-rgb: 133 199 242;
+    --primary-text-rgb: 14 14 17;
 }
 
 body {

@@ -1,5 +1,6 @@
-import { X } from "lucide-react";
+import { X, User, GraduationCap, Calendar, Image as ImportError } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion as Motion } from "framer-motion";
 import { updateStudent, uploadSingleStudentPhoto } from "../../api/student.api";
 
 const EditStudentForm = ({ isOpen, onClose, student, classroomId, onUpdated }) => {
@@ -20,8 +21,6 @@ const EditStudentForm = ({ isOpen, onClose, student, classroomId, onUpdated }) =
     });
     setError("");
   }, [isOpen, student]);
-
-  if (!isOpen) return null;
 
   const validatePhoto = (file, rollNumber) => {
     if (!file) return null;
@@ -89,73 +88,152 @@ const EditStudentForm = ({ isOpen, onClose, student, classroomId, onUpdated }) =
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
-      <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden">
-        <div className="bg-[#2D3748] text-white p-5 flex justify-between">
-          <h3 className="font-bold">Edit Student</h3>
-          <button type="button" onClick={onClose}>
-            <X />
-          </button>
-        </div>
-
-        <form className="p-6 space-y-4" onSubmit={submit}>
-          {error && <div className="text-sm font-semibold rounded-lg px-3 py-2 bg-red-50 text-red-700">{error}</div>}
-
-          <input
-            className="w-full border p-2 rounded"
-            placeholder="Student Name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-
-          <input
-            className="w-full border p-2 rounded"
-            placeholder="Roll No"
-            inputMode="numeric"
-            value={form.rollNo}
-            onChange={(e) => setForm({ ...form, rollNo: e.target.value })}
-          />
-
-          <select
-            className="w-full border p-2 rounded"
-            value={form.gender}
-            onChange={(e) => setForm({ ...form, gender: e.target.value })}
+    <AnimatePresence>
+      {isOpen ? (
+        <Motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-[rgb(var(--primary-text-rgb)/0.5)]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: "easeOut" }}
+        >
+          <Motion.div
+            className="bg-(--primary-bg) w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-[rgb(var(--primary-accent-rgb)/0.1)]"
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
           >
-            <option value="">Select Gender</option>
-            <option value="M">Male</option>
-            <option value="F">Female</option>
-          </select>
+            <div className="bg-(--primary-accent) p-6 flex justify-between items-center text-(--primary-bg)">
+              <div>
+                <h3 className="text-xl font-bold">Edit Student</h3>
+                <p className="text-(--secondary-accent) text-sm opacity-90">Update student details</p>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-2 hover:bg-[rgb(var(--primary-bg-rgb)/0.1)] rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-          <input
-            type="date"
-            className="w-full border p-2 rounded"
-            value={form.dob}
-            onChange={(e) => setForm({ ...form, dob: e.target.value })}
-          />
+            <form className="p-6 space-y-4" onSubmit={submit}>
+              {error && (
+                <div className="text-sm font-semibold rounded-xl px-4 py-3 bg-red-50 text-red-700">
+                  {error}
+                </div>
+              )}
 
-          <div className="space-y-1">
-            <label className="text-sm font-semibold">Replace Photo (JPG/JPEG/PNG)</label>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-              onChange={(e) => setForm({ ...form, photo: e.target.files?.[0] ?? null })}
-            />
-            <p className="text-xs text-gray-500">
-              Filename must be <span className="font-semibold">{Number.isFinite(rollNoNum) && rollNoNum > 0 ? `${rollNoNum}.jpg` : "<rollNo>.jpg"}</span>
-            </p>
-          </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-(--primary-accent)">Student Name</label>
+                <div className="relative">
+                  <User
+                    size={18}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--primary-accent-rgb)/0.4)]"
+                  />
+                  <input
+                    className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 pl-10 pr-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
+                    placeholder="Student Name"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  />
+                </div>
+              </div>
 
-          <div className="flex gap-3 pt-4">
-            <button disabled={submitting} type="button" onClick={onClose} className="flex-1 border rounded p-2">
-              Cancel
-            </button>
-            <button disabled={submitting} type="submit" className="flex-1 bg-[#2D3748] text-white rounded p-2">
-              {submitting ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-(--primary-accent)">Roll No</label>
+                  <div className="relative">
+                    <GraduationCap
+                      size={18}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--primary-accent-rgb)/0.4)]"
+                    />
+                    <input
+                      className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 pl-10 pr-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
+                      placeholder="Roll No"
+                      inputMode="numeric"
+                      value={form.rollNo}
+                      onChange={(e) => setForm({ ...form, rollNo: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-(--primary-accent)">Gender</label>
+                  <div className="relative">
+                    <User
+                      size={18}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--primary-accent-rgb)/0.4)]"
+                    />
+                    <select
+                      className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 pl-10 pr-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
+                      value={form.gender}
+                      onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                    >
+                      <option value="">Select</option>
+                      <option value="M">Male</option>
+                      <option value="F">Female</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-(--primary-accent)">Date of Birth</label>
+                <div className="relative">
+                  <Calendar
+                    size={18}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--primary-accent-rgb)/0.4)]"
+                  />
+                  <input
+                    type="date"
+                    className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 pl-10 pr-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
+                    value={form.dob}
+                    onChange={(e) => setForm({ ...form, dob: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-(--primary-accent)">
+                  Replace Photo <span className="text-xs font-normal opacity-70">(JPG/PNG)</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="file"
+                    className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2 px-3 text-sm text-(--primary-text) file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-(--primary-accent) file:text-(--primary-bg) hover:file:opacity-80"
+                    accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                    onChange={(e) => setForm({ ...form, photo: e.target.files?.[0] ?? null })}
+                  />
+                </div>
+                <p className="text-xs text-(--primary-accent) opacity-60 ml-1">
+                  Filename must be <span className="font-bold">{Number.isFinite(rollNoNum) && rollNoNum > 0 ? `${rollNoNum}.jpg` : "<rollNo>.jpg"}</span>
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  disabled={submitting}
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-[rgb(var(--primary-accent-rgb)/0.1)] text-(--primary-accent) font-semibold hover:bg-(--secondary-bg) transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={submitting}
+                  type="submit"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-(--primary-accent) text-(--primary-bg) font-bold shadow-[0_10px_15px_-3px_rgb(var(--primary-accent-rgb)/0.2),0_4px_6px_-4px_rgb(var(--primary-accent-rgb)/0.2)] hover:bg-(--primary-text) transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:bg-(--primary-accent)"
+                >
+                  {submitting ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </Motion.div>
+        </Motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 };
 

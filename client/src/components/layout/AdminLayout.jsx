@@ -2,43 +2,48 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import AdminNavbar from './AdminNavbar';
 import AdminSidebar from './AdminSidebar';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const AdminLayout = ({ sidebarItems, brandLabel, showSettings }) => {
-const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-return (
-<div className="flex h-screen bg-[#F2F8FF] font-sans text-[#2D3748] overflow-hidden">
+  return (
+    <div className="flex h-screen bg-(--secondary-bg) font-sans text-(--primary-accent) overflow-hidden">
+      {/* Desktop Sidebar */}
+      <AdminSidebar isMobile={false} items={sidebarItems} brandLabel={brandLabel} showSettings={showSettings} />
 
-  {/* Desktop Sidebar */}
-  <AdminSidebar isMobile={false} items={sidebarItems} brandLabel={brandLabel} showSettings={showSettings} />
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col h-full overflow-hidden relative">
+        {/* Navbar */}
+        <AdminNavbar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
-  {/* Main Content Area */}
-  <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-    
-    {/* Navbar */}
-    <AdminNavbar 
-      isMobileMenuOpen={isMobileMenuOpen} 
-      setIsMobileMenuOpen={setIsMobileMenuOpen} 
-    />
+        {/* Mobile Sidebar (Overlay) */}
+        <AdminSidebar
+          isMobile={true}
+          isMobileMenuOpen={isMobileMenuOpen}
+          items={sidebarItems}
+          brandLabel={brandLabel}
+          showSettings={showSettings}
+          onClose={() => setIsMobileMenuOpen(false)}
+        />
 
-    {/* Mobile Sidebar (Overlay) */}
-    <AdminSidebar 
-      isMobile={true} 
-      isMobileMenuOpen={isMobileMenuOpen} 
-      items={sidebarItems}
-      brandLabel={brandLabel}
-      showSettings={showSettings}
-    />
-
-    {/* Page Content Slot */}
-    <div className="flex-1 overflow-y-auto p-6 lg:p-10 pb-20">
-      <Outlet />
+        {/* Page Content Slot */}
+        <div className="flex-1 overflow-y-auto p-6 lg:p-10 pb-20">
+          <AnimatePresence mode="wait">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="h-full"
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </main>
     </div>
-  </main>
-</div>
-
-
-);
+  );
 };
 
 export default AdminLayout;
