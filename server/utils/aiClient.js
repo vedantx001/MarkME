@@ -6,7 +6,7 @@ const AI_SERVICE_URL = process.env.AI_SERVICE_URL;
 // Create a single axios instance with timeout
 const apiClient = axios.create({
     baseURL: AI_SERVICE_URL,
-    timeout: 30000, // 30 seconds
+    timeout: 80000, // 30 seconds
 });
 
 /**
