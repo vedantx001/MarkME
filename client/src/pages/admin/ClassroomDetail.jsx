@@ -11,7 +11,8 @@ import {
   GraduationCap,
   MoreVertical,
   Mail,
-  Phone
+  Phone,
+  X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import Loader from "../../components/common/Loader";
@@ -41,6 +42,13 @@ const ClassroomDetail = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [rowBusyId, setRowBusyId] = useState(null);
 
+  // UI confirm modal (replaces window.confirm)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [pendingDeleteStudent, setPendingDeleteStudent] = useState(null);
+
+  // inline/screen alert (replaces window.alert)
+  const [screenAlert, setScreenAlert] = useState(null);
+
   const currentClassroom = useMemo(() => {
     return classrooms.find(c => c.id === classId);
   }, [classrooms, classId]);
@@ -66,18 +74,24 @@ const ClassroomDetail = () => {
     );
   }, [students, searchTerm]);
 
-  const onDelete = async (student) => {
-    const ok = window.confirm(
-      `Delete student "${student.name}" (Roll ${student.rollNo})?`
-    );
-    if (!ok) return;
+  const onDelete = (student) => {
+    setPendingDeleteStudent(student);
+    setConfirmDeleteOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    const student = pendingDeleteStudent;
+    if (!student) return;
 
     try {
       setRowBusyId(student.id);
       await deleteStudent(student.id);
-      await load();
+      // Avoid full reload + re-animate: update locally so remaining students stay stable
+      setStudents((prev) => prev.filter((x) => x.id !== student.id));
     } finally {
       setRowBusyId(null);
+      setConfirmDeleteOpen(false);
+      setPendingDeleteStudent(null);
     }
   };
 
@@ -93,9 +107,11 @@ const ClassroomDetail = () => {
 
   const openBulkZip = () => {
     if (!excelUploaded) {
-      window.alert(
-        "Tip: Upload Bulk Excel first (student details). Then upload Bulk ZIP for photos."
-      );
+      setScreenAlert({
+        type: "info",
+        message:
+          "Tip: Upload Bulk Excel first (student details). Then upload Bulk ZIP for photos.",
+      });
       return;
     }
     setBulkMode("zip");
@@ -127,6 +143,100 @@ const ClassroomDetail = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+      {/* Screen alert (non-blocking) */}
+      <AnimatePresence>
+        {screenAlert ? (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="bg-(--primary-bg) border border-[rgb(var(--primary-accent-rgb)/0.12)] rounded-2xl p-4 shadow-sm flex items-start justify-between gap-4"
+          >
+            <div className="text-sm text-(--primary-text)">
+              <div className="font-bold">Note</div>
+              <div className="text-(--primary-accent) opacity-80">{screenAlert.message}</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setScreenAlert(null)}
+              className="p-2 hover:bg-red-500 hover:text-white rounded-full transition-colors text-(--primary-accent)"
+              aria-label="Close alert"
+            >
+              <X size={18} />
+            </button>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      {/* Confirm delete modal */}
+      <AnimatePresence>
+        {confirmDeleteOpen ? (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-[rgb(var(--primary-text-rgb)/0.5)]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+          >
+            <motion.div
+              className="bg-(--primary-bg) w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-[rgb(var(--primary-accent-rgb)/0.1)]"
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+            >
+              <div className="bg-(--primary-accent) p-6 flex justify-between items-center text-(--primary-bg)">
+                <div>
+                  <h3 className="text-xl font-bold">Delete Student</h3>
+                  <p className="text-(--secondary-accent) text-sm opacity-90">This action cannot be undone</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (rowBusyId) return;
+                    setConfirmDeleteOpen(false);
+                    setPendingDeleteStudent(null);
+                  }}
+                  className="p-2 hover:bg-red-500 rounded-full transition-colors"
+                  aria-label="Close"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="text-sm text-(--primary-text)">
+                  Are you sure you want to delete <span className="font-bold">{pendingDeleteStudent?.name}</span> (Roll {pendingDeleteStudent?.rollNo})?
+                </div>
+
+                <div className="pt-2 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (rowBusyId) return;
+                      setConfirmDeleteOpen(false);
+                      setPendingDeleteStudent(null);
+                    }}
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-[rgb(var(--primary-accent-rgb)/0.12)] text-(--primary-accent) font-semibold hover:bg-slate-100 transition-colors disabled:opacity-60"
+                    disabled={!!rowBusyId}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmDelete}
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-bold shadow-[0_10px_15px_-3px_rgba(239,68,68,0.25),0_4px_6px_-4px_rgba(239,68,68,0.25)] hover:bg-red-600 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:bg-red-500"
+                    disabled={!!rowBusyId}
+                  >
+                    {rowBusyId ? "Deleting…" : "Delete"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
       <AddStudentForm
         isOpen={openAdd}
         onClose={() => setOpenAdd(false)}
@@ -230,7 +340,7 @@ const ClassroomDetail = () => {
         <AnimatePresence>
           {filteredStudents.map((s) => (
             <motion.div
-              layout
+              layout={false}
               key={s.id}
               variants={itemVariants}
               exit={{ opacity: 0, scale: 0.9 }}
@@ -299,6 +409,23 @@ const ClassroomDetail = () => {
                 </div>
 
               </div>
+
+              {/* Row deleting overlay */}
+              <AnimatePresence>
+                {rowBusyId === s.id ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-[rgb(var(--primary-bg-rgb)/0.75)] backdrop-blur-[1px] flex items-center justify-center"
+                  >
+                    <div className="flex items-center gap-3 text-sm font-bold text-(--primary-text)">
+                      <span className="h-4 w-4 rounded-full border-2 border-[rgb(var(--primary-accent-rgb)/0.35)] border-t-[rgb(var(--primary-accent-rgb)/0.95)] animate-spin" />
+                      Deleting…
+                    </div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
             </motion.div>
           ))}
         </AnimatePresence>

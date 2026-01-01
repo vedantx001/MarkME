@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useAuth } from './authContext';
 import {
   createSchoolUserApi,
   listSchoolUsersApi,
@@ -7,14 +8,14 @@ import {
   listClassesApi,
   createClassApi,
   updateClassApi,
+  updateAdminProfileApi,
 } from '../api/admin.api';
 import { fetchClassroomStudentsCount } from '../api/student.api';
-import { useAuth } from './authContext';
 
 const AdminContext = createContext();
 
 export const AdminProvider = ({ children }) => {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
 
   const [teachers, setTeachers] = useState([]);
   const [principal, setPrincipal] = useState(null);
@@ -32,17 +33,32 @@ export const AdminProvider = ({ children }) => {
     return {
       name: s?.name || 'School Dashboard',
       index: s?.schoolIdx || (user?.schoolId ? String(user.schoolId).slice(-8).toUpperCase() : '—'),
+      address: s?.address || '',
     };
-  }, [user?.school?.name, user?.school?.schoolIdx, user?.schoolId]);
+  }, [user?.school?.name, user?.school?.schoolIdx, user?.school?.address, user?.schoolId]);
 
   const adminProfile = useMemo(
     () => ({
+      id: user?.id,
       name: user?.name || 'Admin',
       email: user?.email || '—',
       avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.name || 'Admin')}`,
     }),
-    [user?.name, user?.email]
+    [user?.id, user?.name, user?.email]
   );
+
+  const updateAdminProfile = async ({ admin, school }) => {
+    const res = await updateAdminProfileApi({ admin, school });
+
+    // Refresh auth profile to keep navbar/sidebar consistent.
+    try {
+      await refreshProfile();
+    } catch {
+      // ignore
+    }
+
+    return res;
+  };
 
   const normalizeUser = (u) => ({
     id: u?._id || u?.id,
@@ -219,6 +235,7 @@ export const AdminProvider = ({ children }) => {
         refreshStudentsCount,
         schoolDetails,
         adminProfile,
+        updateAdminProfile,
         loading,
         error,
       }}

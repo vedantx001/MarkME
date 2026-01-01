@@ -91,13 +91,27 @@ const Classroom = () => {
               key={c.id}
               variants={itemVariants}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-(--primary-bg) p-5 rounded-2xl border border-[rgb(var(--primary-accent-rgb)/0.05)] shadow-sm hover:shadow-md transition-all group"
+              onClick={() => navigate(`/admin/classrooms/${c.id}`)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') navigate(`/admin/classrooms/${c.id}`);
+              }}
+              className="bg-(--primary-bg) p-5 rounded-2xl border border-[rgb(var(--primary-accent-rgb)/0.05)] shadow-sm hover:shadow-md transition-all group cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--secondary-accent)"
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="w-12 h-12 rounded-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.05)] overflow-hidden flex items-center justify-center">
                   <School className="text-(--secondary-accent)" size={20} />
                 </div>
-                <button onClick={() => openEdit(c)} className="text-(--primary-accent) opacity-30 hover:opacity-100 transition-colors" title="Edit">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEdit(c);
+                  }}
+                  className="text-(--primary-accent) opacity-30 hover:opacity-100 transition-colors"
+                  title="Edit"
+                >
                   <Pencil size={18} />
                 </button>
               </div>
@@ -119,7 +133,10 @@ const Classroom = () => {
                 <button
                   type="button"
                   className="text-sm font-semibold text-(--primary-accent) hover:text-(--secondary-accent) transition-colors"
-                  onClick={() => navigate(`/admin/classrooms/${c.id}`)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/admin/classrooms/${c.id}`);
+                  }}
                 >
                   View Details
                 </button>

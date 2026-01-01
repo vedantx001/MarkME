@@ -6,6 +6,7 @@ import {
   TrendingUp,
   MoreHorizontal,
   Plus,
+  UserCheck,
 } from 'lucide-react';
 import { useAdmin } from '../../context/adminContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -93,6 +94,8 @@ const Dashboard = () => {
 
   const { teachers = [], classrooms = [], studentsCount = 0, loading, error } = admin;
 
+  const activeTeachersCount = teachers.filter((t) => (t?.status || '').toLowerCase() === 'active').length;
+
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -124,9 +127,9 @@ const Dashboard = () => {
       {/* Stats Grid */}
       <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <StatCard title="Total Teachers" value={teachers.length} icon={Users} />
+        <StatCard title="Active Teachers" value={activeTeachersCount} icon={UserCheck} />
         <StatCard title="Total Students" value={studentsCount} icon={GraduationCap} />
         <StatCard title="Classrooms" value={classrooms.length} icon={School} />
-        <StatCard title="Attendance" value="—" icon={TrendingUp} />
       </motion.div>
 
       {loading && (

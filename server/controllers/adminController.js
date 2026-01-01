@@ -136,4 +136,76 @@ module.exports = {
       next(err);
     }
   },
+
+  // Update current admin profile + school details
+  updateAdminProfile: async (req, res, next) => {
+    try {
+      const admin = req.user;
+      const adminId = admin?.id;
+      const schoolId = admin?.schoolId?._id ? admin.schoolId._id : admin?.schoolId;
+
+      if (!adminId) return res.status(401).json({ success: false, message: 'Not authenticated' });
+      if (!schoolId) return res.status(400).json({ success: false, message: 'Admin missing school context' });
+
+      const { admin: adminPayload = {}, school: schoolPayload = {} } = req.body || {};
+
+      const adminUpdate = {};
+      if (typeof adminPayload.name === 'string' && adminPayload.name.trim()) adminUpdate.name = adminPayload.name.trim();
+      if (typeof adminPayload.email === 'string' && adminPayload.email.trim()) adminUpdate.email = adminPayload.email.trim().toLowerCase();
+      if (typeof adminPayload.isActive === 'boolean') adminUpdate.isActive = adminPayload.isActive;
+
+      if (typeof adminPayload.password === 'string' && adminPayload.password) {
+        if (adminPayload.password.length < 8) {
+          return res.status(422).json({ success: false, message: 'Password must be at least 8 characters' });
+        }
+        adminUpdate.passwordHash = await bcrypt.hash(adminPayload.password, BCRYPT_ROUNDS);
+      }
+
+      // Ensure email uniqueness if changed
+      if (adminUpdate.email) {
+        const current = await User.findById(adminId).lean();
+        if (!current) return res.status(404).json({ success: false, message: 'Admin not found' });
+        if (current.role !== 'ADMIN') return res.status(403).json({ success: false, message: 'Only ADMIN can update this profile' });
+
+        if (adminUpdate.email !== (current.email || '').toLowerCase()) {
+          const exists = await User.findOne({ email: adminUpdate.email });
+          if (exists) return res.status(409).json({ success: false, message: 'Email already in use' });
+        }
+      }
+
+      const schoolUpdate = {};
+      if (typeof schoolPayload.name === 'string' && schoolPayload.name.trim()) schoolUpdate.name = schoolPayload.name.trim();
+      if (typeof schoolPayload.schoolIdx === 'string' && schoolPayload.schoolIdx.trim()) schoolUpdate.schoolIdx = schoolPayload.schoolIdx.trim();
+      if (typeof schoolPayload.address === 'string') schoolUpdate.address = schoolPayload.address.trim();
+
+      if (schoolUpdate.schoolIdx) {
+        const currentSchool = await School.findById(schoolId).lean();
+        if (!currentSchool) return res.status(404).json({ success: false, message: 'School not found' });
+
+        if (schoolUpdate.schoolIdx !== currentSchool.schoolIdx) {
+          const existsSchool = await School.findOne({ schoolIdx: schoolUpdate.schoolIdx });
+          if (existsSchool) return res.status(409).json({ success: false, message: 'schoolIdx already exists' });
+        }
+      }
+
+      // Apply updates
+      const updatedAdmin = Object.keys(adminUpdate).length
+        ? await User.findByIdAndUpdate(adminId, adminUpdate, { new: true }).select('-passwordHash').lean()
+        : await User.findById(adminId).select('-passwordHash').lean();
+
+      const updatedSchool = Object.keys(schoolUpdate).length
+        ? await School.findByIdAndUpdate(schoolId, schoolUpdate, { new: true }).lean()
+        : await School.findById(schoolId).lean();
+
+      return res.json({
+        success: true,
+        data: {
+          admin: updatedAdmin,
+          school: updatedSchool,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
 };

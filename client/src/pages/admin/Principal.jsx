@@ -72,7 +72,7 @@ const Principal = () => {
           </div>
           <div className="min-w-0">
             <h3 className="text-lg font-bold text-(--primary-text) truncate">{principal.name}</h3>
-            <p className="text-sm font-medium text-(--secondary-accent)">Active</p>
+            <p className="text-sm font-medium text-(--secondary-accent)">{principal.status || '—'}</p>
 
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="flex items-center gap-2 text-sm text-(--primary-accent) opacity-60 bg-(--secondary-bg) p-2 rounded-lg">

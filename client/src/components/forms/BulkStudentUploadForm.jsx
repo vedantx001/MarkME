@@ -80,7 +80,7 @@ const BulkStudentUploadForm = ({ isOpen, onClose, classroomId, onUploaded, mode 
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 hover:bg-[rgb(var(--primary-bg-rgb)/0.1)] rounded-full transition-colors"
+                className="p-2 hover:bg-red-500 rounded-full transition-colors"
               >
                 <X size={20} />
               </button>
@@ -139,6 +139,16 @@ const BulkStudentUploadForm = ({ isOpen, onClose, classroomId, onUploaded, mode 
               >
                 <Upload size={18} /> {submitting ? "Uploading..." : "Upload"}
               </button>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-[rgb(var(--primary-accent-rgb)/0.1)] text-(--primary-accent) font-semibold hover:bg-red-500 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
 
               {result && (
                 <pre className="text-xs bg-gray-50 border rounded-xl p-3 overflow-auto max-h-40">

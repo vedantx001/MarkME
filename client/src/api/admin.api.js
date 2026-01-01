@@ -55,3 +55,11 @@ export async function updateClassApi(classId, payload) {
     body: payload,
   });
 }
+
+export async function updateAdminProfileApi(payload) {
+  return apiFetch('/admin/profile', {
+    method: 'PUT',
+    auth: true,
+    body: payload,
+  });
+}

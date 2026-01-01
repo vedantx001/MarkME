@@ -1,8 +1,9 @@
 // src/api/student.api.js
 
 import { apiFetch } from "./http";
+import defaultStudentPhoto from "../assets/no-result-document-file-data-600nw-2293706569.webp";
 
-const DEFAULT_AVATAR = "https://i.pravatar.cc/300?img=11";
+const DEFAULT_AVATAR = defaultStudentPhoto;
 
 function formatDateOnly(value) {
   if (!value) return "—";

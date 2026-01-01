@@ -44,6 +44,7 @@ export const AuthProvider = ({ children }) => {
               id: profile.schoolId._id || profile.schoolId.id,
               name: profile.schoolId.name,
               schoolIdx: profile.schoolId.schoolIdx,
+              address: profile.schoolId.address,
             }
           : null;
 

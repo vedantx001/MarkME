@@ -92,7 +92,7 @@ const EditPrincipalForm = ({ isOpen, onClose, principal }) => {
               </div>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-[rgb(var(--primary-bg-rgb)/0.1)] rounded-full transition-colors"
+                className="p-2 hover:bg-red-500 rounded-full transition-colors"
               >
                 <X size={20} />
               </button>
@@ -213,7 +213,7 @@ const EditPrincipalForm = ({ isOpen, onClose, principal }) => {
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-[rgb(var(--primary-accent-rgb)/0.1)] text-(--primary-accent) font-semibold hover:bg-(--secondary-bg) transition-colors"
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-[rgb(var(--primary-accent-rgb)/0.1)] text-(--primary-accent) font-semibold hover:bg-red-500 hover:text-white transition-colors"
                 >
                   Cancel
                 </button>

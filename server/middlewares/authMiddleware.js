@@ -22,7 +22,7 @@ async function authMiddleware(req, res, next) {
     // Attach user minimal info
     const user = await User.findById(payload.sub)
       .select('-passwordHash')
-      .populate('schoolId', 'name schoolIdx')
+      .populate('schoolId', 'name schoolIdx address')
       .lean();
     if (!user) return res.status(401).json({ success: false, message: 'User not found' });
 

@@ -8,20 +8,51 @@ const AddClassroomForm = ({ isOpen, onClose }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  const currentEducationalYear = useMemo(() => {
+    const now = new Date();
+    // Academic year switches after June (i.e., from July 1)
+    const startYear = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+    return `${startYear}-${String((startYear + 1) % 100).padStart(2, '0')}`;
+  }, []);
+
   const teacherOptions = useMemo(
     () => (Array.isArray(teachers) ? teachers : []).map((t) => ({ id: t.id, name: t.name })),
     [teachers]
   );
 
-  const [formData, setFormData] = useState({ year: '', std: '', div: '', classTeacherId: '' });
+  const [formData, setFormData] = useState({
+    year: currentEducationalYear,
+    std: '',
+    div: '',
+    classTeacherId: '',
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // basic client-side constraints
+    const stdValue = String(formData.std || '').trim();
+    const divValue = String(formData.div || '').trim().toUpperCase();
+
+    if (!/^\d+$/.test(stdValue)) {
+      setError('Standard must be an integer number (e.g., 5)');
+      return;
+    }
+
+    if (!/^[A-Z]$/.test(divValue)) {
+      setError('Division must be a single alphabet character (e.g., A)');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await createClassroom(formData);
-      setFormData({ year: '', std: '', div: '', classTeacherId: '' });
+      await createClassroom({
+        ...formData,
+        std: stdValue,
+        div: divValue,
+      });
+      setFormData({ year: currentEducationalYear, std: '', div: '', classTeacherId: '' });
       onClose();
     } catch (err) {
       setError(err?.message || 'Failed to create classroom');
@@ -54,7 +85,7 @@ const AddClassroomForm = ({ isOpen, onClose }) => {
               </div>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-[rgb(var(--primary-bg-rgb)/0.1)] rounded-full transition-colors"
+                className="p-2 hover:bg-red-500 rounded-full transition-colors"
               >
                 <X size={20} />
               </button>
@@ -72,14 +103,14 @@ const AddClassroomForm = ({ isOpen, onClose }) => {
                     size={18}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--primary-accent-rgb)/0.4)]"
                   />
-                  <input
-                    type="text"
+                  <select
                     required
                     className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 pl-10 pr-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
-                    placeholder="e.g. 2025-26"
                     value={formData.year}
                     onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                  />
+                  >
+                    <option value={currentEducationalYear}>{currentEducationalYear}</option>
+                  </select>
                 </div>
               </div>
 
@@ -93,11 +124,16 @@ const AddClassroomForm = ({ isOpen, onClose }) => {
                     />
                     <input
                       type="text"
+                      inputMode="numeric"
+                      pattern="\\d+"
                       required
                       className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 pl-10 pr-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
-                      placeholder="e.g. 10"
+                      placeholder="e.g. 5"
                       value={formData.std}
-                      onChange={(e) => setFormData({ ...formData, std: e.target.value })}
+                      onChange={(e) => {
+                        const next = e.target.value.replace(/[^0-9]/g, '');
+                        setFormData({ ...formData, std: next });
+                      }}
                     />
                   </div>
                 </div>
@@ -111,11 +147,20 @@ const AddClassroomForm = ({ isOpen, onClose }) => {
                     />
                     <input
                       type="text"
+                      inputMode="text"
+                      pattern="[A-Za-z]"
+                      maxLength={1}
                       required
                       className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 pl-10 pr-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
                       placeholder="e.g. A"
                       value={formData.div}
-                      onChange={(e) => setFormData({ ...formData, div: e.target.value })}
+                      onChange={(e) => {
+                        const next = String(e.target.value || '')
+                          .replace(/[^a-zA-Z]/g, '')
+                          .toUpperCase()
+                          .slice(0, 1);
+                        setFormData({ ...formData, div: next });
+                      }}
                     />
                   </div>
                 </div>
@@ -148,7 +193,7 @@ const AddClassroomForm = ({ isOpen, onClose }) => {
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-[rgb(var(--primary-accent-rgb)/0.1)] text-(--primary-accent) font-semibold hover:bg-(--secondary-bg) transition-colors"
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-[rgb(var(--primary-accent-rgb)/0.1)] text-(--primary-accent) font-semibold hover:bg-red-500 hover:text-white transition-colors"
                 >
                   Cancel
                 </button>

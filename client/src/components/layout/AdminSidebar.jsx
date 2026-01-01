@@ -116,7 +116,7 @@ const AdminSidebar = ({ isMobile, isMobileMenuOpen, items, brandLabel = 'EduAdmi
             await logout();
             navigate('/login', { replace: true });
           }}
-          className="flex items-center gap-3 px-4 py-3 text-(--primary-accent) opacity-60 hover:opacity-100 hover:text-white hover:bg-red-600 rounded-xl w-full transition-colors cursor-pointer"
+          className="flex items-center gap-3 px-4 py-3 text-(--primary-accent) opacity-60 hover:opacity-100 hover:text-white hover:bg-red-500 rounded-xl w-full transition-colors cursor-pointer"
         >
           <LogOut size={20} />
           <span className="font-medium">Sign Out</span>

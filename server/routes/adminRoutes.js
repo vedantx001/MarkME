@@ -20,4 +20,7 @@ router.put('/users/:id', adminController.updateUser);
 // Delete teacher (principal deletion blocked in controller)
 router.delete('/users/:id', adminController.deleteUser);
 
+// Update current admin profile + school details
+router.put('/profile', adminController.updateAdminProfile);
+
 module.exports = router;
