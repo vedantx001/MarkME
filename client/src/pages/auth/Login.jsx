@@ -54,10 +54,22 @@ const AuthPage = ({ initialMode = 'login' }) => {
     setShowConfirmPassword(false);
   };
 
+  const normalizeRole = (role) => String(role || '').toUpperCase();
+
+  const isFromPathAllowedForRole = (path, role) => {
+    if (!path || typeof path !== 'string') return false;
+    const r = normalizeRole(role);
+    if (r === 'ADMIN') return path === '/admin' || path.startsWith('/admin/');
+    if (r === 'TEACHER') return path === '/teacher' || path.startsWith('/teacher/');
+    if (r === 'PRINCIPAL') return path === '/principal' || path.startsWith('/principal/');
+    return false;
+  };
+
   const redirectByRole = (role) => {
-    if (role === 'ADMIN') return '/admin/dashboard';
-    if (role === 'TEACHER') return '/teacher/classroom';
-    if (role === 'PRINCIPAL') return '/principal/dashboard';
+    const r = normalizeRole(role);
+    if (r === 'ADMIN') return '/admin/dashboard';
+    if (r === 'TEACHER') return '/teacher/classroom';
+    if (r === 'PRINCIPAL') return '/principal/dashboard';
     return '/';
   };
 
@@ -76,7 +88,9 @@ const AuthPage = ({ initialMode = 'login' }) => {
     try {
       if (isLogin) {
         const nextUser = await login({ email: loginForm.email, password: loginForm.password });
-        const target = fromPath || redirectByRole(nextUser?.role);
+        const nextRole = normalizeRole(nextUser?.role);
+        const safeFromPath = isFromPathAllowedForRole(fromPath, nextRole) ? fromPath : null;
+        const target = safeFromPath || redirectByRole(nextRole);
         navigate(target, { replace: true });
         return;
       }

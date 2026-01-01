@@ -69,31 +69,36 @@ const ClassroomDetail = () => {
   const filteredStudents = useMemo(() => {
     const t = searchTerm.trim().toLowerCase();
     if (!t) return students;
-    return students.filter((s) =>
-      `${s.name} ${s.rollNo} ${s.gender}`.toLowerCase().includes(t)
-    );
-  }, [students, searchTerm]);
+    return students.filter((s) => {
+      const name = String(s?.name ?? "").trim().toLowerCase();
+      const roll = String(s?.rollNo ?? "").trim().toLowerCase();
+      const gender = String(s?.gender ?? "").trim().toLowerCase();
+      return name.includes(t) || roll.includes(t) || gender.includes(t);
+    });
+}, [students, searchTerm]);
 
-  const onDelete = (student) => {
-    setPendingDeleteStudent(student);
-    setConfirmDeleteOpen(true);
-  };
+const presenceKey = (searchTerm.trim().toLowerCase() || "all");
 
-  const confirmDelete = async () => {
-    const student = pendingDeleteStudent;
-    if (!student) return;
+const onDelete = (student) => {
+  setPendingDeleteStudent(student);
+  setConfirmDeleteOpen(true);
+};
 
-    try {
-      setRowBusyId(student.id);
-      await deleteStudent(student.id);
-      // Avoid full reload + re-animate: update locally so remaining students stay stable
-      setStudents((prev) => prev.filter((x) => x.id !== student.id));
-    } finally {
-      setRowBusyId(null);
-      setConfirmDeleteOpen(false);
-      setPendingDeleteStudent(null);
-    }
-  };
+const confirmDelete = async () => {
+  const student = pendingDeleteStudent;
+  if (!student) return;
+
+  try {
+    setRowBusyId(student.id);
+    await deleteStudent(student.id);
+    // Avoid full reload + re-animate: update locally so remaining students stay stable
+    setStudents((prev) => prev.filter((x) => x.id !== student.id));
+  } finally {
+    setRowBusyId(null);
+    setConfirmDeleteOpen(false);
+    setPendingDeleteStudent(null);
+  }
+};
 
   const openEdit = (student) => {
     setSelectedStudent(student);
@@ -332,6 +337,7 @@ const ClassroomDetail = () => {
 
       {/* Students Grid */}
       <motion.div
+        key={presenceKey}
         variants={containerVariants}
         initial="hidden"
         animate="show"

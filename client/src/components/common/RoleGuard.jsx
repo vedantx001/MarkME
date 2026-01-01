@@ -17,7 +17,12 @@ const RoleGuard = ({ allowedRoles, children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles?.length && !allowedRoles.includes(user.role)) {
+  const userRole = String(user.role || '').toUpperCase();
+  const allowed = Array.isArray(allowedRoles)
+    ? allowedRoles.map((r) => String(r || '').toUpperCase())
+    : [];
+
+  if (allowed.length && !allowed.includes(userRole)) {
     return <Navigate to="/" replace />;
   }
 

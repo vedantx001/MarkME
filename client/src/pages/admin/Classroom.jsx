@@ -89,6 +89,7 @@ const Classroom = () => {
             <motion.div
               layout
               key={c.id}
+              initial={false}
               variants={itemVariants}
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={() => navigate(`/admin/classrooms/${c.id}`)}
