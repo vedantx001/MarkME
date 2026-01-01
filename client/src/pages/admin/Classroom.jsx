@@ -89,6 +89,7 @@ const Classroom = () => {
             <motion.div
               layout
               key={c.id}
+              initial={false}
               variants={itemVariants}
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-(--primary-bg) p-5 rounded-2xl border border-[rgb(var(--primary-accent-rgb)/0.05)] shadow-sm hover:shadow-md transition-all group"

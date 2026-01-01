@@ -79,10 +79,15 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
   const filteredStudents = useMemo(() => {
     const t = searchTerm.trim().toLowerCase();
     if (!t) return students;
-    return students.filter((s) =>
-      `${s.name} ${s.rollNo} ${s.gender}`.toLowerCase().includes(t)
-    );
+    return students.filter((s) => {
+      const name = String(s?.name ?? "").trim().toLowerCase();
+      const roll = String(s?.rollNo ?? "").trim().toLowerCase();
+      const gender = String(s?.gender ?? "").trim().toLowerCase();
+      return name.includes(t) || roll.includes(t) || gender.includes(t);
+    });
   }, [students, searchTerm]);
+
+  const presenceKey = (searchTerm.trim().toLowerCase() || "all");
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -148,6 +153,7 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
 
       {/* Responsive Students Grid */}
       <motion.div
+        key={presenceKey}
         variants={containerVariants}
         initial="hidden"
         animate="show"
