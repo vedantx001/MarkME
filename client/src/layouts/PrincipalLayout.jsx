@@ -1,41 +1,33 @@
 // src/layouts/PrincipalLayout.jsx
 
-import { Outlet, Navigate } from "react-router-dom";
-import { useState } from "react";
-import Navbar from "../components/common/Navbar";
-import Sidebar from "../components/common/Sidebar";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/authContext";
+import AdminLayout from "../components/layout/AdminLayout";
+import { LayoutDashboard, Users, School } from "lucide-react";
 
 const PrincipalLayout = () => {
-  // FRONTEND-ONLY (mock auth)
-  const isAuthenticated = true;
-  const userRole = "principal";
+  const { isAuthenticated, role, loading } = useAuth();
 
-  // Sidebar visibility state
-  // Default to open on desktop, closed on mobile
-  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-
-  if (!isAuthenticated || userRole !== "principal") {
-    return <Navigate to="/auth" replace />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-(--secondary-bg) flex items-center justify-center">
+        <div className="text-(--primary-text)/60 text-sm font-inter">Loading…</div>
+      </div>
+    );
   }
 
-  return (
-    <div className="flex min-h-screen bg-(--secondary-bg) font-inter">
-      <Sidebar
-        isSidebarOpen={isSidebarOpen}
-        toggleSidebar={toggleSidebar}
-        role="principal"
-      />
+  if (!isAuthenticated || String(role || "").toUpperCase() !== "PRINCIPAL") {
+    return <Navigate to="/login" replace />;
+  }
 
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Navbar toggleSidebar={toggleSidebar} />
+  const principalSidebarItems = [
+    { icon: LayoutDashboard, label: "Dashboard", to: "/principal/dashboard", activePrefixes: ["/principal/dashboard"] },
+    { icon: Users, label: "Teachers", to: "/principal/teachers", activePrefixes: ["/principal/teachers"] },
+    { icon: School, label: "Classrooms", to: "/principal/classrooms", activePrefixes: ["/principal/classrooms", "/principal/student"] },
+  ];
 
-        <main className="flex-1 overflow-y-auto bg-(--secondary-bg) p-6">
-          <Outlet />
-        </main>
-      </div>
-    </div>
-  );
+  // Reuse admin panel chrome (navbar/sidebar/sign-out) for principal.
+  return <AdminLayout sidebarItems={principalSidebarItems} brandLabel="EduAdmin" showSettings={false} />;
 };
 
 export default PrincipalLayout;

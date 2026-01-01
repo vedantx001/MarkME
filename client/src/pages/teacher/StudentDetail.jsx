@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Calendar, UserCheck, Mail } from "lucide-react";
 import { fetchStudentDetail, fetchStudentStreak } from "../../api/student.api";
 import { listMyClassesApi } from "../../api/classes.api";
+import { useAdmin } from "../../context/adminContext";
 import Loader from "../../components/common/Loader";
 
 /* ---------------- Academic Year Day Generator ---------------- */
@@ -70,6 +71,7 @@ const groupDaysByMonth = (days) => {
 const StudentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const admin = useAdmin();
 
   const [student, setStudent] = useState(null);
   const [streak, setStreak] = useState([]);
@@ -82,28 +84,40 @@ const StudentDetail = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const [detail, history, myClasses] = await Promise.all([
+
+        const [detail, history] = await Promise.all([
           fetchStudentDetail(id),
           fetchStudentStreak(id),
-          listMyClassesApi(),
         ]);
+
         setStudent(detail);
         setStreak(history);
 
-        const matched = (myClasses || []).find((c) => c.id === detail?.classId);
-        setClassroomName(matched?.name || "—");
+        // Prefer already-loaded school classrooms (works for ADMIN/PRINCIPAL dashboards).
+        const adminClasses = Array.isArray(admin?.classrooms) ? admin.classrooms : [];
+        let matched = adminClasses.find((c) => c.id === detail?.classId);
+
+        // Fallback to API lookup if adminContext isn't available.
+        if (!matched) {
+          try {
+            const myClasses = await listMyClassesApi();
+            matched = (myClasses || []).find((c) => c.id === detail?.classId);
+          } catch {
+            // ignore; classroomName will remain "—"
+          }
+        }
+
+        setClassroomName(matched?.name || (matched ? `Std ${matched.std}-${matched.division}` : "—"));
       } catch (err) {
-        console.error("Failed to load student", err);
-        setStudent(null);
-        setStreak([]);
-        setError(err?.message || "Failed to load student details");
-        setClassroomName("—");
+        console.error("Failed to load student detail", err);
+        setError(err?.message || "Failed to load student detail");
       } finally {
         setIsLoading(false);
       }
     };
+
     load();
-  }, [id]);
+  }, [id, admin?.classrooms]);
 
   const attendanceMap = useMemo(() => {
     return (streak || []).reduce((acc, cur) => {

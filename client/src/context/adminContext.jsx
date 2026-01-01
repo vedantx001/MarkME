@@ -181,7 +181,10 @@ export const AdminProvider = ({ children }) => {
       }
     };
 
-    if (!user || user.role !== 'ADMIN') {
+    const role = String(user?.role || '').toUpperCase();
+    const canReadDashboard = !!user && (role === 'ADMIN' || role === 'PRINCIPAL');
+
+    if (!canReadDashboard) {
       stopPolling();
       return;
     }
@@ -193,17 +196,20 @@ export const AdminProvider = ({ children }) => {
         await refreshAll();
       } catch (e) {
         if (!alive) return;
-        setError(e?.message || 'Failed to load admin data');
+        setError(e?.message || 'Failed to load dashboard data');
       } finally {
         if (alive) setLoading(false);
       }
     })();
 
-    // Poll every 15s to approximate realtime without sockets.
+    // Polling causes disruptive auto-refresh while browsing pages.
+    // Keep polling only for ADMIN; PRINCIPAL gets initial load and then updates on navigation / reload.
     stopPolling();
-    pollRef.current = setInterval(() => {
-      refreshAll().catch(() => {});
-    }, 15000);
+    if (role === 'ADMIN') {
+      pollRef.current = setInterval(() => {
+        refreshAll().catch(() => {});
+      }, 15000);
+    }
 
     return () => {
       alive = false;

@@ -29,6 +29,17 @@ async function parseResponse(res) {
   return body;
 }
 
+function safeRedirectToError(status) {
+  if (typeof window === 'undefined') return;
+  const path = window.location?.pathname || '';
+  // Avoid redirect loops if we're already on an error route.
+  if (path.startsWith('/errors')) return;
+
+  if (status === 403) window.location.assign('/errors/403');
+  else if (status === 404) window.location.assign('/errors/404');
+  else if (status >= 500) window.location.assign('/errors/500');
+}
+
 async function apiFetch(path, { method = 'GET', headers, body, auth = true, retryOn401 = true } = {}) {
   const url = `${getBaseUrl()}${path.startsWith('/') ? path : `/${path}`}`;
 
@@ -58,10 +69,18 @@ async function apiFetch(path, { method = 'GET', headers, body, auth = true, retr
 
   const data = await parseResponse(res);
   if (!res.ok) {
-    const message = (data && typeof data === 'object' && (data.message || data.error)) ? (data.message || data.error) : `Request failed (${res.status})`;
+    const message =
+      data && typeof data === 'object' && (data.message || data.error)
+        ? (data.message || data.error)
+        : `Request failed (${res.status})`;
+
     const err = new Error(message);
     err.status = res.status;
     err.data = data;
+
+    // For hard failures, show dedicated error pages.
+    safeRedirectToError(res.status);
+
     throw err;
   }
 

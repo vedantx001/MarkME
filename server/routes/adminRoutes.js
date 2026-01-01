@@ -2,17 +2,20 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const authMiddleware = require('../middlewares/authMiddleware');
-const { requireRole } = require('../middlewares/roleMiddleware');
+const { requireRole, requireAnyRole } = require('../middlewares/roleMiddleware');
 
-// All admin endpoints require authentication and ADMIN role
+// All admin endpoints require authentication
 router.use(authMiddleware);
+
+// List users by school (optional query: role, page, limit)
+// Allow PRINCIPAL read-only access to list, so principal dashboard can reuse adminContext.
+router.get('/users', requireAnyRole(['ADMIN', 'PRINCIPAL']), adminController.listUsers);
+
+// ADMIN-only below
 router.use(requireRole('ADMIN'));
 
 // Create teacher/principal
 router.post('/users', adminController.createUser);
-
-// List users by school (optional query: role, page, limit)
-router.get('/users', adminController.listUsers);
 
 // Update teacher/principal
 router.put('/users/:id', adminController.updateUser);

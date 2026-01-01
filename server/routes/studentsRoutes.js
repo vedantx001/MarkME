@@ -24,7 +24,7 @@ router.get("/", auth, studentController.getStudents);
     @access  Authenticated (Teacher/Admin)
     ================================
 */
-router.get("/:id", auth, requireAnyRole(["ADMIN", "TEACHER"]), studentController.getStudentById);
+router.get("/:id", auth, requireAnyRole(["ADMIN", "TEACHER", "PRINCIPAL"]), studentController.getStudentById);
 
 /*
     ====================================================
@@ -33,7 +33,12 @@ router.get("/:id", auth, requireAnyRole(["ADMIN", "TEACHER"]), studentController
     @access  Authenticated (Teacher/Admin)
     ====================================================
 */
-router.get("/:id/attendance-history", auth, requireAnyRole(["ADMIN", "TEACHER"]), studentController.getStudentAttendanceHistory);
+router.get(
+    "/:id/attendance-history",
+    auth,
+    requireAnyRole(["ADMIN", "TEACHER", "PRINCIPAL"]),
+    studentController.getStudentAttendanceHistory
+);
 
 /*
     ================================

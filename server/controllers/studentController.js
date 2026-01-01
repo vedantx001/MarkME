@@ -21,6 +21,16 @@ exports.getStudents = async (req, res) => {
       return res.status(400).json({ message: "classId is required" });
     }
 
+    // Enforce school scoping: the requested class must belong to the same school as the requester.
+    // This protects PRINCIPAL (and everyone) from querying arbitrary classIds across schools.
+    if (req.user?.schoolId) {
+      const classroom = await Classroom.findById(classId).select('schoolId').lean();
+      if (!classroom) return res.status(404).json({ message: "Classroom not found." });
+      if (classroom.schoolId?.toString() !== req.user.schoolId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+    }
+
     const students = await Student.find({ classId }).sort({ rollNumber: 1 });
     res.json(students);
 

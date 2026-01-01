@@ -60,11 +60,19 @@ app.use('/api/classroom-images', classroomImagesRoutes);
 app.use('/api/attendance-records', attendanceRecordsRoutes);
 app.use('/api/reports', reportRoutes);
 
+// 404 for unknown API routes (must be after all /api routes)
+app.use('/api', (req, res) => {
+  return res.status(404).json({ success: false, message: 'API route not found' });
+});
+
 // Generic error handler (minimal)
 app.use((err, req, res, next) => {
   console.error("Global Error Handler:", err); // Log full error
   const status = err.status || 500;
-  res.status(status).json({ success: false, message: err.message || 'Server error', errorField: err.field });
+  res.status(status).json({
+    success: false,
+    message: err.message || 'Server error',
+  });
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

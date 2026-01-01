@@ -6,6 +6,12 @@ import LandingPage from "../pages/LandingPage";
 import Login from "../pages/auth/Login";
 import RegisterAdmin from "../pages/auth/RegisterAdmin";
 
+// Errors
+import ErrorPage from "../pages/errors/ErrorPage";
+import NotFound from "../pages/errors/NotFound";
+import Forbidden from "../pages/errors/Forbidden";
+import ServerError from "../pages/errors/ServerError";
+
 // Teacher
 import TeacherLayout from "../layouts/TeacherLayout";
 import TeacherClassroom from "../pages/teacher/Classroom";
@@ -37,6 +43,12 @@ const AppRoutes = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register-admin" element={<RegisterAdmin />} />
         <Route path="/auth" element={<Navigate to="/login" replace />} />
+
+        {/* Error Routes */}
+        <Route path="/errors" element={<ErrorPage />} />
+        <Route path="/errors/403" element={<Forbidden />} />
+        <Route path="/errors/500" element={<ServerError />} />
+        <Route path="/errors/404" element={<NotFound />} />
 
         {/* Teacher */}
         <Route
@@ -105,7 +117,7 @@ const AppRoutes = () => {
         </Route>
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

@@ -9,8 +9,8 @@ exports.getClasses = async (req, res) => {
     let query = {};
     if (user.role === "TEACHER") {
       query.classTeacherId = user.id; // use stable id
-    } else if (user.role === "ADMIN") {
-      // admin sees all classes under same school
+    } else if (user.role === "ADMIN" || user.role === "PRINCIPAL") {
+      // admin/principal sees all classes under same school
       query.schoolId = user.schoolId; // normalized in authMiddleware
     } else {
       return res.status(403).json({ message: "Not allowed." });

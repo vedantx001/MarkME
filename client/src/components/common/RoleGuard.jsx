@@ -23,7 +23,7 @@ const RoleGuard = ({ allowedRoles, children }) => {
     : [];
 
   if (allowed.length && !allowed.includes(userRole)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/errors/403" replace />;
   }
 
   return children;

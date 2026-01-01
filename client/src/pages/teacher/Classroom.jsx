@@ -3,10 +3,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { Users, Search, GraduationCap } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { fetchClassroomStudents } from "../../api/student.api";
 import { listMyClassesApi } from "../../api/classes.api";
 import { useAuth } from "../../context/authContext";
+import { useAdmin } from "../../context/adminContext";
 import Loader from "../../components/common/Loader";
 
 const FALLBACK_CLASSROOM = {
@@ -19,6 +20,8 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
   const navigate = useNavigate();
   const { classId } = useParams();
   const { user } = useAuth();
+  const admin = useAdmin();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [students, setStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,13 +31,29 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
 
   const effectiveClassId = classId ?? null;
 
+  // Track which source we used so we don't re-fetch on every adminContext update.
+  const usedAdminFallbackRef = useRef(false);
+
   useEffect(() => {
     let alive = true;
 
     const loadClass = async () => {
       try {
         setClassesLoading(true);
-        const classes = await listMyClassesApi();
+
+        usedAdminFallbackRef.current = false;
+
+        let classes = [];
+        try {
+          classes = await listMyClassesApi();
+        } catch (error) {
+          // For PRINCIPAL routes we reuse this component; fall back to adminContext if available.
+          const fallback = Array.isArray(admin?.classrooms) ? admin.classrooms : [];
+          if (fallback.length === 0) throw error;
+          usedAdminFallbackRef.current = true;
+          classes = fallback;
+        }
+
         if (!alive) return;
 
         const selected =
@@ -55,11 +74,16 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
     return () => {
       alive = false;
     };
+    // Don't depend on admin.classrooms (it changes during refresh/poll).
+    // We only need it as a *fallback* when the API call fails.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveClassId, user?.id]);
 
   useEffect(() => {
     const loadStudents = async () => {
       try {
+        setIsLoading(true);
+
         if (!activeClass?.id) {
           setStudents([]);
           return;
@@ -73,6 +97,7 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
         setIsLoading(false);
       }
     };
+
     if (!classesLoading) loadStudents();
   }, [activeClass?.id, classesLoading]);
 
@@ -190,7 +215,7 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
                     <h3 className="text-lg font-bold text-(--primary-text) truncate group-hover:text-(--secondary-accent) transition-colors">
                       {student.name}
                     </h3>
-                    <span className="shrink-0 text-xs font-bold px-2 py-0.5 rounded-full bg-(--secondary-bg) text-(--primary-accent) border border-[rgb(var(--primary-accent-rgb)/0.1)]">
+                    <span className="shrink-0 text-xs font-bold px-2 py-0.5 rounded-full bg-(--secondary-bg) text-(--primary-accent) border border-[rgb(var(--primary-accent-rgb)/0.1]">
                       {student.rollNo}
                     </span>
                   </div>
