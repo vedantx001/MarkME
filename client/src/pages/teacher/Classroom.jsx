@@ -215,7 +215,7 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
                     <h3 className="text-lg font-bold text-(--primary-text) truncate group-hover:text-(--secondary-accent) transition-colors">
                       {student.name}
                     </h3>
-                    <span className="shrink-0 text-xs font-bold px-2 py-0.5 rounded-full bg-(--secondary-bg) text-(--primary-accent) border border-[rgb(var(--primary-accent-rgb)/0.1]">
+                    <span className="shrink-0 text-xs font-bold px-2 py-0.5 rounded-full bg-(--secondary-bg) text-(--primary-accent) border border-[rgb(var(--primary-accent-rgb)/)0.1]">
                       {student.rollNo}
                     </span>
                   </div>

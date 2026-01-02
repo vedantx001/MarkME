@@ -1,7 +1,7 @@
 // src/components/attendance/AttendanceTable.jsx
 
 import AttendanceCell from "./AttendanceCell";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 
 const AttendanceTable = ({ data, onToggle }) => {
   return (
@@ -34,8 +34,8 @@ const AttendanceTable = ({ data, onToggle }) => {
 
       <div className="divide-y divide-[#2D3748]/5">
         {data.map((student, index) => (
-          <motion.div
-            key={student.id}
+          <Motion.div
+            key={student?.id ?? index}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.03 }}
@@ -44,7 +44,9 @@ const AttendanceTable = ({ data, onToggle }) => {
             {/* Roll No */}
             <div className="col-span-3 md:col-span-2 flex items-center gap-2">
               <span className="text-sm font-bold text-[#2D3748]">
-                {student.rollNo.toString().padStart(2, "0")}
+                {student?.rollNo === undefined || student?.rollNo === null
+                  ? "—"
+                  : String(student.rollNo).padStart(2, "0")}
               </span>
             </div>
 
@@ -62,7 +64,7 @@ const AttendanceTable = ({ data, onToggle }) => {
                 onToggle={() => onToggle(student.id)}
               />
             </div>
-          </motion.div>
+          </Motion.div>
         ))}
       </div>
 

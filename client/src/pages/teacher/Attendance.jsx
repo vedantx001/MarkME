@@ -1,7 +1,7 @@
 // src/pages/teacher/Attendance.jsx
 
-import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
+import { motion as Motion, AnimatePresence } from "framer-motion";
+import { Download, RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
 import ImageUpload from "../../components/attendance/ImageUpload";
 import AttendanceLegend from "../../components/attendance/AttendanceLegend";
 import AttendanceTable from "../../components/attendance/AttendanceTable";
@@ -10,6 +10,45 @@ import { useAttendanceStore } from "../../app/store";
 import { uploadClassroomImages, submitAttendance } from "../../api/attendance.api";
 import { listMyClassesApi } from "../../api/classes.api";
 import { useEffect, useMemo, useState } from "react";
+
+const AnimatedSuccessIcon = () => (
+  <Motion.div
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ type: "spring", stiffness: 260, damping: 18 }}
+    className="w-20 h-20 bg-(--secondary-bg) rounded-full flex items-center justify-center mx-auto border border-[rgb(var(--primary-accent-rgb)/0.1)]"
+  >
+    <svg
+      viewBox="0 0 64 64"
+      width="44"
+      height="44"
+      fill="none"
+      aria-hidden="true"
+    >
+      <Motion.circle
+        cx="32"
+        cy="32"
+        r="24"
+        stroke="var(--primary-accent)"
+        strokeWidth="3"
+        strokeLinecap="round"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
+      />
+      <Motion.path
+        d="M22 33.5l7 7L43 26.5"
+        stroke="var(--primary-accent)"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.35, ease: "easeOut", delay: 0.2 }}
+      />
+    </svg>
+  </Motion.div>
+);
 
 const Attendance = () => {
   // Access global state
@@ -24,6 +63,7 @@ const Attendance = () => {
 
   const [activeClass, setActiveClass] = useState(null);
   const [classesLoading, setClassesLoading] = useState(true);
+  const [reportDownloading, setReportDownloading] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -101,7 +141,51 @@ const Attendance = () => {
       }
       setStage("submitted");
     } catch (error) {
-      console.error("Submission failed");
+      console.error("Submission failed", error);
+    }
+  };
+
+  const handleDownloadReport = async () => {
+    if (!activeClass?.id) return;
+
+    const baseUrl = (import.meta?.env?.VITE_API_BASE_URL || "http://localhost:5000/api").replace(/\/+$/, "");
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const date = `${year}-${month}`;
+    const url = `${baseUrl}/reports/class/${activeClass.id}/month/${date}`;
+
+    setReportDownloading(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await fetch(url, {
+        method: "GET",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error(`Report download failed (${res.status})`);
+
+      const blob = await res.blob();
+
+      const contentDisposition = res.headers.get("content-disposition") || "";
+      const match = contentDisposition.match(/filename\*?=([^;]+)|filename="?([^";]+)"?/i);
+      const fallbackName = `Attendance_Report_${year}_${month}.xlsx`;
+      const rawName = (match?.[2] || match?.[1] || fallbackName).replace(/^UTF-8''/i, "");
+      const fileName = decodeURIComponent(rawName);
+
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Failed to download report", error);
+    } finally {
+      setReportDownloading(false);
     }
   };
 
@@ -114,11 +198,11 @@ const Attendance = () => {
       <div className="flex items-center justify-center gap-4 mb-8">
         {steps.map((s, i) => (
           <div key={s} className="flex items-center gap-2">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${i <= activeIdx ? 'bg-[#2D3748] text-[#FBFDFF]' : 'bg-[#FBFDFF] text-[#2D3748]/40 border border-[#2D3748]/10'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${i <= activeIdx ? 'bg-(--primary-accent) text-(--primary-bg)' : 'bg-(--primary-bg) text-[rgb(var(--primary-accent-rgb)/0.4)] border border-[rgb(var(--primary-accent-rgb)/0.1)]'}`}>
               {i + 1}
             </div>
-            <span className={`text-sm font-semibold ${i <= activeIdx ? 'text-[#0E0E11]' : 'text-[#2D3748]/40'}`}>{s}</span>
-            {i < 2 && <div className="w-8 h-0.5 bg-[#2D3748]/10 ml-2" />}
+            <span className={`text-sm font-semibold ${i <= activeIdx ? 'text-(--primary-text)' : 'text-[rgb(var(--primary-accent-rgb)/0.4)]'}`}>{s}</span>
+            {i < 2 && <div className="w-8 h-0.5 bg-[rgb(var(--primary-accent-rgb)/0.1)] ml-2" />}
           </div>
         ))}
       </div>
@@ -129,8 +213,8 @@ const Attendance = () => {
     <div className="max-w-6xl mx-auto">
       {/* Header Section */}
       <div className="mb-8 text-center md:text-left">
-        <h1 className="text-2xl md:text-3xl font-bold text-[#0E0E11] tracking-tight">Take Attendance</h1>
-        <p className="text-[#2D3748]/60 mt-1 font-medium">
+        <h1 className="text-2xl md:text-3xl font-bold text-(--primary-text) tracking-tight">Take Attendance</h1>
+        <p className="text-[rgb(var(--primary-accent-rgb)/0.6)] mt-1 font-medium">
           Our AI will detect faces from your classroom photos.
           {activeClass?.name ? ` (Class: ${activeClass.name})` : ""}
         </p>
@@ -141,12 +225,12 @@ const Attendance = () => {
       <AnimatePresence mode="wait">
         {/* STAGE: UPLOAD */}
         {stage === "upload" && (
-          <motion.div
+          <Motion.div
             key="upload"
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
             className="space-y-6"
           >
-            <div className="bg-[#FBFDFF] p-6 rounded-2xl shadow-sm border border-[#2D3748]/5">
+            <div className="bg-(--primary-bg) p-6 rounded-2xl shadow-sm border border-[rgb(var(--primary-accent-rgb)/0.05)]">
               <ImageUpload images={images} setImages={setImages} />
 
               <div className="mt-8 flex flex-col items-center gap-4">
@@ -155,38 +239,38 @@ const Attendance = () => {
                   onClick={handleProcessImages}
                   style={{ cursor: images.length > 0 && !classesLoading && activeClass?.id ? 'pointer' : 'not-allowed' }}
                   className={`w-full md:w-auto px-10 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 
-                    ${images.length === 0 || classesLoading || !activeClass?.id ? "bg-[#F2F8FF] text-[#2D3748]/40 border border-[#2D3748]/10" : "bg-[#2D3748] text-[#FBFDFF] hover:bg-[#0E0E11] shadow-lg shadow-[#2D3748]/20"}`}
+                    ${images.length === 0 || classesLoading || !activeClass?.id ? "bg-(--secondary-bg) text-[rgb(var(--primary-accent-rgb)/0.4)] border border-[rgb(var(--primary-accent-rgb)/0.1)]" : "bg-(--primary-accent) text-(--primary-bg) hover:bg-(--primary-text) shadow-lg shadow-[rgb(var(--primary-accent-rgb)/0.2)]"}`}
                 >
                   <Sparkles size={18} />
                   Start AI Recognition
                 </button>
-                <p className="text-xs text-[#2D3748]/50">Upload 1 to 4 images for best accuracy</p>
+                <p className="text-xs text-[rgb(var(--primary-accent-rgb)/0.5)]">Upload 1 to 4 images for best accuracy</p>
                 {!classesLoading && !activeClass?.id && (
                   <p className="text-xs text-rose-500/80">No class assigned to this teacher.</p>
                 )}
               </div>
             </div>
-          </motion.div>
+          </Motion.div>
         )}
 
         {/* STAGE: PROCESSING */}
         {stage === "processing" && (
-          <motion.div
+          <Motion.div
             key="processing"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="bg-[#FBFDFF] rounded-2xl shadow-sm border border-[#2D3748]/5 p-16 flex flex-col items-center gap-6"
+            className="bg-(--primary-bg) rounded-2xl shadow-sm border border-[rgb(var(--primary-accent-rgb)/0.05)] p-16 flex flex-col items-center gap-6"
           >
             <Loader size="large" />
             <div className="text-center">
-              <h3 className="text-xl font-bold text-[#0E0E11]">Analyzing Classroom...</h3>
-              <p className="text-[#2D3748]/60 mt-1 font-medium">Identifying students and matching records.</p>
+              <h3 className="text-xl font-bold text-(--primary-text)">Analyzing Classroom...</h3>
+              <p className="text-[rgb(var(--primary-accent-rgb)/0.6)] mt-1 font-medium">Identifying students and matching records.</p>
             </div>
-          </motion.div>
+          </Motion.div>
         )}
 
         {/* STAGE: PREVIEW & EDIT */}
         {stage === "preview" && (
-          <motion.div
+          <Motion.div
             key="preview"
             initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
             className="space-y-6"
@@ -196,24 +280,24 @@ const Attendance = () => {
               <button
                 onClick={resetFlow}
                 style={{ cursor: 'pointer' }}
-                className="flex items-center gap-2 text-sm font-semibold text-[#2D3748]/60 hover:text-[#0E0E11] transition-colors"
+                className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--primary-accent-rgb)/0.6)] hover:text-(--primary-text) transition-colors"
               >
                 <RotateCcw size={16} /> Re-upload Images
               </button>
             </div>
 
-            <div className="bg-[#FBFDFF] rounded-2xl shadow-sm border border-[#2D3748]/5 p-4 md:p-5">
+            <div className="bg-(--primary-bg) rounded-2xl shadow-sm border border-[rgb(var(--primary-accent-rgb)/0.05)] p-4 md:p-5">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-[#2D3748]/40">Summary</div>
-                  <div className="text-sm text-[#2D3748]/70 mt-1">
-                    Total: <span className="font-bold text-[#0E0E11]">{summary.total}</span> &nbsp;•&nbsp; Present:{" "}
-                    <span className="font-bold text-[#2D3748]">{summary.present.length}</span> &nbsp;•&nbsp; Absent:{" "}
+                  <div className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--primary-accent-rgb)/0.4)]">Summary</div>
+                  <div className="text-sm text-[rgb(var(--primary-accent-rgb)/0.7)] mt-1">
+                    Total: <span className="font-bold text-(--primary-text)">{summary.total}</span> &nbsp;•&nbsp; Present:{" "}
+                    <span className="font-bold text-(--primary-accent)">{summary.present.length}</span> &nbsp;•&nbsp; Absent:{" "}
                     <span className="font-bold text-rose-500/80">{summary.absent.length}</span>
                   </div>
                 </div>
 
-                <div className="text-xs text-[#2D3748]/50">
+                <div className="text-xs text-[rgb(var(--primary-accent-rgb)/0.5)]">
                   Detected (P) roll nos: {summary.present.map((s) => s.rollNo).filter(Boolean).join(", ") || "—"}
                   <br />
                   Absent (A) roll nos: {summary.absent.map((s) => s.rollNo).filter(Boolean).join(", ") || "—"}
@@ -229,37 +313,52 @@ const Attendance = () => {
               <button
                 onClick={handleSubmit}
                 style={{ cursor: 'pointer' }}
-                className="px-8 py-3 rounded-xl bg-[#2D3748] text-[#FBFDFF] font-bold hover:bg-[#0E0E11] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#2D3748]/20"
+                className="px-8 py-3 rounded-xl bg-(--primary-accent) text-(--primary-bg) font-bold hover:bg-(--primary-text) transition-all flex items-center justify-center gap-2 shadow-lg shadow-[rgb(var(--primary-accent-rgb)/0.2)]"
               >
                 <ShieldCheck size={18} />
                 Confirm & Submit
               </button>
             </div>
-          </motion.div>
+          </Motion.div>
         )}
 
         {/* STAGE: SUBMITTED */}
         {stage === "submitted" && (
-          <motion.div
+          <Motion.div
             key="submitted"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="bg-[#FBFDFF] rounded-2xl shadow-sm border border-[#2D3748]/5 p-12 text-center space-y-6 max-w-md mx-auto"
+            className="bg-(--primary-bg) rounded-2xl shadow-sm border border-[rgb(var(--primary-accent-rgb)/0.05)] p-12 text-center space-y-6 max-w-md mx-auto"
           >
-            <div className="w-20 h-20 bg-[#F2F8FF] text-[#2D3748] rounded-full flex items-center justify-center mx-auto border border-[#2D3748]/10">
-              <CheckCircle2 size={40} />
-            </div>
+            <AnimatedSuccessIcon />
             <div>
-              <h2 className="text-2xl font-bold text-[#0E0E11]">Submission Complete!</h2>
-              <p className="text-[#2D3748]/60 mt-2 font-medium">Attendance for Class 10-A has been recorded and synced.</p>
+              <h2 className="text-2xl font-bold text-(--primary-text)">Submission Complete!</h2>
+              <p className="text-[rgb(var(--primary-accent-rgb)/0.6)] mt-2 font-medium">
+                Attendance for {activeClass?.name || "your class"} has been recorded and synced.
+              </p>
             </div>
+
+            <button
+              onClick={handleDownloadReport}
+              disabled={!activeClass?.id || reportDownloading}
+              style={{ cursor: !activeClass?.id || reportDownloading ? 'not-allowed' : 'pointer' }}
+              className={`w-full py-3 font-bold rounded-xl transition-colors flex items-center justify-center gap-2 border 
+                ${!activeClass?.id || reportDownloading
+                  ? 'bg-(--secondary-bg) text-[rgb(var(--primary-accent-rgb)/0.4)] border-[rgb(var(--primary-accent-rgb)/0.1)]'
+                  : 'bg-(--primary-bg) text-(--primary-accent) border-[rgb(var(--primary-accent-rgb)/0.2)] hover:bg-(--secondary-bg)'
+                }`}
+            >
+              <Download size={18} />
+              {reportDownloading ? 'Downloading…' : 'Download Attendance Report'}
+            </button>
+
             <button
               onClick={resetFlow}
               style={{ cursor: 'pointer' }}
-              className="w-full py-3 bg-[#2D3748] text-[#FBFDFF] font-bold rounded-xl hover:bg-[#0E0E11] transition-colors"
+              className="w-full py-3 bg-(--primary-accent) text-(--primary-bg) font-bold rounded-xl hover:bg-(--primary-text) transition-colors"
             >
               Take Another Attendance
             </button>
-          </motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
     </div>

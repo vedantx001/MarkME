@@ -1,5 +1,5 @@
 // src/components/attendance/AttendanceCell.jsx
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 
 const AttendanceCell = ({ status, onToggle }) => {
   const isPresent = status === "P";
@@ -13,7 +13,7 @@ const AttendanceCell = ({ status, onToggle }) => {
   };
 
   return (
-    <motion.button
+    <Motion.button
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.92 }}
       onClick={onToggle}
@@ -28,7 +28,7 @@ const AttendanceCell = ({ status, onToggle }) => {
       title="Click to toggle (P/A)"
     >
       <AnimatePresence mode="wait">
-        <motion.span
+        <Motion.span
           key={status}
           initial={{ opacity: 0, scale: 0.5, y: 5 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -36,9 +36,9 @@ const AttendanceCell = ({ status, onToggle }) => {
           transition={{ duration: 0.15 }}
         >
           {isPresent ? "P" : isAbsent ? "A" : "?"}
-        </motion.span>
+        </Motion.span>
       </AnimatePresence>
-    </motion.button>
+    </Motion.button>
   );
 };
 
