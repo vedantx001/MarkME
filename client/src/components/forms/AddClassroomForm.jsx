@@ -36,7 +36,7 @@ const AddClassroomForm = ({ isOpen, onClose }) => {
     const divValue = String(formData.div || '').trim().toUpperCase();
 
     if (!/^\d+$/.test(stdValue)) {
-      setError('Standard must be an integer number (e.g., 5)');
+      setError('Standard must be integer number (e.g. 5)');
       return;
     }
 
@@ -125,7 +125,7 @@ const AddClassroomForm = ({ isOpen, onClose }) => {
                     <input
                       type="text"
                       inputMode="numeric"
-                      pattern="\\d+"
+                      pattern="[0-9]*"
                       required
                       className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 pl-10 pr-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
                       placeholder="e.g. 5"

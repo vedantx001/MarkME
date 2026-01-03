@@ -48,7 +48,7 @@ const getMonthlyClassReport = async (req, res) => {
         });
 
         // Generate Excel
-        const buffer = await generateMonthlyExcel(students, sessions, records);
+        const buffer = await generateMonthlyExcel(students, sessions, records, year, month);
 
         // Send Response
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

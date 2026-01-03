@@ -34,7 +34,7 @@ const AnimatedSuccessIcon = () => (
         strokeLinecap="round"
         initial={{ pathLength: 0 }}
         animate={{ pathLength: 1 }}
-        transition={{ duration: 0.5, ease: "easeInOut" }}
+        transition={{ duration: 1.5, ease: "easeInOut" }}
       />
       <Motion.path
         d="M22 33.5l7 7L43 26.5"
@@ -44,7 +44,7 @@ const AnimatedSuccessIcon = () => (
         strokeLinejoin="round"
         initial={{ pathLength: 0 }}
         animate={{ pathLength: 1 }}
-        transition={{ duration: 0.35, ease: "easeOut", delay: 0.2 }}
+        transition={{ duration: 1.35, ease: "easeOut", delay: 0.2 }}
       />
     </svg>
   </Motion.div>
