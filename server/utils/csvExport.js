@@ -4,6 +4,10 @@ const generateMonthlyExcel = async (students, sessions, records, year, month) =>
     const workbook = new excel.Workbook();
     const worksheet = workbook.addWorksheet('Monthly Attendance');
 
+    const HEADER_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB7DEE8' } }; // Light Blue
+    const ROLLNO_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } }; // Light Gray
+    const NAME_FILL = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF2CC' } }; // Light Yellow
+
     // 1. Determine Date Range
     // Goal: 1st of month to Today (if current month) or End of Month (if past)
     const today = new Date();
@@ -81,7 +85,7 @@ const generateMonthlyExcel = async (students, sessions, records, year, month) =>
         const dateKey = formatDateKey(currentDate);
         const headerText = formatHeaderDate(currentDate);
 
-        columns.push({ header: headerText, key: dateKey, width: 12 });
+        columns.push({ header: headerText, key: dateKey, width: 15 });
         dateKeys.push(dateKey);
 
         // Next day
@@ -91,7 +95,12 @@ const generateMonthlyExcel = async (students, sessions, records, year, month) =>
     worksheet.columns = columns;
 
     // Style the header row
-    worksheet.getRow(1).font = { bold: true };
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, size: 13 };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.eachCell((cell) => {
+        cell.fill = HEADER_FILL;
+    });
 
     // 4. Add Rows
     students.forEach(student => {
@@ -120,15 +129,53 @@ const generateMonthlyExcel = async (students, sessions, records, year, month) =>
                     pattern: 'solid',
                     fgColor: { argb: 'FFC6EFCE' } // Light Green
                 };
+                cell.font = { ...(cell.font || {}), bold: true, size: 13 };
             } else if (val === 'A') {
                 cell.fill = {
                     type: 'pattern',
                     pattern: 'solid',
                     fgColor: { argb: 'FFFFC7CE' } // Light Red
                 };
+                cell.font = { ...(cell.font || {}), bold: true, size: 13 };
             }
         });
     });
+
+    // 6. Global styling (alignment, borders, font size, special column fills)
+    const rowCount = worksheet.rowCount;
+    const colCount = columns.length;
+
+    for (let r = 1; r <= rowCount; r += 1) {
+        const row = worksheet.getRow(r);
+        for (let c = 1; c <= colCount; c += 1) {
+            const cell = row.getCell(c);
+
+            // Center align all text
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Apply thin border on all sides
+            cell.border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+
+            // Set font size 13 everywhere, preserve existing bold
+            const existingFont = cell.font || {};
+            const shouldBeBold = existingFont.bold === true || cell.value === 'P' || cell.value === 'A' || r === 1;
+            cell.font = { ...existingFont, size: 13, bold: shouldBeBold };
+
+            // Special fill for Roll No & Name columns (excluding header row)
+            if (r > 1 && c === 1) {
+                cell.fill = ROLLNO_FILL;
+            }
+            if (r > 1 && c === 2) {
+                cell.fill = NAME_FILL;
+            }
+        }
+        row.commit();
+    }
 
     // Generate buffer
     const buffer = await workbook.xlsx.writeBuffer();
