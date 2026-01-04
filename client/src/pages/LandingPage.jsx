@@ -8,6 +8,7 @@ import Institutions from '../components/landing/Institutions';
 import Roles from '../components/landing/Roles';
 import FinalCTA from '../components/landing/FinalCTA';
 import Footer from '../components/landing/Footer';
+import { DeveloperCarousel } from '../components/Carousel/DeveloperCarousel';
 
 const LandingPage = () => {
     return (
@@ -24,6 +25,7 @@ const LandingPage = () => {
             <Features />
             <Institutions />
             <Roles />
+            <DeveloperCarousel />
             <FinalCTA />
             <Footer />
         </div>
