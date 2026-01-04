@@ -3,10 +3,22 @@ const axios = require('axios');
 // Get AI Service URL from environment variables
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL;
 
+if (!AI_SERVICE_URL) {
+    throw new Error("AI_SERVICE_URL is not defined");
+}
+
+if (!process.env.AI_API_KEY) {
+    throw new Error("AI_API_KEY is not defined");
+}
+
+
 // Create a single axios instance with timeout
 const apiClient = axios.create({
     baseURL: AI_SERVICE_URL,
-    timeout: 80000, // 30 seconds
+    headers: {
+      "X-API-KEY": process.env.AI_API_KEY
+    },
+    timeout: 180000, // 30 seconds
 });
 
 /**

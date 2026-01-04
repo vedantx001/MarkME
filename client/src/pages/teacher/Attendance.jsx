@@ -1,6 +1,6 @@
 // src/pages/teacher/Attendance.jsx
 
-import { motion as Motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence, m } from "framer-motion";
 import { Download, RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
 import ImageUpload from "../../components/attendance/ImageUpload";
 import AttendanceLegend from "../../components/attendance/AttendanceLegend";
@@ -34,7 +34,7 @@ const AnimatedSuccessIcon = () => (
         strokeLinecap="round"
         initial={{ pathLength: 0 }}
         animate={{ pathLength: 1 }}
-        transition={{ duration: 0.5, ease: "easeInOut" }}
+        transition={{ duration: 1.5, ease: "easeInOut" }}
       />
       <Motion.path
         d="M22 33.5l7 7L43 26.5"
@@ -44,7 +44,7 @@ const AnimatedSuccessIcon = () => (
         strokeLinejoin="round"
         initial={{ pathLength: 0 }}
         animate={{ pathLength: 1 }}
-        transition={{ duration: 0.35, ease: "easeOut", delay: 0.2 }}
+        transition={{ duration: 1.35, ease: "easeOut", delay: 0.2 }}
       />
     </svg>
   </Motion.div>
@@ -152,9 +152,10 @@ const Attendance = () => {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
     const date = `${year}-${month}`;
     const url = `${baseUrl}/reports/class/${activeClass.id}/month/${date}`;
-
+  
     setReportDownloading(true);
     try {
       const token = localStorage.getItem("accessToken");
@@ -168,11 +169,8 @@ const Attendance = () => {
 
       const blob = await res.blob();
 
-      const contentDisposition = res.headers.get("content-disposition") || "";
-      const match = contentDisposition.match(/filename\*?=([^;]+)|filename="?([^";]+)"?/i);
-      const fallbackName = `Attendance_Report_${year}_${month}.xlsx`;
-      const rawName = (match?.[2] || match?.[1] || fallbackName).replace(/^UTF-8''/i, "");
-      const fileName = decodeURIComponent(rawName);
+      // Force a consistent, user-friendly filename
+      const fileName = `Attendance_Report (${day}-${month}-${year}).xlsx`;
 
       const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement("a");

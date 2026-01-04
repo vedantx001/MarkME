@@ -1,14 +1,17 @@
 import os
 from dotenv import load_dotenv
 
+
+
 # 1. Environment setup (MUST happen before other imports)
 load_dotenv()
 
 host = os.getenv("HOST")
 port = os.getenv("PORT")    
 
-from fastapi import FastAPI
+from fastapi import FastAPI     
 from routers import face_routes
+
 
 # 2. FastAPI app initialization
 app = FastAPI(title="Attendance AI Service")

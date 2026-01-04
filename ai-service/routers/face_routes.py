@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Set
+from core.security import verify_api_key
 import logging
 import os
 from dotenv import load_dotenv
@@ -14,7 +15,9 @@ from core.utils import download_image
 from core.face_processor import get_embeddings_from_image, compute_similarity
 from database.mongo import get_known_encodings, save_student_embedding
 
-router = APIRouter()
+router = APIRouter(
+    dependencies=[Depends(verify_api_key)]
+)
 logger = logging.getLogger(__name__)
 
 @router.post("/generate-embedding")
