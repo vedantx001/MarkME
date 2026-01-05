@@ -258,12 +258,11 @@ exports.bulkUpload = async (req, res) => {
       return res.status(404).json({ message: "School not found." });
     }
 
-    // Sanitize names
-    const sanitize = (str) => str.toLowerCase().replace(/\s+/g, '_');
-    const schoolName = sanitize(school.name);
-    const className = sanitize(classExists.name);
+    // Use exact names
+    const schoolName = school.name;
+    const className = classExists.name;
 
-    // Path: [school_name]/student-data/[class_name]
+    // Path: [School Name]/student-data/[Class Name]
     const folderPath = `${schoolName}/student-data/${className}`;
 
     // Upload to Cloudinary (Raw)
