@@ -2,9 +2,11 @@ const multer = require('multer');
 const path = require('path');
 
 // Configure storage
+const os = require('os');
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    // Complies with ephemeral hosting constraints (Railway/Render)
+    cb(null, os.tmpdir());
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -28,6 +30,21 @@ const fileFilter = (req, file, cb) => {
     cb(null, true);
   } else {
     cb(new Error('Invalid file type. Only JPG, PNG, and Excel files are allowed.'), false);
+  }
+};
+
+const excelFilter = (req, file, cb) => {
+  const allowedMimeTypes = [
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  ];
+
+  // Also check extension strictly because mimetypes can vary
+  const ext = path.extname(file.originalname).toLowerCase();
+
+  if (allowedMimeTypes.includes(file.mimetype) || ext === '.xlsx') {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only .xlsx Excel files are allowed.'), false);
   }
 };
 
@@ -89,8 +106,14 @@ const uploadClassroomStorage = multer({
   }
 });
 
+const uploadExcelStorage = multer({
+  storage: storage, // uses /tmp from os.tmpdir() defined above
+  fileFilter: excelFilter,
+  limits: { fileSize: 10 * 1024 * 1024 }
+});
+
 const uploadImage = upload.array('images', 4);
-const uploadExcel = upload.single('file');
+const uploadExcel = uploadExcelStorage.single('excelFile');
 const uploadZip = uploadZipStorage.single('file');
 const uploadClassroomImage = uploadClassroomStorage.single('classroomImage'); // Backward compat (single image)
 const uploadClassroomImages = uploadClassroomStorage.array('classroomImages', 4); // Preferred (1-4 images)

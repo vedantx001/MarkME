@@ -79,7 +79,7 @@ export const deleteStudent = async (studentId) => {
 export const bulkUploadStudentsExcel = async ({ classId, file }) => {
   const form = new FormData();
   form.append("classId", classId);
-  form.append("file", file);
+  form.append("excelFile", file);
   return apiFetch("/students/bulk-upload", { method: "POST", auth: true, body: form });
 };
 

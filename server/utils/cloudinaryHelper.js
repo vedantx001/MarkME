@@ -48,6 +48,37 @@ const uploadToCloudinary = (fileBuffer, folderPath, publicId) => {
 };
 
 /**
+ * Uploads a raw file (like Excel) from disk to Cloudinary.
+ * @param {string} filePath - Local path to the file (e.g. /tmp/...).
+ * @param {string} folderPath - Destination folder in Cloudinary.
+ * @param {string} publicId - Optional public ID.
+ * @returns {Promise<string>} - The secure URL.
+ */
+const uploadFileToCloudinary = (filePath, folderPath, publicId) => {
+    return new Promise((resolve, reject) => {
+        const options = {
+            folder: folderPath,
+            resource_type: "raw",
+            use_filename: true,
+            unique_filename: false,
+            overwrite: true
+        };
+
+        if (publicId) {
+            options.public_id = publicId;
+        }
+
+        cloudinary.uploader.upload(filePath, options, (error, result) => {
+            if (error) {
+                console.error("Cloudinary raw upload error:", error);
+                return reject(error);
+            }
+            resolve(result.secure_url);
+        });
+    });
+};
+
+/**
  * Deletes an image from Cloudinary using its public ID.
  * @param {string} publicId - The public ID of the image to delete.
  * @returns {Promise<Object>} - The result of the deletion.
@@ -68,5 +99,6 @@ const deleteFromCloudinary = (publicId) => {
 
 module.exports = {
     uploadToCloudinary,
-    deleteFromCloudinary
+    deleteFromCloudinary,
+    uploadFileToCloudinary
 };

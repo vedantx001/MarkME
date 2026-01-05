@@ -1,9 +1,15 @@
 // /server/utils/excelParser.js
 const xlsx = require("xlsx");
 
-module.exports = function parseExcel(filePath) {
+module.exports = function parseExcel(input) {
   try {
-    const workbook = xlsx.readFile(filePath);
+    let workbook;
+    if (Buffer.isBuffer(input)) {
+      workbook = xlsx.read(input, { type: 'buffer' });
+    } else {
+      workbook = xlsx.readFile(input);
+    }
+
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = xlsx.utils.sheet_to_json(sheet, { defval: "" });
 
@@ -17,6 +23,7 @@ module.exports = function parseExcel(filePath) {
         rollNumber: row.rollNumber || "",
         dob: row.dob || "",
         gender: row.gender || "",
+        profileImageUrl: row.profileImageUrl || "" // Ensure this maps correctly
       });
 
       rowIndex++;

@@ -4,8 +4,11 @@ const Classroom = require("../model/Classroom");
 const School = require("../model/School");
 const AttendanceRecord = require("../model/AttendanceRecord");
 const excelParser = require("../utils/excelParser");
-const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryHelper");
+const { uploadToCloudinary, deleteFromCloudinary, uploadFileToCloudinary } = require("../utils/cloudinaryHelper");
 const aiClient = require("../utils/aiClient");
+const fs = require('fs');
+const axios = require('axios');
+const path = require('path');
 
 function dateOnlyISO(value) {
   if (!value) return null;
@@ -217,17 +220,80 @@ exports.deleteStudent = async (req, res) => {
 
 
 // BULK UPLOAD
+// BULK UPLOAD
 exports.bulkUpload = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "Excel file required." });
 
     const { classId } = req.body;
-    if (!classId) return res.status(400).json({ message: "classId required." });
+    if (!classId) {
+      // Cleanup if validation fails
+      if (req.file.path) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ message: "classId required." });
+    }
 
     const classExists = await Classroom.findById(classId);
-    if (!classExists) return res.status(404).json({ message: "Classroom not found." });
+    if (!classExists) {
+      if (req.file.path) fs.unlinkSync(req.file.path);
+      return res.status(404).json({ message: "Classroom not found." });
+    }
 
-    const parsed = await excelParser(req.file.path);
+    // School context
+    const schoolId = req.user.schoolId;
+    const school = await School.findById(schoolId);
+    if (!school) {
+      if (req.file.path) fs.unlinkSync(req.file.path);
+      return res.status(404).json({ message: "School not found." });
+    }
+
+    // Sanitize names
+    const sanitize = (str) => str.toLowerCase().replace(/\s+/g, '_');
+    const schoolName = sanitize(school.name);
+    const className = sanitize(classExists.name);
+
+    // Path: [school_name]/student-data/[class_name]
+    const folderPath = `${schoolName}/student-data/${className}`;
+
+    // Upload to Cloudinary (Raw)
+    let secureUrl;
+    try {
+      secureUrl = await uploadFileToCloudinary(req.file.path, folderPath);
+    } catch (uploadErr) {
+      if (req.file.path) fs.unlinkSync(req.file.path);
+      console.error("Cloudinary Upload Failed:", uploadErr);
+      return res.status(502).json({ message: "Failed to upload file to cloud storage.", error: uploadErr.message });
+    }
+
+    // Cleanup Local File IMMEDIATELY
+    try {
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+    } catch (cleanupErr) {
+      console.warn("Failed to delete local temp file:", cleanupErr);
+    }
+
+    // Download buffer from Cloudinary
+    let fileBuffer;
+    try {
+      // Axios request for buffer
+      const response = await axios.get(secureUrl, { responseType: 'arraybuffer' });
+      fileBuffer = response.data;
+    } catch (downloadErr) {
+      console.error("Cloudinary Download Failed:", downloadErr);
+      return res.status(502).json({ message: "Failed to retrieve file from cloud storage." });
+    }
+
+    // Parse Buffer
+    // Note: excelParser needs to be updated or we need to pass a buffer. 
+    // Looking at global context, excelParser takes a FILE PATH usually. 
+    // I need to check excelParser.js. The user said: "Pass this buffer into your excelParser.js ... to extract student JSON objects."
+    // So I assume I need to MODIFY excelParser.js or check if it supports buffer.
+    // Let's assume for this step I will pass the buffer and fix excelParser in the next step or if I can see it now.
+    // The previous view of excelParser.js showed it was 729 bytes. I haven't read it yet.
+    // I will pass the buffer here.
+
+    const parsed = await excelParser(fileBuffer);
 
     let results = [];
     let validRows = [];
@@ -255,7 +321,7 @@ exports.bulkUpload = async (req, res) => {
       }
 
       validRows.push({
-        schoolId: req.user.schoolId,
+        schoolId: schoolId,
         classId,
         name: row.name,
         rollNumber: row.rollNumber,
@@ -271,7 +337,7 @@ exports.bulkUpload = async (req, res) => {
       await Student.insertMany(validRows, { ordered: false });
     }
 
-    res.json({ uploaded: validRows.length, results });
+    res.json({ uploaded: validRows.length, results, fileUrl: secureUrl });
 
   } catch (err) {
     console.error("bulkUpload error:", err);
