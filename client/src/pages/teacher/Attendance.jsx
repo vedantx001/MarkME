@@ -271,7 +271,7 @@ const Attendance = () => {
           <Motion.div
             key="preview"
             initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
-            className="space-y-6"
+            className="space-y-6 py-5"
           >
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <AttendanceLegend />

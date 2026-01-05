@@ -12,9 +12,21 @@ const path = require('path');
 
 function dateOnlyISO(value) {
   if (!value) return null;
+
+  // If server already provides a date-only string, keep it.
+  const asString = typeof value === "string" ? value : null;
+  if (asString && /^\d{4}-\d{2}-\d{2}$/.test(asString)) return asString;
+
+  // IMPORTANT:
+  // Do NOT use toISOString() here. toISOString() converts the date to UTC,
+  // which can shift a local "start of day" date into the previous/next day.
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toISOString().split("T")[0];
+
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 exports.getStudents = async (req, res) => {

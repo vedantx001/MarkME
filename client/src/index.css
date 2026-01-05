@@ -1,6 +1,8 @@
 /* src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 @import "tailwindcss";
+
 
 :root {
     --primary-bg: #fbfdff;
@@ -15,6 +17,57 @@
     --primary-accent-rgb: 45 55 72;
     --secondary-accent-rgb: 133 199 242;
     --primary-text-rgb: 14 14 17;
+
+    /* === LIGHT THEME (Default) === */
+
+    /* Primary Backgrounds */
+    --bg-primary: #FAF7F2;
+    /* Warm Ivory */
+    --bg-secondary: #F5F0E8;
+    /* Warm Stone */
+    --bg-tertiary: #EDE6DB;
+    /* Cream Sand */
+
+    /* Glass Surfaces */
+    --glass-bg: rgba(255, 253, 250, 0.72);
+    --glass-border: rgba(125, 211, 252, 0.2);
+    --glass-shadow: rgba(14, 165, 233, 0.08);
+
+    /* Text Colors */
+    --text-primary: #2C2824;
+    /* Deep Charcoal */
+    --text-secondary: #5A534A;
+    /* Warm Gray */
+    --text-tertiary: #8A8278;
+    /* Muted Stone */
+
+    /* Accent Colors - Sky Blue */
+    --accent-primary: #0EA5E9;
+    /* Sky 500 */
+    --accent-secondary: #38BDF8;
+    /* Sky 400 */
+    --accent-tertiary: #7DD3FC;
+    /* Sky 300 */
+    --accent-subtle: rgba(14, 165, 233, 0.15);
+
+    /* Particle Colors */
+    --particle-primary: rgba(14, 165, 233, 0.6);
+    --particle-secondary: rgba(56, 189, 248, 0.4);
+    --particle-tertiary: rgba(125, 211, 252, 0.25);
+
+    /* Overlays */
+    --overlay-bg: rgba(250, 247, 242, 0.92);
+    --overlay-blur: 24px;
+
+    /* Borders & Dividers */
+    --border-subtle: rgba(44, 40, 36, 0.08);
+    --border-medium: rgba(44, 40, 36, 0.15);
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(14, 165, 233, 0.06);
+    --shadow-md: 0 8px 24px rgba(14, 165, 233, 0.1);
+    --shadow-lg: 0 16px 48px rgba(14, 165, 233, 0.14);
+    --shadow-glow: 0 0 40px rgba(14, 165, 233, 0.2);
 }
 
 body {
@@ -48,4 +101,181 @@ header {
     border-color: #3182CE;
     background-color: #ffffff;
     box-shadow: 0 0 0 4px rgba(49, 130, 206, 0.1);
+}
+
+.heading-display {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+.heading-xl {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.1;
+}
+
+.heading-lg {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.heading-md {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.heading-sm {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.text-body {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+.text-body-lg {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+.text-caption {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   Glass Morphism
+   ========================================================================== */
+
+.glass-surface {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-md);
+}
+
+.glass-surface-strong {
+  background: var(--overlay-bg);
+  backdrop-filter: blur(var(--overlay-blur));
+  -webkit-backdrop-filter: blur(var(--overlay-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ==========================================================================
+   Theme Transition Wave
+   ========================================================================== */
+
+.theme-wave {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 200vmax;
+  height: 200vmax;
+  background: var(--bg-primary);
+  border-radius: 50%;
+  transform: translate(50%, -50%) scale(0);
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0;
+}
+
+.theme-wave.active {
+  animation: themeWaveExpand 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes themeWaveExpand {
+  0% {
+    transform: translate(50%, -50%) scale(0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* ==========================================================================
+   Scrollbar
+   ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
+/* ==========================================================================
+   Selection
+   ========================================================================== */
+
+::selection {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ==========================================================================
+   Focus States (Accessibility)
+   ========================================================================== */
+
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
 }
