@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
-import { Users, Search, GraduationCap } from "lucide-react";
+import { Users, Search, GraduationCap, ArrowLeft } from "lucide-react";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { fetchClassroomStudents } from "../../api/student.api";
 import { listMyClassesApi } from "../../api/classes.api";
@@ -138,7 +138,21 @@ const Classroom = ({ basePath = "/teacher", defaultClassId = "class-10-a" }) => 
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 p-4 md:p-8">
+    <div className="max-w-7xl mx-auto space-y-8 p-4 md:pb-20">
+      {/* Back button (shown for detail routes like /principal/classrooms/:classId) */}
+      {effectiveClassId ? (
+        <div className="flex items-center">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-(--primary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] text-(--primary-accent) font-semibold hover:bg-(--primary-accent) hover:text-white transition-colors cursor-pointer"
+          >
+            <ArrowLeft size={16} />
+            Back
+          </button>
+        </div>
+      ) : null}
+
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-(--primary-bg) p-6 rounded-2xl border border-[rgb(var(--primary-accent-rgb)/0.05)] shadow-sm">
         <div>

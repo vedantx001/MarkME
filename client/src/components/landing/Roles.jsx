@@ -41,7 +41,7 @@ const Roles = () => {
                     className="grid grid-cols-1 lg:grid-cols-3 gap-8"
                 >
                     {/* Admin */}
-                    <motion.div variants={{ hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0 } }} className="p-1 rounded-2xl bg-gradient-to-b from-gray-200 to-transparent">
+                    <motion.div variants={{ hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0 } }} className="p-1 rounded-2xl bg-linear-to-b from-gray-200 to-transparent">
                         <div className="bg-white p-8 rounded-[calc(1rem-1px)] h-full shadow-sm hover:shadow-md transition-shadow">
                             <h3 className="heading-font text-xl font-bold mb-4 text-[#2D3748]">The Admin</h3>
                             <ul className="space-y-4 text-sm text-gray-600 font-sans">
@@ -52,7 +52,7 @@ const Roles = () => {
                         </div>
                     </motion.div>
                     {/* Teacher */}
-                    <motion.div variants={{ hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0 } }} className="p-1 rounded-2xl bg-gradient-to-b from-[#85C7F2] to-transparent">
+                    <motion.div variants={{ hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0 } }} className="p-1 rounded-2xl bg-linear-to-b from-[#85C7F2] to-transparent">
                         <div className="bg-white p-8 rounded-[calc(1rem-1px)] h-full shadow-sm hover:shadow-md transition-shadow">
                             <h3 className="heading-font text-xl font-bold mb-4 text-[#2D3748]">The Teacher</h3>
                             <ul className="space-y-4 text-sm text-gray-600 font-sans">
@@ -63,7 +63,7 @@ const Roles = () => {
                         </div>
                     </motion.div>
                     {/* Principal */}
-                    <motion.div variants={{ hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0 } }} className="p-1 rounded-2xl bg-gradient-to-b from-[#2D3748] to-transparent">
+                    <motion.div variants={{ hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0 } }} className="p-1 rounded-2xl bg-linear-to-b from-[#2D3748] to-transparent">
                         <div className="bg-white p-8 rounded-[calc(1rem-1px)] h-full shadow-sm hover:shadow-md transition-shadow">
                             <h3 className="heading-font text-xl font-bold mb-4 text-[#2D3748]">The Principal</h3>
                             <ul className="space-y-4 text-sm text-gray-600 font-sans">

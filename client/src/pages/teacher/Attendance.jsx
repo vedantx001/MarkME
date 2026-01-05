@@ -11,6 +11,18 @@ import { uploadClassroomImages, submitAttendance } from "../../api/attendance.ap
 import { listMyClassesApi } from "../../api/classes.api";
 import { useEffect, useMemo, useState } from "react";
 
+const SUBMITTED_OVERLAY_MS = 1750;
+
+const getLocalYyyyMmDd = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const submittedReportKey = (classId) => `attendance:submittedReport:${classId}`;
+
 const AnimatedSuccessIcon = () => (
   <Motion.div
     initial={{ opacity: 0, scale: 0.9 }}
@@ -64,6 +76,54 @@ const Attendance = () => {
   const [activeClass, setActiveClass] = useState(null);
   const [classesLoading, setClassesLoading] = useState(true);
   const [reportDownloading, setReportDownloading] = useState(false);
+  const [showSubmittedOverlay, setShowSubmittedOverlay] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  const handleResetFlow = () => {
+    try {
+      if (typeof window !== "undefined" && activeClass?.id) {
+        localStorage.removeItem(submittedReportKey(activeClass.id));
+      }
+    } catch {
+      // ignore storage failures
+    }
+    resetFlow();
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setPrefersReducedMotion(Boolean(mq.matches));
+    onChange();
+
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    }
+
+    mq.addListener(onChange);
+    return () => mq.removeListener(onChange);
+  }, []);
+
+  useEffect(() => {
+    if (stage !== "submitted") {
+      setShowSubmittedOverlay(false);
+      return;
+    }
+
+    if (prefersReducedMotion) {
+      setShowSubmittedOverlay(false);
+      return;
+    }
+
+    setShowSubmittedOverlay(true);
+    const timer = window.setTimeout(() => {
+      setShowSubmittedOverlay(false);
+    }, SUBMITTED_OVERLAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [stage, prefersReducedMotion]);
 
   useEffect(() => {
     let alive = true;
@@ -87,6 +147,24 @@ const Attendance = () => {
       alive = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (classesLoading) return;
+    if (!activeClass?.id) return;
+
+    try {
+      const stored = localStorage.getItem(submittedReportKey(activeClass.id));
+      if (stored === getLocalYyyyMmDd()) {
+        // Ensure the UI is consistent even if the store is fresh after login.
+        setImages([]);
+        setAttendanceData([]);
+        setSessionId(null);
+        setStage("submitted");
+      }
+    } catch {
+      // ignore storage failures
+    }
+  }, [activeClass?.id, classesLoading, setAttendanceData, setImages, setSessionId, setStage]);
 
   const summary = useMemo(() => {
     const present = (attendanceData || []).filter((s) => s.status === "P");
@@ -155,7 +233,7 @@ const Attendance = () => {
     const day = String(now.getDate()).padStart(2, "0");
     const date = `${year}-${month}`;
     const url = `${baseUrl}/reports/class/${activeClass.id}/month/${date}`;
-  
+
     setReportDownloading(true);
     try {
       const token = localStorage.getItem("accessToken");
@@ -180,6 +258,13 @@ const Attendance = () => {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(blobUrl);
+
+      // Persist: if report is generated for today, keep showing "submitted" stage for the day.
+      try {
+        localStorage.setItem(submittedReportKey(activeClass.id), getLocalYyyyMmDd());
+      } catch {
+        // ignore storage failures
+      }
     } catch (error) {
       console.error("Failed to download report", error);
     } finally {
@@ -208,7 +293,7 @@ const Attendance = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto pb-25">
       {/* Header Section */}
       <div className="mb-8 text-center md:text-left">
         <h1 className="text-2xl md:text-3xl font-bold text-(--primary-text) tracking-tight">Take Attendance</h1>
@@ -219,6 +304,31 @@ const Attendance = () => {
       </div>
 
       <StepIndicator currentStage={stage} />
+
+      <AnimatePresence>
+        {stage === "submitted" && showSubmittedOverlay && (
+          <Motion.div
+            key="submitted-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-white backdrop-blur-xl"
+          >
+            <Motion.div
+              initial={{ opacity: 0, scale: 0.98, y: 6 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, y: 6 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="text-center"
+            >
+              <AnimatedSuccessIcon />
+              <div className="mt-4 text-sm font-semibold text-(--primary-text)">Attendance submitted</div>
+              <div className="mt-1 text-xs text-[rgb(var(--primary-accent-rgb)/0.6)]">Saving your record…</div>
+            </Motion.div>
+          </Motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence mode="wait">
         {/* STAGE: UPLOAD */}
@@ -276,7 +386,7 @@ const Attendance = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <AttendanceLegend />
               <button
-                onClick={resetFlow}
+                onClick={handleResetFlow}
                 style={{ cursor: 'pointer' }}
                 className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--primary-accent-rgb)/0.6)] hover:text-(--primary-text) transition-colors"
               >
@@ -327,14 +437,21 @@ const Attendance = () => {
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             className="bg-(--primary-bg) rounded-2xl shadow-sm border border-[rgb(var(--primary-accent-rgb)/0.05)] p-12 text-center space-y-6 max-w-md mx-auto"
           >
-            <AnimatedSuccessIcon />
+            <div className="flex">
+              {/* <AnimatedSuccessIcon /> */}
+              <img
+                src="/undraw_document-ready_o5d5.svg"
+                alt="Document ready illustration"
+                loading="lazy"
+                className="w-30 h-30 max-w-md mx-auto"
+              />
+            </div>
             <div>
               <h2 className="text-2xl font-bold text-(--primary-text)">Submission Complete!</h2>
               <p className="text-[rgb(var(--primary-accent-rgb)/0.6)] mt-2 font-medium">
                 Attendance for {activeClass?.name || "your class"} has been recorded and synced.
               </p>
             </div>
-
             <button
               onClick={handleDownloadReport}
               disabled={!activeClass?.id || reportDownloading}
@@ -350,7 +467,7 @@ const Attendance = () => {
             </button>
 
             <button
-              onClick={resetFlow}
+              onClick={handleResetFlow}
               style={{ cursor: 'pointer' }}
               className="w-full py-3 bg-(--primary-accent) text-(--primary-bg) font-bold rounded-xl hover:bg-(--primary-text) transition-colors"
             >

@@ -17,6 +17,15 @@ const NotFound = () => {
           </div>
         </div>
 
+        <div className="mt-6">
+          <img
+            src="/Search.svg"
+            alt="Page not found illustration"
+            loading="lazy"
+            className="w-full max-w-md mx-auto"
+          />
+        </div>
+
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
             to="/"

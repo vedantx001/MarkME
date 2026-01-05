@@ -17,9 +17,32 @@ export function DeveloperCarousel() {
     const [scrollLeft, setScrollLeft] = useState(0);
     const [velocity, setVelocity] = useState(0);
     const lastX = useRef(0);
-    const lastTime = useRef(Date.now());
+    const lastTime = useRef(0);
     const animationRef = useRef(null);
     const isMouseOverCarousel = useRef(false);
+    const isCarouselFullyVisible = useRef(false);
+
+    // Only enable wheel-to-horizontal when the carousel container is fully in the viewport
+    useEffect(() => {
+        const element = containerRef.current;
+        if (!element) return;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                // Some browsers can report 0.999.. due to rounding; treat ~99% as "fully visible"
+                isCarouselFullyVisible.current = Boolean(entry?.isIntersecting) && (entry?.intersectionRatio ?? 0) >= 0.99;
+            },
+            {
+                threshold: [0, 0.25, 0.5, 0.75, 0.99, 1]
+            }
+        );
+
+        observer.observe(element);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
 
     // Calculate card width based on viewport
     const getCardWidth = () => {
@@ -60,6 +83,9 @@ export function DeveloperCarousel() {
         const handleWheel = (e) => {
             // Only hijack scroll when mouse is over the carousel section
             if (!isMouseOverCarousel.current) return;
+
+            // Only hijack when the carousel is fully visible in the viewport
+            if (!isCarouselFullyVisible.current) return;
 
             // Check if the carousel track has actually scrolled to the edge
             const track = trackRef.current;
@@ -192,6 +218,7 @@ export function DeveloperCarousel() {
         <>
             <section
                 ref={sectionRef}
+                id="developers"
                 className="carousel-section"
                 onMouseEnter={() => { isMouseOverCarousel.current = true; }}
                 onMouseLeave={() => { isMouseOverCarousel.current = false; }}

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ShieldAlert } from "lucide-react";
 
+
 const Forbidden = () => {
   return (
     <div className="min-h-screen bg-(--secondary-bg) flex items-center justify-center p-6">
@@ -17,18 +18,21 @@ const Forbidden = () => {
           </div>
         </div>
 
+        <div className="mt-6">
+          <img
+            src="/undraw_access-denied_krem.svg"
+            alt="Access denied illustration"
+            loading="lazy"
+            className="w-full max-w-md mx-auto"
+          />
+        </div>
+
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
-            to="/"
-            className="px-4 py-2 rounded-xl bg-(--primary-accent) text-(--primary-bg) font-bold hover:bg-(--primary-text) transition-colors"
-          >
-            Go Home
-          </Link>
-          <Link
-            to="/login"
+            to={-1}
             className="px-4 py-2 rounded-xl border border-[rgb(var(--primary-accent-rgb)/0.15)] bg-(--primary-bg) text-(--primary-accent) font-bold hover:bg-(--secondary-bg) transition-colors"
           >
-            Login
+            Go Back
           </Link>
         </div>
       </div>

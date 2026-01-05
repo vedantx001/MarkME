@@ -111,7 +111,7 @@ const Dashboard = () => {
       initial="hidden"
       animate="show"
       variants={containerVariants}
-      className="max-w-7xl mx-auto"
+      className="max-w-7xl mx-auto pb-20"
     >
       <AddTeacherForm
         isOpen={isAddTeacherOpen}

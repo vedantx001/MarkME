@@ -57,6 +57,8 @@ async function apiFetch(path, { method = 'GET', headers, body, auth = true, retr
     method,
     headers: finalHeaders,
     credentials: 'include',
+    // Avoid stale data from browser/proxy caches for API calls.
+    cache: 'no-store',
     body: body instanceof FormData ? body : body != null ? JSON.stringify(body) : undefined,
   });
 

@@ -59,7 +59,7 @@ const BulkStudentUploadForm = ({ isOpen, onClose, classroomId, onUploaded, mode 
     <AnimatePresence>
       {isOpen ? (
         <Motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-[rgb(var(--primary-text-rgb)/0.5)]"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-[rgb(var(--primary-text-rgb)/0.5)] w-full h-full"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -108,9 +108,9 @@ const BulkStudentUploadForm = ({ isOpen, onClose, classroomId, onUploaded, mode 
                       onChange={(e) => setExcel(e.target.files?.[0] ?? null)}
                     />
                   </div>
-                  <p className="text-xs text-(--primary-accent) opacity-60 ml-1">
+                  <li className="text-xs text-red-600 opacity-60 ml-1">
                     Upload Excel first to create student records, then upload ZIP for photos.
-                  </p>
+                  </li>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -127,9 +127,12 @@ const BulkStudentUploadForm = ({ isOpen, onClose, classroomId, onUploaded, mode 
                       onChange={(e) => setZip(e.target.files?.[0] ?? null)}
                     />
                   </div>
-                  <p className="text-xs text-(--primary-accent) opacity-60 ml-1">
+                  <li className="text-xs text-red-600 opacity-60 ml-1">
                     ZIP must contain images named by rollNumber (e.g., 101.jpg).
-                  </p>
+                  </li>
+                  <li className="text-xs text-red-600 opacity-60 ml-1">
+                    ZIP folder name must be the same as the classroom name(e.g., "10-A").
+                  </li>
                 </div>
               )}
 

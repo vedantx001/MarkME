@@ -9,6 +9,7 @@ import {
   FileSpreadsheet,
   FileArchive,
   GraduationCap,
+  ArrowLeft,
   MoreVertical,
   Mail,
   Phone,
@@ -75,30 +76,30 @@ const ClassroomDetail = () => {
       const gender = String(s?.gender ?? "").trim().toLowerCase();
       return name.includes(t) || roll.includes(t) || gender.includes(t);
     });
-}, [students, searchTerm]);
+  }, [students, searchTerm]);
 
-const presenceKey = (searchTerm.trim().toLowerCase() || "all");
+  const presenceKey = (searchTerm.trim().toLowerCase() || "all");
 
-const onDelete = (student) => {
-  setPendingDeleteStudent(student);
-  setConfirmDeleteOpen(true);
-};
+  const onDelete = (student) => {
+    setPendingDeleteStudent(student);
+    setConfirmDeleteOpen(true);
+  };
 
-const confirmDelete = async () => {
-  const student = pendingDeleteStudent;
-  if (!student) return;
+  const confirmDelete = async () => {
+    const student = pendingDeleteStudent;
+    if (!student) return;
 
-  try {
-    setRowBusyId(student.id);
-    await deleteStudent(student.id);
-    // Avoid full reload + re-animate: update locally so remaining students stay stable
-    setStudents((prev) => prev.filter((x) => x.id !== student.id));
-  } finally {
-    setRowBusyId(null);
-    setConfirmDeleteOpen(false);
-    setPendingDeleteStudent(null);
-  }
-};
+    try {
+      setRowBusyId(student.id);
+      await deleteStudent(student.id);
+      // Avoid full reload + re-animate: update locally so remaining students stay stable
+      setStudents((prev) => prev.filter((x) => x.id !== student.id));
+    } finally {
+      setRowBusyId(null);
+      setConfirmDeleteOpen(false);
+      setPendingDeleteStudent(null);
+    }
+  };
 
   const openEdit = (student) => {
     setSelectedStudent(student);
@@ -147,7 +148,7 @@ const confirmDelete = async () => {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 md:pb-20 max-w-7xl mx-auto space-y-6">
       {/* Screen alert (non-blocking) */}
       <AnimatePresence>
         {screenAlert ? (
@@ -268,6 +269,17 @@ const confirmDelete = async () => {
         onUpdated={load}
       />
 
+
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-(--primary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] text-(--primary-accent) font-semibold hover:bg-(--primary-accent) hover:text-white transition-colors cursor-pointer"
+        >
+          <ArrowLeft size={16} />
+          Back
+        </button>
+      </div>
       {/* Header */}
       <div className="bg-(--primary-bg) p-6 rounded-2xl border border-[rgb(var(--primary-accent-rgb)/0.05)] shadow-sm space-y-6">
         <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
@@ -350,7 +362,20 @@ const confirmDelete = async () => {
               key={s.id}
               variants={itemVariants}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-(--primary-bg) border border-[rgb(var(--primary-accent-rgb)/0.05)] rounded-2xl hover:shadow-lg transition-all group relative overflow-hidden flex"
+              role="button"
+              tabIndex={0}
+              onClick={() => {
+                if (rowBusyId === s.id) return;
+                navigate(`/admin/student/${s.id}`);
+              }}
+              onKeyDown={(e) => {
+                if (rowBusyId === s.id) return;
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigate(`/admin/student/${s.id}`);
+                }
+              }}
+              className="bg-(--primary-bg) border border-[rgb(var(--primary-accent-rgb)/0.05)] rounded-2xl hover:shadow-lg transition-all group relative overflow-hidden flex cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--secondary-accent) focus:ring-offset-2 focus:ring-offset-(--primary-bg)"
             >
               {/* Left Stripe Decoration */}
               <div className="w-1.5 bg-(--secondary-accent)" />
@@ -388,7 +413,10 @@ const confirmDelete = async () => {
                   {/* Actions - appear on hover (desktop) or always visible if needed */}
                   <div className="flex items-center gap-2 mt-2">
                     <button
-                      onClick={() => navigate(`/admin/student/${s.id}`)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/admin/student/${s.id}`);
+                      }}
                       className="text-xs font-semibold px-2 py-1 rounded-md bg-(--secondary-bg) text-(--primary-accent) hover:bg-(--secondary-accent) hover:text-(--secondary-bg) transition-colors"
                     >
                       Profile
@@ -396,7 +424,10 @@ const confirmDelete = async () => {
                     <div className="ml-auto flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         disabled={rowBusyId === s.id}
-                        onClick={() => openEdit(s)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEdit(s);
+                        }}
                         className="p-1.5 hover:bg-(--secondary-bg) rounded-full text-(--primary-accent)"
                         title="Edit"
                       >
@@ -404,7 +435,10 @@ const confirmDelete = async () => {
                       </button>
                       <button
                         disabled={rowBusyId === s.id}
-                        onClick={() => onDelete(s)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(s);
+                        }}
                         className="p-1.5 hover:bg-red-50 rounded-full text-red-500"
                         title="Delete"
                       >

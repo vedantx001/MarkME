@@ -1,6 +1,6 @@
 // src/components/common/Navbar.jsx
 import { motion } from "framer-motion";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { LogOut, User, Bell, Menu } from "lucide-react";
 import { useAuth } from "../../context/authContext";
 
@@ -18,11 +18,18 @@ const getPageTitle = (pathname) => {
 
 const Navbar = ({ toggleSidebar }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const title = getPageTitle(location.pathname);
 
   const { user, logout } = useAuth();
   const displayName = user?.name || "—";
   const roleLabel = user?.role ? String(user.role).toUpperCase() : "";
+
+  const handleLogout = async () => {
+    // Navigate first so we don't get redirected back to the last protected route.
+    navigate('/login', { replace: true, state: { forceRoleRedirect: true } });
+    await logout();
+  };
 
   return (
     <motion.header
@@ -67,7 +74,7 @@ const Navbar = ({ toggleSidebar }) => {
             whileTap={{ scale: 0.95 }}
             className="ml-2 p-2 md:px-3 md:py-1.5 rounded-lg bg-(--primary-accent) text-white flex items-center gap-2 hover:bg-(--primary-text) transition-all shadow-sm"
             style={{ cursor: 'pointer' }}
-            onClick={logout}
+            onClick={handleLogout}
           >
             <LogOut size={16} />
             <span className="hidden md:inline text-xs font-bold uppercase tracking-wider">Logout</span>

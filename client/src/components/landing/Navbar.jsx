@@ -24,9 +24,30 @@ const Navbar = () => {
                 </div>
 
                 <div className="hidden md:flex items-center gap-8">
-                    <a href="#workflow" className="text-sm font-medium hover:text-[#85C7F2] transition-colors cursor-pointer">Workflow</a>
-                    <a href="#features" className="text-sm font-medium hover:text-[#85C7F2] transition-colors cursor-pointer">Features</a>
-                    <a href="#roles" className="text-sm font-medium hover:text-[#85C7F2] transition-colors cursor-pointer">Solutions</a>
+                    <a
+                        href="#workflow"
+                        className="relative text-sm font-medium cursor-pointer transition-colors hover:text-[#85C7F2] after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2 after:-bottom-1.5 after:h-0.5 after:w-full after:bg-[#85C7F2] after:scale-x-0 after:origin-center after:transition-transform after:duration-300 hover:after:scale-x-100"
+                    >
+                        Workflow
+                    </a>
+                    <a
+                        href="#features"
+                        className="relative text-sm font-medium cursor-pointer transition-colors hover:text-[#85C7F2] after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2 after:-bottom-1.5 after:h-0.5 after:w-full after:bg-[#85C7F2] after:scale-x-0 after:origin-center after:transition-transform after:duration-300 hover:after:scale-x-100"
+                    >
+                        Features
+                    </a>
+                    <a
+                        href="#roles"
+                        className="relative text-sm font-medium cursor-pointer transition-colors hover:text-[#85C7F2] after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2 after:-bottom-1.5 after:h-0.5 after:w-full after:bg-[#85C7F2] after:scale-x-0 after:origin-center after:transition-transform after:duration-300 hover:after:scale-x-100"
+                    >
+                        Solutions
+                    </a>
+                    <a
+                        href="#developers"
+                        className="relative text-sm font-medium cursor-pointer transition-colors hover:text-[#85C7F2] after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2 after:-bottom-1.5 after:h-0.5 after:w-full after:bg-[#85C7F2] after:scale-x-0 after:origin-center after:transition-transform after:duration-300 hover:after:scale-x-100"
+                    >
+                        Developers
+                    </a>
                     <button
                         onClick={() => navigate('/login')}
                         className="px-5 py-2.5 bg-[#2D3748] text-white text-sm font-semibold rounded-lg hover:bg-[#1a202c] transition-all cursor-pointer"

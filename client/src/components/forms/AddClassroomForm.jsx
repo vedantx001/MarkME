@@ -40,6 +40,12 @@ const AddClassroomForm = ({ isOpen, onClose }) => {
       return;
     }
 
+    const stdNum = Number(stdValue);
+    if (stdNum < 1 || stdNum > 12) {
+      setError('Standard must be between 1 and 12');
+      return;
+    }
+
     if (!/^[A-Z]$/.test(divValue)) {
       setError('Division must be a single alphabet character (e.g., A)');
       return;
@@ -126,13 +132,19 @@ const AddClassroomForm = ({ isOpen, onClose }) => {
                       type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
+                      maxLength={2}
                       required
                       className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 pl-10 pr-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
                       placeholder="e.g. 5"
                       value={formData.std}
                       onChange={(e) => {
-                        const next = e.target.value.replace(/[^0-9]/g, '');
-                        setFormData({ ...formData, std: next });
+                        let next = e.target.value.replace(/[^0-9]/g, '');
+                        if (next === '') {
+                          setFormData({ ...formData, std: '' });
+                          return;
+                        }
+                        const num = Math.min(parseInt(next, 10) || 0, 12);
+                        setFormData({ ...formData, std: String(num) });
                       }}
                     />
                   </div>

@@ -17,19 +17,21 @@ const ServerError = () => {
           </div>
         </div>
 
+        <div className="mt-6">
+          <img
+            src="/Error-page.svg"
+            alt="Server error illustration"
+            loading="lazy"
+            className="w-full max-w-md mx-auto"
+          />
+        </div>
+
         <div className="mt-6 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 rounded-xl bg-(--primary-accent) text-(--primary-bg) font-bold hover:bg-(--primary-text) transition-colors"
-          >
-            Reload
-          </button>
           <Link
-            to="/"
+            to={-1}
             className="px-4 py-2 rounded-xl border border-[rgb(var(--primary-accent-rgb)/0.15)] bg-(--primary-bg) text-(--primary-accent) font-bold hover:bg-(--secondary-bg) transition-colors"
           >
-            Go Home
+            Go Back
           </Link>
         </div>
       </div>

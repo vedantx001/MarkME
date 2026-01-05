@@ -8,19 +8,44 @@ const EditClassroomForm = ({ isOpen, onClose, classroom }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  const currentEducationalYear = useMemo(() => {
+    const now = new Date();
+    // Academic year switches after June (i.e., from July 1)
+    const startYear = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+    return `${startYear}-${String((startYear + 1) % 100).padStart(2, '0')}`;
+  }, []);
+
+  const yearOptions = useMemo(() => {
+    const values = new Set([currentEducationalYear]);
+    const existing = String(classroom?.year || '').trim();
+    if (existing) values.add(existing);
+    return Array.from(values);
+  }, [currentEducationalYear, classroom?.year]);
+
   const teacherOptions = useMemo(
     () => (Array.isArray(teachers) ? teachers : []).map((t) => ({ id: t.id, name: t.name })),
     [teachers]
   );
 
   const initial = useMemo(
-    () => ({
-      year: classroom?.year || '',
-      std: classroom?.std || '',
-      div: classroom?.div || '',
-      classTeacherId: classroom?.classTeacherId || '',
-      name: classroom?.name || '',
-    }),
+    () => {
+      const year = classroom?.year || '';
+      const std = classroom?.std || '';
+      const div = classroom?.div || '';
+
+      const autoName = std && div && year ? `${String(std).trim()}-${String(div).trim().toUpperCase()} (${String(year).trim()})` : '';
+      const existingName = String(classroom?.name || '').trim();
+      const name = existingName && existingName !== autoName ? existingName : '';
+
+      return {
+        year,
+        std,
+        div,
+        classTeacherId: classroom?.classTeacherId || '',
+        // Blank means: use auto name from std/div/year (like Add form)
+        name,
+      };
+    },
     [classroom?.year, classroom?.std, classroom?.div, classroom?.classTeacherId, classroom?.name]
   );
 
@@ -40,6 +65,12 @@ const EditClassroomForm = ({ isOpen, onClose, classroom }) => {
 
     if (!/^\d+$/.test(stdValue)) {
       setError('Standard must be an integer number (e.g., 5)');
+      return;
+    }
+
+    const stdNum = Number(stdValue);
+    if (stdNum < 1 || stdNum > 12) {
+      setError('Standard must be between 1 and 12');
       return;
     }
 
@@ -105,13 +136,18 @@ const EditClassroomForm = ({ isOpen, onClose, classroom }) => {
                     size={18}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--primary-accent-rgb)/0.4)]"
                   />
-                  <input
-                    type="text"
+                  <select
                     required
                     className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 pl-10 pr-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
                     value={formData.year}
                     onChange={(e) => setFormData((p) => ({ ...p, year: e.target.value }))}
-                  />
+                  >
+                    {yearOptions.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -126,13 +162,19 @@ const EditClassroomForm = ({ isOpen, onClose, classroom }) => {
                     <input
                       type="text"
                       inputMode="numeric"
-                      pattern="\\d+"
+                      pattern="[0-9]*"
+                      maxLength={2}
                       required
                       className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 pl-10 pr-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
                       value={formData.std}
                       onChange={(e) => {
-                        const next = e.target.value.replace(/[^0-9]/g, '');
-                        setFormData((p) => ({ ...p, std: next }));
+                        let next = e.target.value.replace(/[^0-9]/g, '');
+                        if (next === '') {
+                          setFormData((p) => ({ ...p, std: '' }));
+                          return;
+                        }
+                        const num = Math.min(parseInt(next, 10) || 0, 12);
+                        setFormData((p) => ({ ...p, std: String(num) }));
                       }}
                     />
                   </div>
@@ -186,16 +228,6 @@ const EditClassroomForm = ({ isOpen, onClose, classroom }) => {
                     ))}
                   </select>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-(--primary-accent)">Display Name (optional)</label>
-                <input
-                  type="text"
-                  className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 px-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
-                  value={formData.name}
-                  onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
-                />
               </div>
 
               <div className="pt-2 flex gap-3">
