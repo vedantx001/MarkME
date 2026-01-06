@@ -11,6 +11,7 @@ import {
   updateAdminProfileApi,
 } from '../api/admin.api';
 import { fetchClassroomStudentsCount } from '../api/student.api';
+import { buildGenderAvatarUrl } from '../utils/avatar';
 
 const AdminContext = createContext();
 
@@ -42,9 +43,9 @@ export const AdminProvider = ({ children }) => {
       id: user?.id,
       name: user?.name || 'Admin',
       email: user?.email || '—',
-      avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user?.name || 'Admin')}`,
+      avatar: buildGenderAvatarUrl({ name: user?.name || 'Admin', gender: user?.gender }),
     }),
-    [user?.id, user?.name, user?.email]
+    [user?.id, user?.name, user?.email, user?.gender]
   );
 
   const updateAdminProfile = async ({ admin, school }) => {
@@ -64,6 +65,7 @@ export const AdminProvider = ({ children }) => {
     id: u?._id || u?.id,
     name: u?.name || '—',
     email: u?.email || '—',
+    gender: u?.gender,
     status: u?.isActive ? 'Active' : 'Disabled',
   });
 

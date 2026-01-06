@@ -53,6 +53,7 @@ export const AuthProvider = ({ children }) => {
         name: profile.name,
         email: profile.email,
         role: profile.role,
+        gender: profile.gender,
         schoolId: typeof profile.schoolId === 'string' ? profile.schoolId : school?.id,
         school,
       };

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import AddTeacherForm from '../../components/forms/AddTeacherForm';
 import EditTeacherForm from '../../components/forms/EditTeacherForm';
 import { motion, AnimatePresence } from 'framer-motion';
+import { buildGenderAvatarUrl } from '../../utils/avatar';
 
 const Teachers = () => {
   const navigate = useNavigate();
@@ -205,7 +206,7 @@ const Teachers = () => {
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="w-12 h-12 rounded-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.05)] overflow-hidden flex items-center justify-center">
-                  <img src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${teacher.name}`} alt={teacher.name} className="w-full h-full" />
+                  <img src={buildGenderAvatarUrl({ name: teacher.name, gender: teacher.gender })} alt={teacher.name} className="w-full h-full" />
                 </div>
                 <div className="flex items-center gap-2">
                   <button
