@@ -15,10 +15,11 @@ const EditTeacherForm = ({ isOpen, onClose, teacher }) => {
     () => ({
       name: teacher?.name || '',
       email: teacher?.email || '',
+      gender: teacher?.gender || 'MALE',
       password: '',
       isActive: teacher?.status === 'Active',
     }),
-    [teacher?.name, teacher?.email, teacher?.status]
+    [teacher?.name, teacher?.email, teacher?.gender, teacher?.status]
   );
 
   const [formData, setFormData] = useState(initial);
@@ -53,6 +54,7 @@ const EditTeacherForm = ({ isOpen, onClose, teacher }) => {
       const payload = {
         name: formData.name,
         email: formData.email,
+        gender: formData.gender,
         isActive: !!formData.isActive,
         ...(formData.password ? { password: formData.password } : {}),
       };
@@ -132,6 +134,18 @@ const EditTeacherForm = ({ isOpen, onClose, teacher }) => {
                     onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-(--primary-accent)">Gender</label>
+                <select
+                  className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 px-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
+                  value={formData.gender}
+                  onChange={(e) => setFormData((p) => ({ ...p, gender: e.target.value }))}
+                >
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                </select>
               </div>
 
               <div className="space-y-2">

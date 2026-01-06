@@ -16,12 +16,13 @@ const EditAdminProfileForm = ({ isOpen, onClose }) => {
     () => ({
       adminName: adminProfile?.name || '',
       adminEmail: adminProfile?.email || '',
+      adminGender: adminProfile?.gender || 'MALE',
       password: '',
       schoolName: schoolDetails?.name || '',
       schoolIdx: schoolDetails?.index || '',
       address: schoolDetails?.address || '',
     }),
-    [adminProfile?.name, adminProfile?.email, schoolDetails?.name, schoolDetails?.index, schoolDetails?.address]
+    [adminProfile?.name, adminProfile?.email, adminProfile?.gender, schoolDetails?.name, schoolDetails?.index, schoolDetails?.address]
   );
 
   const [formData, setFormData] = useState(initial);
@@ -57,6 +58,7 @@ const EditAdminProfileForm = ({ isOpen, onClose }) => {
         admin: {
           name: formData.adminName,
           email: formData.adminEmail,
+          gender: formData.adminGender,
           ...(formData.password ? { password: formData.password } : {}),
         },
         school: {
@@ -146,6 +148,18 @@ const EditAdminProfileForm = ({ isOpen, onClose }) => {
                           onChange={(e) => setFormData((p) => ({ ...p, adminEmail: e.target.value }))}
                         />
                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-(--primary-accent)">Gender</label>
+                      <select
+                        className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 px-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
+                        value={formData.adminGender}
+                        onChange={(e) => setFormData((p) => ({ ...p, adminGender: e.target.value }))}
+                      >
+                        <option value="MALE">Male</option>
+                        <option value="FEMALE">Female</option>
+                      </select>
                     </div>
 
                     <div className="space-y-2">

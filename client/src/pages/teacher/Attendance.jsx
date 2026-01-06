@@ -293,7 +293,7 @@ const Attendance = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto pb-25">
+    <div className="max-w-6xl mx-auto pb-25 relative">
       {/* Header Section */}
       <div className="mb-8 text-center md:text-left">
         <h1 className="text-2xl md:text-3xl font-bold text-(--primary-text) tracking-tight">Take Attendance</h1>
@@ -313,7 +313,7 @@ const Attendance = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-white backdrop-blur-xl"
+            className="absolute inset-0 z-20 flex items-center justify-center bg-(--primary-bg) backdrop-blur-xl"
           >
             <Motion.div
               initial={{ opacity: 0, scale: 0.98, y: 6 }}

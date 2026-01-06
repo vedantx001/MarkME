@@ -7,7 +7,7 @@ const AddTeacherForm = ({ isOpen, onClose }) => {
 const { createTeacher } = useAdmin();
 const [submitting, setSubmitting] = useState(false);
 const [error, setError] = useState('');
-const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+const [formData, setFormData] = useState({ name: '', email: '', password: '', gender: 'Select' });
 const [confirmPassword, setConfirmPassword] = useState('');
 const [showPassword, setShowPassword] = useState(false);
 const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -24,7 +24,7 @@ if ((formData.password || '') !== (confirmPassword || '')) {
 setSubmitting(true);
 try {
   await createTeacher(formData);
-  setFormData({ name: '', email: '', password: '' });
+  setFormData({ name: '', email: '', password: '', gender: 'Select' });
   setConfirmPassword('');
   setShowPassword(false);
   setShowConfirmPassword(false);
@@ -97,6 +97,19 @@ return (
               onChange={(e) => setFormData({...formData, email: e.target.value})}
             />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-(--primary-accent)">Gender</label>
+          <select
+            className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 px-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
+            value={formData.gender}
+            onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+          >
+            <option value="Select">Select</option>
+            <option value="MALE">Male</option>
+            <option value="FEMALE">Female</option>
+          </select>
         </div>
 
         <div className="space-y-2">

@@ -15,10 +15,11 @@ const EditPrincipalForm = ({ isOpen, onClose, principal }) => {
     () => ({
       name: principal?.name || '',
       email: principal?.email || '',
+      gender: principal?.gender || 'MALE',
       password: '',
       isActive: principal?.status === 'Active',
     }),
-    [principal?.name, principal?.email, principal?.status]
+    [principal?.name, principal?.email, principal?.gender, principal?.status]
   );
 
   const [formData, setFormData] = useState(initial);
@@ -53,6 +54,7 @@ const EditPrincipalForm = ({ isOpen, onClose, principal }) => {
       const payload = {
         name: formData.name,
         email: formData.email,
+        gender: formData.gender,
         isActive: !!formData.isActive,
         ...(formData.password ? { password: formData.password } : {}),
       };
@@ -135,6 +137,18 @@ const EditPrincipalForm = ({ isOpen, onClose, principal }) => {
                     onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-(--primary-accent)">Gender</label>
+                <select
+                  className="w-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] rounded-xl py-2.5 px-4 text-(--primary-text) focus:outline-none focus:border-(--secondary-accent) focus:ring-1 focus:ring-(--secondary-accent) transition-all"
+                  value={formData.gender}
+                  onChange={(e) => setFormData((p) => ({ ...p, gender: e.target.value }))}
+                >
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                </select>
               </div>
 
               <div className="space-y-2">

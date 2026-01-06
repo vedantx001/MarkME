@@ -43,6 +43,7 @@ export const AdminProvider = ({ children }) => {
       id: user?.id,
       name: user?.name || 'Admin',
       email: user?.email || '—',
+      gender: user?.gender,
       avatar: buildGenderAvatarUrl({ name: user?.name || 'Admin', gender: user?.gender }),
     }),
     [user?.id, user?.name, user?.email, user?.gender]
@@ -121,15 +122,15 @@ export const AdminProvider = ({ children }) => {
     await refreshStudentsCount(rooms);
   };
 
-  const createTeacher = async ({ name, email, password }) => {
-    await createSchoolUserApi({ name, email, password, role: 'TEACHER' });
+  const createTeacher = async ({ name, email, password, gender }) => {
+    await createSchoolUserApi({ name, email, password, gender, role: 'TEACHER' });
     await refreshTeachers();
   };
 
-  const createPrincipal = async ({ name, email, password }) => {
+  const createPrincipal = async ({ name, email, password, gender }) => {
     // Client enforces single principal.
     if (principal) return;
-    await createSchoolUserApi({ name, email, password, role: 'PRINCIPAL' });
+    await createSchoolUserApi({ name, email, password, gender, role: 'PRINCIPAL' });
     await refreshPrincipal();
   };
 

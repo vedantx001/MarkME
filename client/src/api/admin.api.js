@@ -1,10 +1,10 @@
 import { apiFetch } from './http';
 
-export async function createSchoolUserApi({ name, email, password, role }) {
+export async function createSchoolUserApi({ name, email, password, role, gender }) {
   return apiFetch('/admin/users', {
     method: 'POST',
     auth: true,
-    body: { name, email, password, role },
+    body: { name, email, password, role, gender },
   });
 }
 

@@ -9,7 +9,7 @@ module.exports = {
   createUser: async (req, res, next) => {
     try {
       const admin = req.user; // from authMiddleware
-      const { name, email, password, role } = req.body;
+      const { name, email, password, role, gender } = req.body;
 
       if (!name || !email || !password || !role) return res.status(422).json({ success: false, message: 'Missing fields' });
 
@@ -28,18 +28,27 @@ module.exports = {
 
       const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
+      let genderUpper;
+      if (typeof gender === 'string' && gender.trim()) {
+        genderUpper = gender.trim().toUpperCase();
+        if (!['MALE', 'FEMALE'].includes(genderUpper)) {
+          return res.status(422).json({ success: false, message: 'Invalid gender' });
+        }
+      }
+
       const created = await User.create({
         schoolId,
         name,
         email: email.toLowerCase(),
         passwordHash,
         role: roleUpper,
+        ...(genderUpper ? { gender: genderUpper } : {}),
         isActive: true,
       });
 
       return res.status(201).json({
         success: true,
-        user: { id: created._id, name: created.name, email: created.email, role: created.role, schoolId: created.schoolId },
+        user: { id: created._id, name: created.name, email: created.email, role: created.role, gender: created.gender, schoolId: created.schoolId },
       });
     } catch (err) {
       next(err);
@@ -81,7 +90,7 @@ module.exports = {
       if (!schoolId) return res.status(400).json({ success: false, message: 'Admin missing school context' });
 
       const { id } = req.params;
-      const { name, email, password, isActive } = req.body || {};
+      const { name, email, password, isActive, gender } = req.body || {};
 
       const user = await User.findOne({ _id: id, schoolId }).lean();
       if (!user) return res.status(404).json({ success: false, message: 'User not found' });
@@ -93,6 +102,13 @@ module.exports = {
       if (typeof name === 'string' && name.trim()) update.name = name.trim();
       if (typeof email === 'string' && email.trim()) update.email = email.trim().toLowerCase();
       if (typeof isActive === 'boolean') update.isActive = isActive;
+      if (typeof gender === 'string' && gender.trim()) {
+        const genderUpper = gender.trim().toUpperCase();
+        if (!['MALE', 'FEMALE'].includes(genderUpper)) {
+          return res.status(422).json({ success: false, message: 'Invalid gender' });
+        }
+        update.gender = genderUpper;
+      }
       if (typeof password === 'string' && password) {
         if (password.length < 8) return res.status(422).json({ success: false, message: 'Password must be at least 8 characters' });
         update.passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
@@ -153,6 +169,13 @@ module.exports = {
       if (typeof adminPayload.name === 'string' && adminPayload.name.trim()) adminUpdate.name = adminPayload.name.trim();
       if (typeof adminPayload.email === 'string' && adminPayload.email.trim()) adminUpdate.email = adminPayload.email.trim().toLowerCase();
       if (typeof adminPayload.isActive === 'boolean') adminUpdate.isActive = adminPayload.isActive;
+      if (typeof adminPayload.gender === 'string' && adminPayload.gender.trim()) {
+        const genderUpper = adminPayload.gender.trim().toUpperCase();
+        if (!['MALE', 'FEMALE'].includes(genderUpper)) {
+          return res.status(422).json({ success: false, message: 'Invalid gender' });
+        }
+        adminUpdate.gender = genderUpper;
+      }
 
       if (typeof adminPayload.password === 'string' && adminPayload.password) {
         if (adminPayload.password.length < 8) {
