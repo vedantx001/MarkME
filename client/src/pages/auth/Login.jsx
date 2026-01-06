@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from "../../context/authContext.jsx";
 import { registerAdminApi } from "../../api/auth.api.js";
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Eye, EyeOff, Mail, Lock, User, School, ArrowRight,
@@ -126,11 +126,23 @@ const AuthPage = ({ initialMode = 'login' }) => {
       };
 
       await registerAdminApi(payload);
-      setSuccess('Admin registered. Please login to continue.');
-      setConfirmPassword('');
-      navigate('/login', { replace: true, state: { prefillEmail: registerForm.adminEmail } });
+
+      // New flow: OTP verification required before login
+      navigate('/verify-otp', {
+        replace: true,
+        state: {
+          email: registerForm.adminEmail,
+          context: 'register-admin',
+        },
+      });
     } catch (err) {
-      setError(err?.message || 'Something went wrong');
+      // If server says not verified, route to OTP page
+      const msg = String(err?.message || 'Something went wrong');
+      if (isLogin && (err?.status === 403) && msg.toLowerCase().includes('verify')) {
+        navigate('/verify-otp', { replace: true, state: { email: loginForm.email, context: 'login' } });
+        return;
+      }
+      setError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -340,9 +352,12 @@ const AuthPage = ({ initialMode = 'login' }) => {
 
                   {isLogin && (
                     <div className="flex justify-end">
-                      <a href="#" className="text-sm font-semibold text-gray-500 hover:text-[#3182CE] transition-colors">
+                      <Link
+                        to="/forgot-password"
+                        className="text-sm font-semibold text-gray-500 hover:text-[#3182CE] transition-colors"
+                      >
                         Forgot Password?
-                      </a>
+                      </Link>
                     </div>
                   )}
 

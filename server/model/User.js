@@ -33,9 +33,30 @@ const userSchema = new Schema(
       enum: USER_ROLES,
       required: true,
     },
+    gender: {
+      type: String,
+      enum: ['MALE', 'FEMALE'],
+      required: false,
+    },
     isActive: {
       type: Boolean,
       default: true,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    otpHash: {
+      type: String,
+    },
+    otpExpiresAt: {
+      type: Date,
+    },
+    passwordResetToken: {
+      type: String,
+    },
+    passwordResetExpires: {
+      type: Date,
     },
   },
   { timestamps: true }

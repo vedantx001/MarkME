@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { Search, Mail } from 'lucide-react';
 import { useAdmin } from '../../context/adminContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { buildGenderAvatarUrl } from '../../utils/avatar';
 
 const Teachers = () => {
   const { teachers, loading, error } = useAdmin();
@@ -87,7 +88,7 @@ const Teachers = () => {
               <div className="flex justify-between items-start mb-4">
                 <div className="w-12 h-12 rounded-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.05)] overflow-hidden flex items-center justify-center">
                   <img
-                    src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(teacher.name || 'Teacher')}`}
+                    src={buildGenderAvatarUrl({ name: teacher.name || 'Teacher', gender: teacher.gender })}
                     alt={teacher.name}
                     className="w-full h-full"
                   />

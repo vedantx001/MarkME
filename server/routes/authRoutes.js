@@ -7,9 +7,17 @@ router.post('/login', authController.login);
 router.post('/refresh-token', authController.refreshToken);
 router.post('/logout', authController.logout);
 
-// Email verification & password reset flows
-router.get('/verify-email', authController.verifyEmail); // link: /api/auth/verify-email?token=...
-router.post('/request-password-reset', authController.requestPasswordReset);
-router.post('/reset-password', authController.resetPassword); // body: { token, newPassword }
+// OTP email verification flow
+router.post('/send-otp', authController.sendOtp);
+router.post('/verify-otp', authController.verifyOtp);
+
+// Password reset flows
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/reset-password-token', authController.resetPasswordWithUserToken);
+
+// Legacy endpoints (kept in controller but not exposed)
+// router.get('/verify-email', authController.verifyEmail);
+// router.post('/request-password-reset', authController.requestPasswordReset);
+// router.post('/reset-password', authController.resetPassword);
 
 module.exports = router;

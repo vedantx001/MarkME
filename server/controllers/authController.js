@@ -8,6 +8,12 @@ const School = require('../model/School');
 const User = require('../model/User');
 const RefreshToken = require('../model/RefreshToken');
 
+const sendMail = require("../utils/mailer");
+
+const otpMail = require("../utils/emailTemplates/otpMail");
+const welcomeMail = require("../utils/emailTemplates/welcomeMail");
+const resetPasswordMail = require("../utils/emailTemplates/resetPasswordMail");
+
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXP = process.env.JWT_EXP || '7d'; // 7 days as requested
 const REFRESH_TOKEN_EXP_DAYS = parseInt(process.env.REFRESH_TOKEN_EXP_DAYS || '30', 10);
@@ -33,12 +39,12 @@ async function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
-// Placeholder: replace with real mailer integration
-async function sendEmail({ to, subject, text, html }) {
-  // TODO: implement real mailer (SendGrid/nodemailer etc.)
-  // For dev/testing: we're returning true. In production, do not return tokens in responses.
-  // console.log('SEND EMAIL', { to, subject, text });
-  return true;
+function generateOtp() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+async function hashOtp(otp) {
+  return crypto.createHash('sha256').update(String(otp)).digest('hex');
 }
 
 module.exports = {
@@ -75,7 +81,7 @@ module.exports = {
       }
 
       // Check admin email uniqueness
-      const existingUser = await User.findOne({ email: adminEmail }).session(session);
+      const existingUser = await User.findOne({ email: adminEmail.toLowerCase() }).session(session);
       if (existingUser) {
         await session.abortTransaction();
         session.endSession();
@@ -89,9 +95,7 @@ module.exports = {
       // Hash password
       const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-      // Create admin user; enforce single ADMIN per school for now (we'll check)
-      // If at some point you want multiple admins, remove the check or add a flag.
-      // (We already ensured no user with this email exists; this prevents duplicate admin by email.)
+      // Create admin user
       const adminUser = await User.create(
         [
           {
@@ -101,53 +105,40 @@ module.exports = {
             passwordHash,
             role: 'ADMIN',
             isActive: true,
+            isVerified: false,
           },
         ],
         { session }
       );
 
-      // Create email verification token (one-time)
-      const verificationToken = randomTokenString();
-      const verificationTokenHash = await hashToken(verificationToken);
-      // Save verification token as a short-lived refresh token-like document but flagged for verification
-      const vtExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
-      await RefreshToken.create(
-        [
-          {
-            userId: adminUser[0]._id,
-            tokenHash: verificationTokenHash,
-            expiresAt: vtExpires,
-            createdByIp: req.ip,
-            // we can reuse fields - treat revoked=false as valid
-          },
-        ],
+      // Generate OTP and store hash on user (OTP-based verification)
+      const otp = generateOtp();
+      const otpHash = await hashOtp(otp);
+      const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      await User.updateOne(
+        { _id: adminUser[0]._id },
+        { $set: { otpHash, otpExpiresAt, isVerified: false } },
         { session }
       );
 
       await session.commitTransaction();
       session.endSession();
 
-      // Send verification email (development: we also return token for your request.rest tests)
-      const verifyUrl = `${APP_BASE_URL}/api/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(
-        adminEmail.toLowerCase()
-      )}`;
-
-      await sendEmail({
-        to: adminEmail,
-        subject: 'Verify your email',
-        text: `Please verify: ${verifyUrl}`,
-        html: `<p>Please verify your email by clicking <a href="${verifyUrl}">here</a></p>`,
+      // Send OTP email
+      await sendMail({
+        to: adminEmail.toLowerCase(),
+        subject: 'MarkME | Verify your Email',
+        html: otpMail(otp),
       });
 
-      // Return admin profile and verification token for dev/testing
+      // Return minimal info (no access token until verified)
       return res.status(201).json({
         success: true,
-        message: 'School and Admin created. Verification email sent.',
+        message: 'Admin registered. OTP sent to email for verification.',
         data: {
           school: { id: schoolDoc._id, schoolIdx: schoolDoc.schoolIdx, name: schoolDoc.name },
           admin: { id: adminUser[0]._id, name: adminUser[0].name, email: adminUser[0].email, role: adminUser[0].role },
-          // NOTE: verificationToken included only for dev/testing; remove in production.
-          verificationToken,
         },
       });
     } catch (err) {
@@ -161,34 +152,15 @@ module.exports = {
     }
   },
 
-  // Email verification endpoint
-  verifyEmail: async (req, res, next) => {
-    try {
-      const { token, email } = req.query;
-      if (!token || !email) return res.status(400).json({ success: false, message: 'Missing token or email' });
-
-      const user = await User.findOne({ email: email.toLowerCase() });
-      if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-
-      const tokenHash = await hashToken(token);
-      const rt = await RefreshToken.findOne({ userId: user._id, tokenHash, expiresAt: { $gt: new Date() }, revoked: false });
-      if (!rt) return res.status(400).json({ success: false, message: 'Invalid or expired token' });
-
-      // "Verify" by removing token and maybe setting a flag on user (we'll set isEmailVerified)
-      user.isEmailVerified = true;
-      await user.save();
-
-      // revoke the token so it can't be used again
-      rt.revoked = true;
-      await rt.save();
-
-      return res.json({ success: true, message: 'Email verified' });
-    } catch (err) {
-      next(err);
-    }
+  // Email verification endpoint (DEPRECATED: old token-link flow). Keep for compatibility, but indicate not supported.
+  verifyEmail: async (req, res) => {
+    return res.status(410).json({
+      success: false,
+      message: 'Email-link verification is disabled. Please verify using OTP (/api/auth/verify-otp).',
+    });
   },
 
-  // Login: return access token + refresh token (refresh token saved hashed in DB)
+  // Login: require verified email
   login: async (req, res, next) => {
     try {
       const { email, password } = req.body;
@@ -201,6 +173,12 @@ module.exports = {
       if (!match) return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
       if (!user.isActive) return res.status(403).json({ success: false, message: 'Account disabled' });
+
+      // Only ADMIN is OTP-verified in the current product flow.
+      // Teachers/Principals are usually provisioned by Admin and should be able to login without OTP.
+      if (String(user.role).toUpperCase() === 'ADMIN' && !user.isVerified) {
+        return res.status(403).json({ success: false, message: 'Please verify your email using OTP' });
+      }
 
       // Build tokens
       const accessToken = generateAccessToken(user);
@@ -216,7 +194,6 @@ module.exports = {
         createdByIp: req.ip,
       });
 
-      // Set httpOnly cookie for refresh token (helpful for browsers). Also return refresh token in body for API testing (remove in prod).
       res.cookie('refreshToken', refreshTokenPlain, {
         httpOnly: true,
         sameSite: 'lax',
@@ -235,13 +212,53 @@ module.exports = {
       return res.json({
         success: true,
         token: accessToken,
-        refreshToken: refreshTokenPlain, // included for request.rest testing — remove in production if you store only cookie
+        refreshToken: refreshTokenPlain,
         user: userPayload,
       });
     } catch (err) {
       next(err);
     }
   },
+
+  // OTP: verify OTP and mark account verified
+  verifyOtp: async (req, res, next) => {
+    try {
+      const { email, otp } = req.body;
+      if (!email || !otp) return res.status(422).json({ success: false, message: 'Email and OTP required' });
+
+      const user = await User.findOne({ email: email.toLowerCase() });
+      if (!user) return res.status(400).json({ success: false, message: 'Invalid user' });
+
+      const hashedOtp = await hashOtp(otp);
+      if (!user.otpHash || user.otpHash !== hashedOtp || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+        return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+      }
+
+      user.isVerified = true;
+      user.otpHash = undefined;
+      user.otpExpiresAt = undefined;
+      await user.save();
+
+      await sendMail({
+        to: user.email,
+        subject: 'Welcome to MarkME',
+        html: welcomeMail(user.name),
+      });
+
+      return res.json({ success: true, message: 'Account verified' });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /*
+   * NOTE:
+   * The legacy controller previously had a duplicated `login` implementation below this point.
+   * That duplicate enforced `isVerified` for ALL roles and was causing TEACHER/PRINCIPAL logins
+   * to fail with 403, eventually redirecting to /errors/403 in the client.
+   *
+   * We intentionally keep ONLY the single `login` above (ADMIN requires OTP; others can login).
+   */
 
   // Rotate refresh token and return new access token + new refresh token
   refreshToken: async (req, res, next) => {
@@ -339,7 +356,7 @@ module.exports = {
 
       const resetUrl = `${APP_BASE_URL}/api/auth/reset-password?token=${tokenPlain}&email=${encodeURIComponent(user.email)}`;
 
-      await sendEmail({
+      await sendMail({
         to: user.email,
         subject: 'Password Reset',
         text: `Reset: ${resetUrl}`,
@@ -376,6 +393,131 @@ module.exports = {
 
       rt.revoked = true;
       await rt.save();
+
+      return res.json({ success: true, message: 'Password reset successful' });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  // OTP: send OTP for email verification (works with User schema: otpHash, otpExpiresAt, isVerified)
+  sendOtp: async (req, res, next) => {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(422).json({ success: false, message: 'Email required' });
+      if (!validator.isEmail(email)) return res.status(422).json({ success: false, message: 'Invalid email' });
+
+      const user = await User.findOne({ email: email.toLowerCase() });
+      if (!user) return res.status(400).json({ success: false, message: 'Invalid user' });
+
+      const otp = generateOtp();
+      user.otpHash = await hashOtp(otp);
+      user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      user.isVerified = false;
+
+      await user.save();
+
+      await sendMail({
+        to: user.email,
+        subject: 'MarkME | Verify your Email',
+        html: otpMail(otp),
+      });
+
+      return res.status(200).json({ success: true, message: 'OTP sent to email' });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  // OTP: verify OTP and mark account verified
+  verifyOtp: async (req, res, next) => {
+    try {
+      const { email, otp } = req.body;
+      if (!email || !otp) return res.status(422).json({ success: false, message: 'Email and OTP required' });
+
+      const user = await User.findOne({ email: email.toLowerCase() });
+      if (!user) return res.status(400).json({ success: false, message: 'Invalid user' });
+
+      const hashedOtp = await hashOtp(otp);
+
+      if (!user.otpHash || user.otpHash !== hashedOtp || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+        return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+      }
+
+      user.isVerified = true;
+      user.otpHash = undefined;
+      user.otpExpiresAt = undefined;
+      await user.save();
+
+      await sendMail({
+        to: user.email,
+        subject: 'Welcome to MarkME',
+        html: welcomeMail(user.name),
+      });
+
+      return res.json({ success: true, message: 'Account verified' });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  // Forgot password: create reset token on User model (passwordResetToken/passwordResetExpires)
+  forgotPassword: async (req, res, next) => {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(422).json({ success: false, message: 'Email required' });
+
+      const user = await User.findOne({ email: email.toLowerCase() });
+      if (!user) {
+        // privacy
+        return res.json({ success: true, message: 'If email exists, reset link sent' });
+      }
+
+      const token = crypto.randomBytes(32).toString('hex');
+      user.passwordResetToken = await hashToken(token);
+      user.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+      await user.save();
+
+      const resetLink = `${APP_BASE_URL}/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
+
+      await sendMail({
+        to: user.email,
+        subject: 'MarkME | Reset Password',
+        html: resetPasswordMail(resetLink),
+      });
+
+      return res.json({ success: true, message: 'Reset link sent' });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  // Reset password: verify token from User model and update passwordHash
+  resetPasswordWithUserToken: async (req, res, next) => {
+    try {
+      const { token, password, email } = req.body;
+      if (!token || !password) return res.status(422).json({ success: false, message: 'Token and password required' });
+      if (password.length < 8) return res.status(422).json({ success: false, message: 'Password must be at least 8 characters' });
+
+      const hashedToken = await hashToken(token);
+
+      const query = {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { $gt: new Date() },
+      };
+      if (email) query.email = email.toLowerCase();
+
+      const user = await User.findOne(query);
+
+      if (!user) return res.status(400).json({ success: false, message: 'Token invalid or expired' });
+
+      user.passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save();
+
+      // also revoke refresh tokens (if you use them) as a safety measure
+      await RefreshToken.updateMany({ userId: user._id }, { revoked: true }).catch(() => {});
 
       return res.json({ success: true, message: 'Password reset successful' });
     } catch (err) {
