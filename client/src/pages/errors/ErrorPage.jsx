@@ -16,10 +16,19 @@ const ErrorPage = () => {
             <p className="text-sm text-(--primary-accent) opacity-70 mt-1">
               We couldn’t complete your request.
             </p>
-            <p className="text-xs text-(--primary-accent) opacity-55 mt-3 break-words">
+            <p className="text-xs text-(--primary-accent) opacity-55 mt-3 wrap-break-words">
               Path: <span className="font-semibold">{location.pathname}</span>
             </p>
           </div>
+        </div>
+
+        <div className="mt-6">
+          <img
+            src="/undraw_connection-lost_am29.svg"
+            alt="Connection lost illustration"
+            loading="lazy"
+            className="w-full max-w-md mx-auto"
+          />
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">

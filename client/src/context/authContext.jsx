@@ -109,6 +109,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    // If the user explicitly logs out, we should not redirect them back to the
+    // last protected page on next login. This flag is consumed by Login.
+    try {
+      sessionStorage.setItem("auth_force_role_redirect", "1");
+    } catch {
+      // ignore storage errors (private mode, blocked storage)
+    }
     try {
       await logoutApi();
     } finally {

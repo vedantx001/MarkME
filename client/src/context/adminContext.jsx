@@ -159,13 +159,44 @@ export const AdminProvider = ({ children }) => {
   };
 
   const updateClassroom = async (classId, payload) => {
+    const trimmedName = typeof payload.name === 'string' ? payload.name.trim() : '';
+    const nameToSend = trimmedName ? trimmedName : undefined;
+
     await updateClassApi(classId, {
       educationalYear: payload.year,
       std: payload.std,
       division: payload.div,
       classTeacherId: payload.classTeacherId,
-      name: payload.name,
+      name: nameToSend,
     });
+
+    // Update local state immediately so UI (e.g., dashboard) reflects changes without waiting.
+    setClassrooms((prev) => {
+      const list = Array.isArray(prev) ? prev : [];
+      const teacherName = (Array.isArray(teachers) ? teachers : []).find((t) => t.id === payload.classTeacherId)?.name;
+
+      return list.map((c) => {
+        if (c?.id !== classId) return c;
+
+        const nextStd = String(payload.std ?? '').trim();
+        const nextDiv = String(payload.div ?? '').trim();
+        const nextYear = payload.year ?? c.year;
+        const nextName = String(payload.name ?? '').trim();
+        const computed = `${nextStd}-${String(nextDiv || '').toUpperCase()} (${nextYear})`;
+
+        return {
+          ...c,
+          year: nextYear,
+          std: nextStd,
+          div: nextDiv,
+          classTeacherId: payload.classTeacherId ?? c.classTeacherId,
+          classTeacherName: teacherName ?? c.classTeacherName,
+          name: nextName ? nextName : computed,
+        };
+      });
+    });
+
+    // Reconcile with server state (also updates teacher name / any server-side computed fields).
     await refreshClassrooms();
   };
 

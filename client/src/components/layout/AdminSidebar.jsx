@@ -113,8 +113,8 @@ const AdminSidebar = ({ isMobile, isMobileMenuOpen, items, brandLabel = 'EduAdmi
       <div className="mt-auto pt-6 border-t border-[rgb(var(--primary-accent-rgb)/0.05)]">
         <button
           onClick={async () => {
+            navigate('/login', { replace: true, state: { forceRoleRedirect: true } });
             await logout();
-            navigate('/login', { replace: true });
           }}
           className="flex items-center gap-3 px-4 py-3 text-(--primary-accent) opacity-60 hover:opacity-100 hover:text-white hover:bg-red-500 rounded-xl w-full transition-colors cursor-pointer"
         >

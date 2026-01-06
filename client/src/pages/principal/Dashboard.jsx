@@ -109,7 +109,7 @@ const Dashboard = () => {
       initial="hidden"
       animate="show"
       variants={containerVariants}
-      className="max-w-7xl mx-auto"
+      className="max-w-7xl mx-auto pb-20"
     >
       {error && (
         <div className="mb-6 text-sm font-semibold rounded-xl px-4 py-3 bg-red-50 text-red-700">

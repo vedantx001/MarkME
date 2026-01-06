@@ -169,13 +169,13 @@ const StudentDetail = () => {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-5xl mx-auto space-y-8 p-4 md:p-8"
+      className="max-w-5xl mx-auto space-y-8 p-4 md:pb-20"
     >
       <div className="flex items-center">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-(--primary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] text-(--primary-accent) font-semibold hover:bg-(--secondary-bg) transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-(--primary-bg) border border-[rgb(var(--primary-accent-rgb)/0.1)] text-(--primary-accent) font-semibold hover:bg-(--primary-accent) hover:text-white transition-colors cursor-pointer"
         >
           <ArrowLeft size={16} />
           Back

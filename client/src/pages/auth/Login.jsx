@@ -73,6 +73,25 @@ const AuthPage = ({ initialMode = 'login' }) => {
     return '/';
   };
 
+  const shouldForceRoleRedirect = () => {
+    const stateFlag = location?.state?.forceRoleRedirect === true;
+    let storageFlag = false;
+    try {
+      storageFlag = sessionStorage.getItem('auth_force_role_redirect') === '1';
+    } catch {
+      storageFlag = false;
+    }
+    return stateFlag || storageFlag;
+  };
+
+  const clearForceRoleRedirect = () => {
+    try {
+      sessionStorage.removeItem('auth_force_role_redirect');
+    } catch {
+      // ignore
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -89,8 +108,10 @@ const AuthPage = ({ initialMode = 'login' }) => {
       if (isLogin) {
         const nextUser = await login({ email: loginForm.email, password: loginForm.password });
         const nextRole = normalizeRole(nextUser?.role);
-        const safeFromPath = isFromPathAllowedForRole(fromPath, nextRole) ? fromPath : null;
+        const forceRoleRedirect = shouldForceRoleRedirect();
+        const safeFromPath = !forceRoleRedirect && isFromPathAllowedForRole(fromPath, nextRole) ? fromPath : null;
         const target = safeFromPath || redirectByRole(nextRole);
+        if (forceRoleRedirect) clearForceRoleRedirect();
         navigate(target, { replace: true });
         return;
       }

@@ -12,6 +12,11 @@ const Classrooms = () => {
   const { classrooms = [] } = useAdmin();
   const [searchTerm, setSearchTerm] = useState('');
 
+  const parseStd = (value) => {
+    const n = Number.parseInt(String(value ?? ''), 10);
+    return Number.isFinite(n) ? n : null;
+  };
+
   const filteredClassrooms = useMemo(() => {
     const s = searchTerm.trim().toLowerCase();
     if (!s) return classrooms;
@@ -21,6 +26,41 @@ const Classrooms = () => {
       return key.includes(s);
     });
   }, [classrooms, searchTerm]);
+
+  const groupedByStandard = useMemo(() => {
+    const map = new Map();
+
+    for (const c of filteredClassrooms) {
+      const stdNum = parseStd(c?.std);
+      const stdKey = stdNum ?? String(c?.std ?? '');
+
+      if (!map.has(stdKey)) map.set(stdKey, { stdNum, classrooms: [] });
+      map.get(stdKey).classrooms.push(c);
+    }
+
+    const groups = Array.from(map.entries())
+      .map(([stdKey, value]) => ({ stdKey, ...value }))
+      .sort((a, b) => {
+        const an = a.stdNum ?? Number.POSITIVE_INFINITY;
+        const bn = b.stdNum ?? Number.POSITIVE_INFINITY;
+        if (an !== bn) return an - bn;
+        return String(a.stdKey).localeCompare(String(b.stdKey), undefined, { numeric: true, sensitivity: 'base' });
+      });
+
+    for (const g of groups) {
+      g.classrooms.sort((x, y) => {
+        const xd = String(x?.div ?? '').toUpperCase();
+        const yd = String(y?.div ?? '').toUpperCase();
+        const byDiv = xd.localeCompare(yd, undefined, { sensitivity: 'base' });
+        if (byDiv !== 0) return byDiv;
+        const xy = String(x?.year ?? '');
+        const yy = String(y?.year ?? '');
+        return xy.localeCompare(yy, undefined, { numeric: true, sensitivity: 'base' });
+      });
+    }
+
+    return groups;
+  }, [filteredClassrooms]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -38,7 +78,7 @@ const Classrooms = () => {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-7xl mx-auto">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-7xl mx-auto py-20">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
@@ -60,72 +100,86 @@ const Classrooms = () => {
         </div>
       </div>
 
-      {/* Classrooms Grid */}
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-      >
-        <AnimatePresence>
-          {filteredClassrooms.map((c) => (
-            <motion.div
-              layout
-              key={c.id}
-              initial={false}
-              variants={itemVariants}
-              exit={{ opacity: 0, scale: 0.95 }}
-              onClick={() => navigate(`/principal/classrooms/${c.id}`)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') navigate(`/principal/classrooms/${c.id}`);
-              }}
-              className="bg-(--primary-bg) p-5 rounded-2xl border border-[rgb(var(--primary-accent-rgb)/0.05)] shadow-sm hover:shadow-md transition-all group cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--secondary-accent)"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 rounded-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.05)] overflow-hidden flex items-center justify-center">
-                  <School className="text-(--secondary-accent)" size={20} />
-                </div>
-              </div>
-
-              <h3 className="text-lg font-bold text-(--primary-text) mb-1">
-                Std {c.std} - {c.div}
-              </h3>
-              <p className="text-sm font-medium text-(--secondary-accent) mb-3">{c.year}</p>
-
-              <div className="text-sm text-(--primary-accent) opacity-60 mb-4 bg-(--secondary-bg) p-2 rounded-lg">
-                <span className="font-semibold text-(--primary-accent)">Class Teacher:</span>{' '}
-                <span className="truncate">{c.classTeacherName || '—'}</span>
-              </div>
-
-              <div className="flex justify-between items-center pt-4 border-t border-[rgb(var(--primary-accent-rgb)/0.05)]">
-                <span className="text-xs font-bold px-2 py-1 rounded-md bg-emerald-50 text-emerald-600">Active</span>
-                <button
-                  type="button"
-                  className="text-sm font-semibold text-(--primary-accent) hover:text-(--secondary-accent) transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/principal/classrooms/${c.id}`);
-                  }}
-                >
-                  View Details
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-
-        {/* Empty State */}
-        {filteredClassrooms.length === 0 && (
-          <div className="col-span-full py-12 text-center text-(--primary-accent) opacity-50">
-            <div className="w-16 h-16 bg-(--secondary-bg) rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search size={24} className="opacity-50" />
-            </div>
-            <p>No classrooms found matching your search.</p>
+      {/* Grouped Classrooms (Standard-wise) */}
+      {filteredClassrooms.length === 0 ? (
+        <div className="py-12 text-center text-(--primary-accent) opacity-50">
+          <div className="w-16 h-16 bg-(--secondary-bg) rounded-full flex items-center justify-center mx-auto mb-4">
+            <Search size={24} className="opacity-50" />
           </div>
-        )}
-      </motion.div>
+          <p>No classrooms found matching your search.</p>
+        </div>
+      ) : (
+        <div className="space-y-10">
+          {groupedByStandard.map((group) => (
+            <section key={String(group.stdKey)} className="space-y-4">
+              <div className="flex items-baseline justify-between">
+                <h3 className="text-xl font-bold text-(--primary-text)">
+                  Standard {group.stdNum ?? group.stdKey}
+                </h3>
+                <span className="text-sm text-(--primary-accent) opacity-60">
+                  {group.classrooms.length} {group.classrooms.length === 1 ? 'class' : 'classes'}
+                </span>
+              </div>
+
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                <AnimatePresence>
+                  {group.classrooms.map((c) => (
+                    <motion.div
+                      layout
+                      key={c.id}
+                      initial={false}
+                      variants={itemVariants}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      onClick={() => navigate(`/principal/classrooms/${c.id}`)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') navigate(`/principal/classrooms/${c.id}`);
+                      }}
+                      className="bg-(--primary-bg) p-5 rounded-2xl border border-[rgb(var(--primary-accent-rgb)/0.05)] shadow-sm hover:shadow-md transition-all group cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--secondary-accent)"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="w-12 h-12 rounded-full bg-(--secondary-bg) border border-[rgb(var(--primary-accent-rgb)/0.05)] overflow-hidden flex items-center justify-center">
+                          <School className="text-(--secondary-accent)" size={20} />
+                        </div>
+                      </div>
+
+                      <h4 className="text-lg font-bold text-(--primary-text) mb-1">
+                        Division {String(c.div ?? '—').toUpperCase()}
+                      </h4>
+                      <p className="text-sm font-medium text-(--secondary-accent) mb-3">{c.year}</p>
+
+                      <div className="text-sm text-(--primary-accent) opacity-60 mb-4 bg-(--secondary-bg) p-2 rounded-lg">
+                        <span className="font-semibold text-(--primary-accent)">Class Teacher:</span>{' '}
+                        <span className="truncate">{c.classTeacherName || '—'}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-4 border-t border-[rgb(var(--primary-accent-rgb)/0.05)]">
+                        <span className="text-xs font-bold px-2 py-1 rounded-md bg-emerald-50 text-emerald-600">Active</span>
+                        <button
+                          type="button"
+                          className="text-sm font-semibold text-(--primary-accent) hover:text-(--secondary-accent) transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/principal/classrooms/${c.id}`);
+                          }}
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            </section>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 };
