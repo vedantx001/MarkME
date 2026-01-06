@@ -5,6 +5,9 @@ import LandingPage from "../pages/LandingPage";
 // Auth
 import Login from "../pages/auth/Login";
 import RegisterAdmin from "../pages/auth/RegisterAdmin";
+import VerifyOtp from "../pages/auth/VerifyOtp";
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import ResetPassword from "../pages/auth/ResetPassword";
 
 // Errors
 import ErrorPage from "../pages/errors/ErrorPage";
@@ -42,6 +45,9 @@ const AppRoutes = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register-admin" element={<RegisterAdmin />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth" element={<Navigate to="/login" replace />} />
 
         {/* Error Routes */}

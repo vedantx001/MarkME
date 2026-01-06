@@ -22,6 +22,44 @@ export async function registerAdminApi(payload) {
   });
 }
 
+/* ================= OTP / PASSWORD FLOW ================= */
+
+// Send OTP (resend)
+export async function sendOtpApi(payload) {
+  return apiFetch('/auth/send-otp', {
+    method: 'POST',
+    auth: false,
+    body: payload,
+  });
+}
+
+// Forgot password
+export async function forgotPasswordApi(payload) {
+  return apiFetch('/auth/forgot-password', {
+    method: 'POST',
+    auth: false,
+    body: payload,
+  });
+}
+
+// Verify OTP
+export async function verifyOtpApi(payload) {
+  return apiFetch('/auth/verify-otp', {
+    method: 'POST',
+    auth: false,
+    body: payload,
+  });
+}
+
+// Reset password (token-based from forgot password email)
+export async function resetPasswordApi(payload) {
+  return apiFetch('/auth/reset-password-token', {
+    method: 'POST',
+    auth: false,
+    body: payload,
+  });
+}
+
 export async function logoutApi() {
   const refreshToken = getStoredRefreshToken();
   try {
