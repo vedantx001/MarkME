@@ -3,39 +3,55 @@
 
 export const developers = [
     {
-        id: 1,
-        name: "Adrian Chen",
-        role: "Lead Systems Architect",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
-        highlights: [
-            "Core infrastructure design",
-            "Real-time sync engine",
-            "Database architecture"
+        "id": 1,
+        "name": "Aryan Prajapati",
+        "role": "Backend & AI Systems Engineer",
+        "avatar": "/aryan-prajapati_profile%20picture.png",
+        "highlights": [
+            "AI-driven image-based attendance systems",
+            "Cloud-deployed biometric recognition services",
+            "Concurrent processing & data integrity handling"
         ],
-        contributions: {
-            modules: [
-                "Core Engine",
-                "Authentication System",
-                "Real-time Sync Module"
+        "contributions": {
+            "modules": [
+                "Attendance Session & Records Engine",
+                "AI Recognition Microservice (FastAPI)",
+                "Image Upload & Cloud Persistence Pipeline",
+                "Reporting & CSV/Excel Export Utilities"
             ],
-            features: [
-                "Designed distributed marking system handling 100K+ concurrent sessions",
-                "Built zero-downtime deployment pipeline",
-                "Implemented end-to-end encryption for sensitive data",
-                "Created auto-scaling infrastructure for peak loads"
+            "features": [
+                "Engineered a parallel image processing pipeline for classroom attendance, reducing total AI inference time by ~40% for multi-image sessions.",
+                "Designed a dynamic cloud storage structure supporting bulk image uploads and raw Excel dataset persistence.",
+                "Implemented concurrency-safe attendance updates to prevent duplicate or inconsistent records during parallel AI inference.",
+                "Built a biometric recognition flow using InsightFace (512-dimensional embeddings) with cross-image student de-duplication.",
+                "Deployed and exposed the AI microservice on Oracle Cloud Infrastructure with HTTPS via DuckDNS and reverse proxy configuration."
             ],
-            techStack: ["Go", "PostgreSQL", "Redis", "Kubernetes", "gRPC"],
-            decisions: [
-                "Chose event-sourcing for audit trail and replay capability",
-                "Implemented CQRS pattern for read/write optimization"
+            "techStack": [
+                "Node.js",
+                "Express.js",
+                "MongoDB",
+                "FastAPI",
+                "Python",
+                "InsightFace (Buffalo_L)",
+                "ONNX Runtime",
+                "Oracle Cloud Infrastructure",
+                "Multer"
+            ],
+            "decisions": [
+                "Selected InsightFace (Buffalo_L) over legacy dlib models to improve recognition accuracy in crowded classroom conditions.",
+                "Capped classroom image uploads to a maximum of four per session to balance inference latency, cost, and recognition coverage.",
+                "Adopted parallel asynchronous processing for image analysis to minimize end-to-end attendance marking time.",
+                "Decoupled AI inference behind a dedicated client abstraction to allow independent scaling and future model replacement.",
+                "Exposed the AI service over HTTPS using domain-based routing instead of raw IP access to meet production security standards."
             ]
         },
-        links: {
-            github: "https://github.com",
-            linkedin: "https://linkedin.com",
-            portfolio: "https://example.com"
+        "links": {
+            "github": "https://github.com/your-username",
+            "linkedin": "https://linkedin.com/in/your-username",
+            "portfolio": "https://your-portfolio-site.com"
         }
-    },
+    }
+    ,
     {
         id: 2,
         name: "Maya Rodriguez",
