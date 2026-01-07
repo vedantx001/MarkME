@@ -226,7 +226,7 @@ const Attendance = () => {
   const handleDownloadReport = async () => {
     if (!activeClass?.id) return;
 
-    const baseUrl = (import.meta?.env?.VITE_API_BASE_URL || "http://localhost:5000/api").replace(/\/+$/, "");
+    const baseUrl = (import.meta?.env?.SERVER_URL || "http://localhost:5000/api").replace(/\/+$/, "");
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
