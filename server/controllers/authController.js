@@ -18,7 +18,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXP = process.env.JWT_EXP || '7d'; // 7 days as requested
 const REFRESH_TOKEN_EXP_DAYS = parseInt(process.env.REFRESH_TOKEN_EXP_DAYS || '30', 10);
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
-const APP_BASE_URL = process.env.APP_BASE_URL || 'http://localhost:5173';
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 function generateAccessToken(user) {
   const payload = {
@@ -354,7 +354,7 @@ module.exports = {
         createdByIp: req.ip,
       });
 
-      const resetUrl = `${APP_BASE_URL}/api/auth/reset-password?token=${tokenPlain}&email=${encodeURIComponent(user.email)}`;
+      const resetUrl = `${CLIENT_URL}/api/auth/reset-password?token=${tokenPlain}&email=${encodeURIComponent(user.email)}`;
 
       await sendMail({
         to: user.email,
@@ -478,7 +478,7 @@ module.exports = {
       user.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
       await user.save();
 
-      const resetLink = `${APP_BASE_URL}/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
+      const resetLink = `${CLIENT_URL}/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
 
       await sendMail({
         to: user.email,
