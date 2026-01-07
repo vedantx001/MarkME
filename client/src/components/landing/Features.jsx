@@ -8,47 +8,56 @@ const Features = () => {
         {
             icon: ScanFace,
             title: "Face Recognition",
-            desc: "Advanced AI algorithms that work even in varied lighting conditions."
+            desc: "Advanced 512-D facial embedding recognition optimized for high-density classroom environments and variable lighting conditions."
         },
         {
             icon: FileSpreadsheet,
-            title: "Bulk Upload",
-            desc: "Quickly import student data using standard Excel or CSV templates."
+            title: "Institutional Data Ingestion",
+            desc: "Seamless bulk enrollment via cloud-persistent Excel processing, enabling rapid institutional onboarding with zero local storage footprint."
         },
         {
             icon: BarChart3,
-            title: "Analytics",
-            desc: "Visual reports and trends to track student regularity automatically."
+            title: "Predictive Analytics",
+            desc: "Clear attendance summaries and trends to help teachers and school authorities monitor student attendance patterns."
         },
         {
             icon: Lock,
-            title: "Secure Access",
-            desc: "Role-based permissions for Admins, Teachers, and Principals."
+            title: "Secure Role-Based Access",
+            desc: "Role‑based access control ensuring secure and appropriate system usage for administrators, teachers, and principals."
         }
     ];
 
     return (
-        <section id="features" className="py-24 px-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-16">
+        <section id="features" className="py-24 px-6 relative overflow-hidden bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div className="text-center mb-20">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        className="text-[#85C7F2] font-bold text-sm tracking-widest uppercase mb-3"
+                    >
+                        Capabilities
+                    </motion.div>
                     <motion.h2
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="heading-font text-3xl md:text-4xl font-bold text-[#2D3748] mb-4"
+                        className="heading-font text-4xl md:text-5xl font-bold text-[#2D3748] mb-6"
                     >
-                        Key Features
+                        Enterprise Infrastructure
                     </motion.h2>
                     <motion.p
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.2 }}
-                        className="text-gray-600"
+                        className="text-gray-600 max-w-2xl mx-auto text-lg"
                     >
-                        Powerful tools designed for educational excellence.
+                        Leveraging high-precision computer vision and secure cloud persistence to modernize institutional workflows.
                     </motion.p>
                 </div>
+
                 <motion.div
                     initial="hidden"
                     whileInView="show"
@@ -57,24 +66,29 @@ const Features = () => {
                         hidden: { opacity: 0 },
                         show: {
                             opacity: 1,
-                            transition: {
-                                staggerChildren: 0.1
-                            }
+                            transition: { staggerChildren: 0.15 }
                         }
                     }}
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
                 >
                     {features.map((feature, index) => (
                         <motion.div
-                            variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
+                            variants={{ 
+                                hidden: { opacity: 0, y: 30 }, 
+                                show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } } 
+                            }}
                             key={index}
-                            className="bg-[#F2F8FF] rounded-xl p-8 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] hover:-translate-y-1 hover:shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08)] transition-all duration-200"
+                            className="group bg-[#F2F8FF] rounded-2xl p-10 border border-[#85C7F2]/10 hover:border-[#85C7F2]/40 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 ease-out"
                         >
-                            <div className="w-12 h-12 bg-[#85C7F2]/20 rounded-lg flex items-center justify-center mb-6">
-                                <feature.icon className="w-6 h-6 text-[#2D3748]" />
+                            <div className="w-14 h-14 bg-white rounded-xl shadow-inner flex items-center justify-center mb-8 group-hover:scale-110 group-hover:bg-[#85C7F2] transition-all duration-300">
+                                <feature.icon className="w-7 h-7 text-[#2D3748] group-hover:text-white transition-colors" />
                             </div>
-                            <h3 className="heading-font text-lg font-bold mb-3 text-[#2D3748]">{feature.title}</h3>
-                            <p className="text-sm text-gray-600 leading-relaxed font-sans">{feature.desc}</p>
+                            <h3 className="heading-font text-xl font-bold mb-4 text-[#2D3748] leading-tight group-hover:text-[#85C7F2] transition-colors">
+                                {feature.title}
+                            </h3>
+                            <p className="text-sm text-gray-600 leading-relaxed font-sans opacity-90">
+                                {feature.desc}
+                            </p>
                         </motion.div>
                     ))}
                 </motion.div>

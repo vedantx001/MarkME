@@ -20,7 +20,7 @@ const Hero = () => {
                         className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F2F8FF] border border-[#85C7F2]/30 text-[#2D3748] text-xs font-semibold mb-6"
                     >
                         <span className="w-1.5 h-1.5 rounded-full bg-[#85C7F2] animate-pulse"></span>
-                        GovTech Ready • Institutional Standard
+                        Government‑Grade • Built for Public Schools
                     </motion.div>
 
                     <motion.h1
@@ -29,7 +29,7 @@ const Hero = () => {
                         transition={{ delay: 0.3 }}
                         className="heading-font text-5xl md:text-7xl font-bold leading-[1.1] mb-8 text-[#2D3748]"
                     >
-                        Automating Attendance For Rural Schools.
+                        Smart Attendance Solutions for Rural Schools.
                     </motion.h1>
 
                     <motion.p
@@ -38,7 +38,7 @@ const Hero = () => {
                         transition={{ delay: 0.4 }}
                         className="text-lg md:text-xl text-gray-600 mb-10 leading-relaxed max-w-2xl"
                     >
-                        A facial recognition system engineered for schools. Replace manual logs with secure, biometric intelligence that guarantees accurate & smooth experience.
+                       An AI‑powered attendance system designed for government and rural schools. Eliminate manual registers with secure face recognition that ensures accuracy, efficiency, and ease of use for teachers.
                     </motion.p>
 
                     <motion.div
@@ -51,7 +51,7 @@ const Hero = () => {
                             onClick={() => navigate('/auth')}
                             className="px-8 py-4 bg-[#85C7F2] text-[#2D3748] font-bold rounded-xl hover:shadow-lg hover:shadow-[#85C7F2]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
                         >
-                            Get Started <ArrowRight size={18} />
+                            Start Using MarkME <ArrowRight size={18} />
                         </button>
                     </motion.div>
                 </div>
