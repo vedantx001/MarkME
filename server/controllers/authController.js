@@ -18,7 +18,8 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXP = process.env.JWT_EXP || '7d'; // 7 days as requested
 const REFRESH_TOKEN_EXP_DAYS = parseInt(process.env.REFRESH_TOKEN_EXP_DAYS || '30', 10);
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+// Normalize client URL and strip trailing slashes to avoid double slashes in paths
+const CLIENT_URL = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/+$/, '');
 
 function generateAccessToken(user) {
   const payload = {

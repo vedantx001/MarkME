@@ -21,10 +21,11 @@ const reportRoutes = require('./routes/reportsRoutes');
 
 const app = express();
 const PORT = process.env.NODE_PORT || 5000;
+const CLIENT_ORIGIN = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/+$/, '');
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: CLIENT_ORIGIN,
     credentials: true,
   })
 );
