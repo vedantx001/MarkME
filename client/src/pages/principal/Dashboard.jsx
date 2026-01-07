@@ -118,7 +118,10 @@ const Dashboard = () => {
       )}
 
       {/* Stats Grid */}
-      <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <motion.div
+        variants={containerVariants}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-10"
+      >
         <StatCard title="Total Teachers" value={teachers.length} icon={Users} />
         <StatCard title="Active Teachers" value={activeTeachersCount} icon={UserCheck} />
         <StatCard title="Total Students" value={studentsCount} icon={GraduationCap} />

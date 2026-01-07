@@ -125,7 +125,10 @@ const Dashboard = () => {
       )}
 
       {/* Stats Grid */}
-      <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <motion.div
+        variants={containerVariants}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-10"
+      >
         <StatCard title="Total Teachers" value={teachers.length} icon={Users} />
         <StatCard title="Active Teachers" value={activeTeachersCount} icon={UserCheck} />
         <StatCard title="Total Students" value={studentsCount} icon={GraduationCap} />
@@ -133,11 +136,11 @@ const Dashboard = () => {
       </motion.div>
 
       {loading && (
-        <div className="mb-8 text-sm text-(--primary-accent) opacity-60">Refreshing data…</div>
+        <div className="mb-6 sm:mb-8 text-sm text-(--primary-accent) opacity-60">Refreshing data</div>
       )}
 
       {/* Main Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         {/* Teachers Section */}
         <motion.div
           variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}

@@ -9,8 +9,15 @@ const AdminLayout = ({ sidebarItems, brandLabel, showSettings }) => {
 
   return (
     <div className="flex h-screen bg-(--secondary-bg) font-sans text-(--primary-accent) overflow-hidden">
-      {/* Desktop Sidebar */}
-      <AdminSidebar isMobile={false} items={sidebarItems} brandLabel={brandLabel} showSettings={showSettings} />
+      {/* Desktop Sidebar (hidden below lg) */}
+      <div className="hidden lg:flex">
+        <AdminSidebar
+          isMobile={false}
+          items={sidebarItems}
+          brandLabel={brandLabel}
+          showSettings={showSettings}
+        />
+      </div>
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
@@ -28,7 +35,7 @@ const AdminLayout = ({ sidebarItems, brandLabel, showSettings }) => {
         />
 
         {/* Page Content Slot */}
-        <div className="flex-1 overflow-y-auto p-6 lg:p-10 pb-20">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10 pb-20">
           <AnimatePresence mode="wait">
             <motion.div
               initial={{ opacity: 0, y: 10 }}

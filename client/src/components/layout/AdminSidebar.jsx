@@ -123,7 +123,8 @@ const AdminSidebar = ({ isMobile, isMobileMenuOpen, items, brandLabel = 'EduAdmi
         </button>
       </div>
 
-      {isMobile && (
+      {/* Remove admin profile section from mobile sidebar */}
+      {false && isMobile && (
         <div className="mt-6 border-t border-[rgb(var(--primary-accent-rgb)/0.1)] pt-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-(--primary-accent) overflow-hidden border border-[rgb(var(--secondary-accent-rgb)/0.5)]">
             <img src={adminProfile?.avatar} alt="Mobile Profile" className="w-full h-full object-cover" />

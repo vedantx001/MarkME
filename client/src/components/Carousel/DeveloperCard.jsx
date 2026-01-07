@@ -6,6 +6,11 @@ export function DeveloperCard({ developer, isActive, onClick, index }) {
     const [isHovered, setIsHovered] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
 
+    // Some local images (taller portraits) need a different crop focus.
+    // Default in CSS is `center top`; for Vedant (id: 2) we slightly pull the focus down
+    // so more of the body (till waist) remains visible while keeping the hair in frame.
+    const imageObjectPosition = developer?.id === 2 ? 'center 10%' : undefined;
+
     return (
         <motion.article
             className={`developer-card ${isActive ? 'is-active' : ''}`}
@@ -33,6 +38,7 @@ export function DeveloperCard({ developer, isActive, onClick, index }) {
                         src={developer.avatar}
                         alt={developer.name}
                         className={`developer-card__image ${imageLoaded ? 'loaded' : ''}`}
+                        style={imageObjectPosition ? { objectPosition: imageObjectPosition } : undefined}
                         onLoad={() => setImageLoaded(true)}
                         loading="lazy"
                     />

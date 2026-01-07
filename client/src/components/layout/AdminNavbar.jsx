@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { useAdmin } from '../../context/adminContext';
+import { useAuth } from '../../context/authContext';
 import { motion } from 'framer-motion';
 import EditAdminProfileForm from '../forms/EditAdminProfileForm';
 
 const AdminNavbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
   const { schoolDetails, adminProfile } = useAdmin();
+  const { role } = useAuth();
+  const isAdmin = String(role || '').toUpperCase() === 'ADMIN';
+
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
   return (
     <>
-      <EditAdminProfileForm isOpen={isEditProfileOpen} onClose={() => setIsEditProfileOpen(false)} />
+      {isAdmin && (
+        <EditAdminProfileForm isOpen={isEditProfileOpen} onClose={() => setIsEditProfileOpen(false)} />
+      )}
       <motion.header
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -41,26 +47,42 @@ const AdminNavbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
         </div>
 
         <div className="flex items-center gap-4 lg:gap-6">
-
           <div className="h-8 w-px bg-(--primary-accent) opacity-10 hidden md:block"></div>
 
-          <div className="flex items-center gap-3 pl-2 cursor-pointer group" onClick={() => setIsEditProfileOpen(true)} role="button" tabIndex={0}>
-            <div className="hidden md:flex flex-col items-end">
-              <span className="text-sm font-bold text-(--primary-text) group-hover:text-(--secondary-accent) transition-colors">
-                {adminProfile.name}
-              </span>
-              <span className="text-xs font-medium text-(--primary-accent) opacity-50">
-                {adminProfile.email}
-              </span>
-            </div>
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-(--primary-accent) shadow-md flex items-center justify-center overflow-hidden border-2 border-(--secondary-accent) group-hover:scale-105 transition-transform">
-                <img src={adminProfile.avatar} alt="Admin" className="w-full h-full object-cover" />
+          {isAdmin ? (
+            <div
+              className="flex items-center gap-3 pl-2 cursor-pointer group"
+              onClick={() => setIsEditProfileOpen(true)}
+              role="button"
+              tabIndex={0}
+            >
+              <div className="hidden md:flex flex-col items-end">
+                <span className="text-sm font-bold text-(--primary-text) group-hover:text-(--secondary-accent) transition-colors">
+                  {adminProfile.name}
+                </span>
+                <span className="text-xs font-medium text-(--primary-accent) opacity-50">
+                  {adminProfile.email}
+                </span>
               </div>
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-(--secondary-accent) border-2 border-(--primary-bg) rounded-full"></div>
+              <div className="relative">
+                <div className="w-10 h-10 rounded-full bg-(--primary-accent) shadow-md flex items-center justify-center overflow-hidden border-2 border-(--secondary-accent) group-hover:scale-105 transition-transform">
+                  <img src={adminProfile.avatar} alt="Admin" className="w-full h-full object-cover" />
+                </div>
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-(--secondary-accent) border-2 border-(--primary-bg) rounded-full"></div>
+              </div>
+              <ChevronDown size={16} className="text-(--primary-accent) opacity-30 hidden md:block group-hover:text-(--secondary-accent) group-hover:opacity-100 transition-all" />
             </div>
-            <ChevronDown size={16} className="text-(--primary-accent) opacity-30 hidden md:block group-hover:text-(--secondary-accent) group-hover:opacity-100 transition-all" />
-          </div>
+          ) : (
+            // Teacher / Principal: same avatar style, but non-clickable
+            <div className="flex items-center gap-3 pl-2 select-none">
+              <div className="relative">
+                <div className="w-10 h-10 rounded-full bg-(--primary-accent) shadow-md flex items-center justify-center overflow-hidden border-2 border-(--secondary-accent)">
+                  <img src={adminProfile.avatar} alt="Profile" className="w-full h-full object-cover" />
+                </div>
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-(--secondary-accent) border-2 border-(--primary-bg) rounded-full"></div>
+              </div>
+            </div>
+          )}
         </div>
       </motion.header>
     </>

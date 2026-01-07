@@ -54,30 +54,45 @@ export const developers = [
     ,
     {
         id: 2,
-        name: "Maya Rodriguez",
-        role: "Frontend Lead",
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face",
+        name: "Vedant Patel",
+        role: "Backend & System Architect | Team Lead",
+        avatar: "/Vedant_Patel_Profile.png",
         highlights: [
-            "UI/UX system design",
-            "Component architecture",
-            "Performance optimization"
+            "Authentication & Authorization Architecture",
+            "Admin Panel System Design",
+            "Team Management with Constant Inputs",
         ],
         contributions: {
             modules: [
-                "Design System",
-                "Dashboard Module",
-                "Analytics Visualizations"
+                "Authentication & Authorization System",
+                "Complete Admin Panel",
+                "Role-Based Access Control",
+                "Database Schema Design"
             ],
             features: [
-                "Built atomic design system with 60+ reusable components",
-                "Implemented real-time collaboration UI with presence indicators",
-                "Created accessible, keyboard-navigable interface (WCAG 2.1 AA)",
-                "Optimized bundle size by 45% through code splitting"
+                "Built complete JWT-based authentication system using access & refresh tokens",
+                "Integrated Nodemailer with live email workflows for signup, OTP verification, and password recovery",
+                "Developed full admin panel allowing creation and management of teachers, principals, classrooms, and students",
+                "Implemented strict role-based authorization for Admin, Teacher, and Principal",
+                "Designed and structured the entire database schema for scalability and clarity",
+                "Handled smooth server–client integration for reliable data flow across the application",
+                "Led the team by managing full workflow, assigning tasks, and providing constant feedback and inputs"
             ],
-            techStack: ["React", "TypeScript", "Framer Motion", "D3.js", "Vite"],
+            techStack: [
+                "Node.js",
+                "Express.js",
+                "MongoDB",
+                "JWT (Access & Refresh Tokens)",
+                "Nodemailer",
+                "React",
+                "REST APIs",
+                "Git & GitHub"
+            ],
             decisions: [
-                "Adopted CSS-in-JS for scoped, theme-aware styling",
-                "Chose Zustand over Redux for simpler state management"
+                "Chose refresh-token-based JWT authentication for better security and session control",
+                "Designed role-based middleware to centralize authorization logic",
+                "Structured backend APIs to remain UI-agnostic for future frontend changes",
+                "Led end-to-end repository management, aligning team contributions through structured branching, reviews, and release discipline"
             ]
         },
         links: {
