@@ -29,7 +29,7 @@ const Hero = () => {
                         transition={{ delay: 0.3 }}
                         className="heading-font text-5xl md:text-7xl font-bold leading-[1.1] mb-8 text-[#2D3748]"
                     >
-                        Automating Attendance with <span className="text-[#85C7F2]">Clinical Precision.</span>
+                        Automating Attendance For Rural Schools.
                     </motion.h1>
 
                     <motion.p
@@ -38,7 +38,7 @@ const Hero = () => {
                         transition={{ delay: 0.4 }}
                         className="text-lg md:text-xl text-gray-600 mb-10 leading-relaxed max-w-2xl"
                     >
-                        A facial recognition system engineered for schools and government institutions. Replace manual logs with secure, biometric intelligence that guarantees 99.9% accuracy.
+                        A facial recognition system engineered for schools. Replace manual logs with secure, biometric intelligence that guarantees accurate & smooth experience.
                     </motion.p>
 
                     <motion.div
@@ -51,13 +51,7 @@ const Hero = () => {
                             onClick={() => navigate('/auth')}
                             className="px-8 py-4 bg-[#85C7F2] text-[#2D3748] font-bold rounded-xl hover:shadow-lg hover:shadow-[#85C7F2]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
                         >
-                            Schedule Consultation <ArrowRight size={18} />
-                        </button>
-                        <button
-                            onClick={() => navigate('/auth')}
-                            className="px-8 py-4 bg-transparent border-2 border-[#2D3748]/10 text-[#2D3748] font-bold rounded-xl hover:bg-[#F2F8FF] transition-all cursor-pointer"
-                        >
-                            View Governance Specs
+                            Get Started <ArrowRight size={18} />
                         </button>
                     </motion.div>
                 </div>

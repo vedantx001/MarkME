@@ -23,10 +23,8 @@ const LandingPage = () => {
             <Hero />
             <Workflow />
             <Features />
-            <Institutions />
             <Roles />
             <DeveloperCarousel />
-            <FinalCTA />
             <Footer />
         </div>
     );

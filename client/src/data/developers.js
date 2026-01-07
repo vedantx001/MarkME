@@ -103,35 +103,58 @@ export const developers = [
     },
     {
         id: 3,
-        name: "James Okonkwo",
-        role: "Backend Engineer",
-        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face",
+        name: "Vraj Patel",
+        role: "Lead Frontend & Fullstack Engineer",
+        avatar: "/Vraj_Patel_profile_pic.png",
         highlights: [
-            "API development",
-            "Security implementation",
-            "Integration systems"
+            "Built landing and multi-role dashboards (Teacher / Principal )",
+            "End-to-end attendance workflows with UI, APIs, and data models",
+            "Luxury UI/UX design with advanced animations and performance optimization"
         ],
         contributions: {
             modules: [
-                "REST API Gateway",
-                "OAuth Integration",
-                "Webhook System"
+                "Landing Page / Luxury Landing Suite",
+                "Teacher & Principal Dashboards",
+                "Attendance Module (client + server)",
+                "Developer / Contributors Showcase",
+                "Server APIs: Classes, Students",
+                "Server Models: Student, Classroom"
             ],
             features: [
-                "Designed RESTful API serving 2M+ requests daily",
-                "Implemented OAuth 2.0 with PKCE for secure authentication",
-                "Built webhook delivery system with retry logic",
-                "Created API versioning strategy for backward compatibility"
+                "Built a responsive, motion-rich landing page with Hero, Features, and CTA sections",
+                "Designed premium UI components using Framer Motion and glassmorphism patterns",
+                "Implemented Teacher/Principal dashboards with classroom and student detail views",
+                "Developed a complete attendance flow including submission, reports, and image uploads",
+                "Built bulk student upload with Excel parsing and validation",
+                "Created an interactive developer showcase enhanced with Three.js animations"
             ],
-            techStack: ["Node.js", "Express", "MongoDB", "JWT", "OpenAPI"],
+            techStack: [
+                "React",
+                "Vite",
+                "JavaScript",
+                "Node.js",
+                "Express",
+                "MongoDB",
+                "Mongoose",
+                "Framer Motion",
+                "Three.js",
+                "Tailwind CSS",
+                "Lucide",
+                "Cloudinary",
+                "multer"
+            ],
             decisions: [
-                "Implemented rate limiting at API gateway level",
-                "Chose MongoDB for flexible schema evolution"
+                "Designed a modular, reusable component and form architecture",
+                "Maintained strict client–server separation with RESTful controllers",
+                "Used middleware-based file uploads and Excel parsing for bulk ingestion",
+                "Transitioned branding from AegisID to MarkME with a complete design-system overhaul",
+                "Selected Orbitron and Exo 2 typography to establish a premium technical aesthetic"
             ]
         },
         links: {
-            github: "https://github.com",
-            linkedin: "https://linkedin.com"
+            github: "https://github.com/VrajPatel1635",
+            linkedin: "https://www.linkedin.com/in/vraj-patel-1a28762ba/",
+            portfolio: "https://vraj-portfolio-nu.vercel.app/"
         }
     },
     {

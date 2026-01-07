@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { resetPasswordApi } from '../../api/auth.api';
-import { Lock, ArrowRight, Mail } from 'lucide-react';
+import { Lock, ArrowRight, Mail, Eye, EyeOff } from 'lucide-react';
 
 function useQuery() {
   const { search } = useLocation();
@@ -15,10 +15,12 @@ const ResetPassword = () => {
   const tokenFromUrl = query.get('token') || '';
   const emailFromUrl = query.get('email') || '';
 
-  const [token, setToken] = useState(tokenFromUrl);
+  const [token] = useState(tokenFromUrl);
   const [email, setEmail] = useState(emailFromUrl);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -28,6 +30,11 @@ const ResetPassword = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    if (!token) {
+      setError('Reset token is missing. Please use the reset link from your email.');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -78,37 +85,41 @@ const ResetPassword = () => {
             <div className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3182CE] transition-colors" size={22} />
               <input
-                type="text"
-                className="form-input"
-                placeholder="Reset token"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3182CE] transition-colors" size={22} />
-              <input
-                type="password"
-                className="form-input"
+                type={showPassword ? 'text' : 'password'}
+                className="form-input pr-12"
                 placeholder="New password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
+              </button>
             </div>
 
             <div className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3182CE] transition-colors" size={22} />
               <input
-                type="password"
-                className="form-input"
+                type={showConfirmPassword ? 'text' : 'password'}
+                className="form-input pr-12"
                 placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+              >
+                {showConfirmPassword ? <EyeOff size={22} /> : <Eye size={22} />}
+              </button>
             </div>
 
             <button

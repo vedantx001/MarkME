@@ -45,7 +45,7 @@ const Roles = () => {
                         <div className="bg-white p-8 rounded-[calc(1rem-1px)] h-full shadow-sm hover:shadow-md transition-shadow">
                             <h3 className="heading-font text-xl font-bold mb-4 text-[#2D3748]">The Admin</h3>
                             <ul className="space-y-4 text-sm text-gray-600 font-sans">
-                                <li className="flex gap-2"><span>•</span> Manages school database and student enrollment.</li>
+                                <li className="flex gap-2"><span>•</span> Manages staff and student enrollment.</li>
                                 <li className="flex gap-2"><span>•</span> Oversees system health and technical setup.</li>
                                 <li className="flex gap-2"><span>•</span> Assigns roles and permissions to staff.</li>
                             </ul>
