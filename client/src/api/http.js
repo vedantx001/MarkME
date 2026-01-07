@@ -1,7 +1,11 @@
-const SERVER_URL = import.meta.env.SERVER_URL || 'http://localhost:5000/api';
+// ✅ Vite-safe environment variable handling
+const SERVER_URL =
+  import.meta.env.SERVER_URL || 'http://localhost:5000/api';
 
 function getBaseUrl() {
-  return (import.meta?.env?.VITE_API_BASE_URL || SERVER_URL).replace(/\/+$/, '');
+  return (
+    import.meta.env.SERVER_URL
+  ).replace(/\/+$/, '');
 }
 
 function getStoredToken() {
@@ -25,14 +29,15 @@ function clearAuthTokens() {
 async function parseResponse(res) {
   const contentType = res.headers.get('content-type') || '';
   const isJson = contentType.includes('application/json');
-  const body = isJson ? await res.json().catch(() => null) : await res.text().catch(() => '');
-  return body;
+  return isJson
+    ? await res.json().catch(() => null)
+    : await res.text().catch(() => '');
 }
 
 function safeRedirectToError(status) {
   if (typeof window === 'undefined') return;
-  const path = window.location?.pathname || '';
-  // Avoid redirect loops if we're already on an error route.
+
+  const path = window.location.pathname || '';
   if (path.startsWith('/errors')) return;
 
   if (status === 403) window.location.assign('/errors/403');
@@ -40,7 +45,10 @@ function safeRedirectToError(status) {
   else if (status >= 500) window.location.assign('/errors/500');
 }
 
-async function apiFetch(path, { method = 'GET', headers, body, auth = true, retryOn401 = true } = {}) {
+async function apiFetch(
+  path,
+  { method = 'GET', headers, body, auth = true, retryOn401 = true } = {}
+) {
   const url = `${getBaseUrl()}${path.startsWith('/') ? path : `/${path}`}`;
 
   const finalHeaders = {
@@ -57,32 +65,41 @@ async function apiFetch(path, { method = 'GET', headers, body, auth = true, retr
     method,
     headers: finalHeaders,
     credentials: 'include',
-    // Avoid stale data from browser/proxy caches for API calls.
     cache: 'no-store',
-    body: body instanceof FormData ? body : body != null ? JSON.stringify(body) : undefined,
+    body:
+      body instanceof FormData
+        ? body
+        : body != null
+        ? JSON.stringify(body)
+        : undefined,
   });
 
   if (res.status === 401 && retryOn401) {
     const refreshed = await tryRefreshToken();
     if (refreshed) {
-      return apiFetch(path, { method, headers, body, auth, retryOn401: false });
+      return apiFetch(path, {
+        method,
+        headers,
+        body,
+        auth,
+        retryOn401: false,
+      });
     }
   }
 
   const data = await parseResponse(res);
+
   if (!res.ok) {
     const message =
       data && typeof data === 'object' && (data.message || data.error)
-        ? (data.message || data.error)
+        ? data.message || data.error
         : `Request failed (${res.status})`;
 
     const err = new Error(message);
     err.status = res.status;
     err.data = data;
 
-    // For hard failures, show dedicated error pages.
     safeRedirectToError(res.status);
-
     throw err;
   }
 
@@ -92,7 +109,6 @@ async function apiFetch(path, { method = 'GET', headers, body, auth = true, retr
 async function tryRefreshToken() {
   const refreshToken = getStoredRefreshToken();
 
-  // Server supports refresh via cookie OR body. We send body if we have it.
   try {
     const data = await apiFetch('/auth/refresh-token', {
       method: 'POST',
@@ -102,7 +118,10 @@ async function tryRefreshToken() {
     });
 
     if (data?.token) {
-      storeAuthTokens({ accessToken: data.token, refreshToken: data.refreshToken });
+      storeAuthTokens({
+        accessToken: data.token,
+        refreshToken: data.refreshToken,
+      });
       return true;
     }
 
@@ -112,4 +131,11 @@ async function tryRefreshToken() {
   }
 }
 
-export { apiFetch, getStoredToken, getStoredRefreshToken, storeAuthTokens, clearAuthTokens };
+export {
+  apiFetch,
+  getBaseUrl,
+  getStoredToken,
+  getStoredRefreshToken,
+  storeAuthTokens,
+  clearAuthTokens,
+};

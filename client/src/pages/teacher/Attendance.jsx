@@ -10,6 +10,7 @@ import { useAttendanceStore } from "../../app/store";
 import { uploadClassroomImages, submitAttendance } from "../../api/attendance.api";
 import { listMyClassesApi } from "../../api/classes.api";
 import { useEffect, useMemo, useState } from "react";
+import { getBaseUrl } from "../../api/http";
 
 const SUBMITTED_OVERLAY_MS = 1750;
 
@@ -226,7 +227,7 @@ const Attendance = () => {
   const handleDownloadReport = async () => {
     if (!activeClass?.id) return;
 
-    const baseUrl = (import.meta?.env?.SERVER_URL || "http://localhost:5000/api").replace(/\/+$/, "");
+    const baseUrl = getBaseUrl();
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
