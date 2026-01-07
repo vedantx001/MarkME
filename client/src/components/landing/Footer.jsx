@@ -13,27 +13,17 @@ const Footer = () => {
                         <div className="bg-[#2D3748] rounded flex items-center justify-center">
                             <img className='w-10 h-11 rounded-md' src="/markme.png" alt="Logo" />
                         </div>
-                        <span className="heading-font font-bold text-[#2D3748]">
-                            MarkME 
+                        <span className="heading-font text-xl font-bold text-[#2D3748]">
+                            Mark<span className="text-[#85C7F2]">ME</span> 
                         </span>
                     </div>
 
+                    
+                </div>
+                <div className='w-200'>
                     <p className="text-sm text-gray-400 pl-12 leading-relaxed hover:text-[#2D3748] transition-colors">
                         A smart attendance management platform for government and rural schools, powered by secure face recognition and centralized reporting.
                     </p>
-                </div>
-
-                {/* Footer Links */}
-                <div className="flex gap-8 text-sm text-gray-400">
-                    <a href="#" className="hover:text-[#2D3748] transition-colors cursor-pointer">
-                        Privacy Policy
-                    </a>
-                    <a href="#" className="hover:text-[#2D3748] transition-colors cursor-pointer">
-                        Terms & Conditions
-                    </a>
-                    <a href="#" className="hover:text-[#2D3748] transition-colors cursor-pointer">
-                        Accessibility Statement
-                    </a>
                 </div>
 
                 {/* Copyright */}
