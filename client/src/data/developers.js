@@ -49,9 +49,8 @@ export const developers = [
             ]
         },
         "links": {
-            "github": "https://github.com/your-username",
-            "linkedin": "https://linkedin.com/in/your-username",
-            "portfolio": "https://your-portfolio-site.com"
+            "github": "https://github.com/Debug-Aryan",
+            "linkedin": "https://www.linkedin.com/in/aryan-prajapati-b9b9a5284"
         }
     }
     ,
@@ -99,41 +98,38 @@ export const developers = [
             ]
         },
         links: {
-            github: "https://github.com",
-            linkedin: "https://linkedin.com",
-            portfolio: "https://example.com"
+            github: "https://github.com/vedantx001",
+            linkedin: "https://www.linkedin.com/in/vedant-patell"
         }
     },
     {
-        id: 3,
-        name: "Vraj Patel",
-        role: "Lead Frontend & Fullstack Engineer",
-        avatar: "/Vraj_Patel_profile_pic.png",
-        highlights: [
-            "Built landing and multi-role dashboards (Teacher / Principal )",
-            "End-to-end attendance workflows with UI, APIs, and data models",
-            "Luxury UI/UX design with advanced animations and performance optimization"
+        "id": 3,
+        "name": "Vraj Patel",
+        "role": "Lead Frontend & Fullstack Engineer",
+        "avatar": "/Vraj_Patel_profile_pic.png",
+        "highlights": [
+            "Luxury-grade frontend architecture with motion-first UI",
+            "End-to-end attendance workflows across client and server",
+            "Multi-role dashboard systems with performance-focused design"
         ],
-        contributions: {
-            modules: [
-                "Landing Page / Luxury Landing Suite",
-                "Teacher & Principal Dashboards",
-                "Attendance Module (client + server)",
+        "contributions": {
+            "modules": [
+                "Teacher & Principal Dashboard System",
+                "Attendance Module (Client + Server)",
                 "Developer / Contributors Showcase",
-                "Server APIs: Classes, Students",
-                "Server Models: Student, Classroom"
+                "Server APIs: Classes & Students",
+                "Server Data Models: Student, Classroom"
             ],
-            features: [
-                "Built a responsive, motion-rich landing page with Hero, Features, and CTA sections",
-                "Designed premium UI components using Framer Motion and glassmorphism patterns",
-                "Implemented Teacher/Principal dashboards with classroom and student detail views",
-                "Developed a complete attendance flow including submission, reports, and image uploads",
-                "Built bulk student upload with Excel parsing and validation",
-                "Created an interactive developer showcase enhanced with Three.js animations"
+            "features": [
+                "Built a fully responsive, motion-rich landing experience with Hero, Features, and CTA sections optimized for first-time user conversion.",
+                "Designed and implemented premium UI components using Framer Motion, glassmorphism patterns, and micro-interactions for a luxury feel.",
+                "Developed Teacher and Principal dashboards with classroom overviews, student detail views, and role-based UI flows.",
+                "Implemented a complete attendance workflow including submission, reporting, image uploads, and UI-state synchronization.",
+                "Built bulk student upload functionality with Excel parsing, validation, and structured error handling.",
+                "Created an interactive developer and contributors showcase enhanced with Three.js-based visual elements."
             ],
-            techStack: [
+            "techStack": [
                 "React",
-                "Vite",
                 "JavaScript",
                 "Node.js",
                 "Express",
@@ -142,22 +138,19 @@ export const developers = [
                 "Framer Motion",
                 "Three.js",
                 "Tailwind CSS",
-                "Lucide",
                 "Cloudinary",
-                "multer"
             ],
-            decisions: [
-                "Designed a modular, reusable component and form architecture",
-                "Maintained strict client–server separation with RESTful controllers",
-                "Used middleware-based file uploads and Excel parsing for bulk ingestion",
-                "Transitioned branding from AegisID to MarkME with a complete design-system overhaul",
-                "Selected Orbitron and Exo 2 typography to establish a premium technical aesthetic"
+            "decisions": [
+                "Designed a modular and reusable component architecture to scale UI features without duplication.",
+                "Maintained strict client–server separation using RESTful controllers and clean API contracts.",
+                "Adopted middleware-based file upload and Excel parsing to support reliable bulk student ingestion.",
+                "Selected Orbitron and Exo 2 typography to establish a premium, technical, and futuristic visual identity."
             ]
         },
-        links: {
-            github: "https://github.com/VrajPatel1635",
-            linkedin: "https://www.linkedin.com/in/vraj-patel-1a28762ba/",
-            portfolio: "https://vraj-portfolio-nu.vercel.app/"
+        "links": {
+            "github": "https://github.com/VrajPatel1635",
+            "linkedin": "https://www.linkedin.com/in/vraj-patel-1a28762ba/",
+            "portfolio": "https://vraj-portfolio-nu.vercel.app/"
         }
     },
     {
