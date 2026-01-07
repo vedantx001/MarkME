@@ -5,7 +5,7 @@ export const developers = [
     {
         "id": 1,
         "name": "Aryan Prajapati",
-        "role": "Backend & AI Systems Engineer",
+        "role": "Backend, AI & Integration Engineer",
         "avatar": "/aryan-prajapati_profile%20picture.png",
         "highlights": [
             "AI-driven image-based attendance systems",
@@ -35,14 +35,17 @@ export const developers = [
                 "InsightFace (Buffalo_L)",
                 "ONNX Runtime",
                 "Oracle Cloud Infrastructure",
-                "Multer"
+                "Multer",
+                "Git & Github"
             ],
             "decisions": [
                 "Selected InsightFace (Buffalo_L) over legacy dlib models to improve recognition accuracy in crowded classroom conditions.",
                 "Capped classroom image uploads to a maximum of four per session to balance inference latency, cost, and recognition coverage.",
                 "Adopted parallel asynchronous processing for image analysis to minimize end-to-end attendance marking time.",
                 "Decoupled AI inference behind a dedicated client abstraction to allow independent scaling and future model replacement.",
-                "Exposed the AI service over HTTPS using domain-based routing instead of raw IP access to meet production security standards."
+                "Exposed the AI service over HTTPS using domain-based routing instead of raw IP access to meet production security standards.",
+                "Maintained isolated backend and AI-service integration branches to safely merge contributions from multiple team members",
+                "Consolidated all backend and AI service work into a single stable branch while keeping frontend development decoupled to avoid cross-domain conflicts"
             ]
         },
         "links": {
