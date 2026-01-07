@@ -2,6 +2,9 @@ const bcrypt = require('bcrypt');
 const User = require('../model/User');
 const School = require('../model/School');
 
+const sendMail = require('../utils/mailer');
+const credentialsMail = require('../utils/emailTemplates/credentialsMail');
+
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
 
 module.exports = {
@@ -26,6 +29,10 @@ module.exports = {
       const exists = await User.findOne({ email: email.toLowerCase() });
       if (exists) return res.status(409).json({ success: false, message: 'Email already in use' });
 
+      if (typeof password !== 'string' || password.length < 8) {
+        return res.status(422).json({ success: false, message: 'Password must be at least 8 characters' });
+      }
+
       const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
       let genderUpper;
@@ -44,7 +51,21 @@ module.exports = {
         role: roleUpper,
         ...(genderUpper ? { gender: genderUpper } : {}),
         isActive: true,
+        // Teachers/Principals are provisioned by admin; OTP verification not required.
+        isVerified: true,
       });
+
+      // Send credentials mail (best-effort)
+      try {
+        await sendMail({
+          to: created.email,
+          subject: `MarkME | Your ${roleUpper} Account Credentials`,
+          html: credentialsMail(roleUpper, created.email, password),
+        });
+      } catch (mailErr) {
+        // Don't fail user creation if mail provider is down
+        console.warn('Failed to send credentials email:', mailErr?.message || mailErr);
+      }
 
       return res.status(201).json({
         success: true,
