@@ -1,81 +1,89 @@
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function looksLikeEmail(value) {
+  return typeof value === 'string' && value.includes('@');
+}
 
-const FROM_EMAIL =
-  process.env.EMAIL_FROM || '"MarkME" <onboarding@resend.dev>';
+function getMailConfig() {
+  const host = process.env.MAIL_HOST;
+  const port = Number(process.env.MAIL_PORT || 587);
+  const user = process.env.MAIL_USER;
+  const pass = process.env.MAIL_PASS;
+  const secureEnv = process.env.MAIL_SECURE;
 
-/**
- * sendMail({ to, subject, html, text, replyTo })
- * - Backward-compatible with prior Nodemailer usage.
- * - `to` can be string or array.
- * - Resend requires `html` or `text` (we prefer html; fallback to text).
- */
-const sendMail = async ({ to, subject, html, text, replyTo } = {}) => {
-  try {
-    if (!to || !subject) {
-      throw new Error('sendMail: "to" and "subject" are required');
+  if (!host || !user || !pass) {
+    return null;
+  }
+
+  // If MAIL_SECURE is explicitly set, respect it; otherwise infer from port.
+  const secure = typeof secureEnv === 'string' ? secureEnv.toLowerCase() === 'true' : port === 465;
+
+  return { host, port, user, pass, secure };
+}
+
+let cachedTransporter;
+let cachedFrom;
+
+function getTransporter() {
+  if (cachedTransporter) return cachedTransporter;
+
+  const mailConfig = getMailConfig();
+  const explicitFrom = process.env.MAIL_FROM;
+
+  // If SMTP isn't configured (common in dev/demo deployments), don't break auth flows.
+  // Use a JSON transport and log the outbound email content to the server console.
+  if (!mailConfig) {
+    cachedFrom = '"MarkME" <no-reply@local>';
+    cachedTransporter = nodemailer.createTransport({ jsonTransport: true });
+    cachedTransporter.__mailDisabled = true;
+    return cachedTransporter;
+  }
+
+  // Some SMTP providers use a non-email username (e.g., SendGrid uses "apikey").
+  // In that case, you MUST set MAIL_FROM to a verified sender address.
+  if (explicitFrom) {
+    cachedFrom = explicitFrom;
+  } else if (looksLikeEmail(mailConfig.user)) {
+    cachedFrom = `"MarkME" <${mailConfig.user}>`;
+  } else {
+    cachedFrom = '"MarkME" <no-reply@local>';
+    console.warn(
+      '[MAIL] MAIL_USER is not an email address; set MAIL_FROM to a verified sender to avoid SMTP 550/unauthorized sender errors.'
+    );
+  }
+
+  cachedTransporter = nodemailer.createTransport({
+    host: mailConfig.host,
+    port: mailConfig.port,
+    secure: mailConfig.secure,
+    auth: {
+      user: mailConfig.user,
+      pass: mailConfig.pass,
+    },
+  });
+
+  return cachedTransporter;
+}
+
+const sendMail = async ({ to, subject, html }) => {
+  const transporter = getTransporter();
+  const info = await transporter.sendMail({
+    from: cachedFrom,
+    to,
+    subject,
+    html,
+  });
+
+  if (transporter && transporter.__mailDisabled) {
+    // Log the full payload so OTP/reset links can be retrieved from logs when SMTP isn't configured.
+    // This is intended for local/dev/demo use.
+    try {
+      console.warn('[MAIL DISABLED] Outbound email captured (SMTP not configured).');
+      console.warn(JSON.stringify(info?.message || { to, subject, html }, null, 2));
+    } catch {
+      // ignore logging failures
     }
-
-    // If API key is missing, do NOT break auth flows (best-effort; logs only)
-    if (!process.env.RESEND_API_KEY) {
-      console.warn('[MAIL DISABLED] RESEND_API_KEY not configured.');
-      console.warn(
-        JSON.stringify(
-          {
-            from: FROM_EMAIL,
-            to,
-            subject,
-            text,
-            html,
-            replyTo,
-          },
-          null,
-          2
-        )
-      );
-      return;
-    }
-
-    const normalizedTo = Array.isArray(to) ? to : [to];
-
-    const resolvedHtml =
-      typeof html === 'string' && html.trim()
-        ? html
-        : typeof text === 'string' && text.trim()
-          ? `<pre style="white-space:pre-wrap;word-wrap:break-word">${escapeHtml(text)}</pre>`
-          : undefined;
-
-    const resolvedText = typeof text === 'string' && text.trim() ? text : undefined;
-
-    if (!resolvedHtml && !resolvedText) {
-      throw new Error('sendMail: either "html" or "text" must be provided');
-    }
-
-    const response = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: normalizedTo,
-      subject,
-      ...(resolvedHtml ? { html: resolvedHtml } : {}),
-      ...(resolvedText ? { text: resolvedText } : {}),
-      ...(replyTo ? { replyTo } : {}),
-    });
-
-    return response;
-  } catch (error) {
-    console.error('[RESEND ERROR] Failed to send email');
-    console.error(error);
-    throw error;
   }
 };
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
 
 module.exports = sendMail;
