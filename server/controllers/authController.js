@@ -115,15 +115,13 @@ module.exports = {
           html: otpMail(otp),
         });
       } catch (mailErr) {
-        // IMPORTANT: log a sanitized summary so production logs show the exact SMTP failure reason.
-        // Do not log credentials.
+        // IMPORTANT: log a sanitized summary so production logs show the exact mail failure reason.
+        // (Used to be SMTP-specific; now uses Resend API.) Do not log secrets.
         try {
           console.error('[AUTH] Failed to send OTP email', {
             to: normalizedEmail,
-            code: mailErr?.code,
-            command: mailErr?.command,
-            responseCode: mailErr?.responseCode,
-            response: mailErr?.response,
+            name: mailErr?.name,
+            statusCode: mailErr?.statusCode,
             message: mailErr?.message,
           });
         } catch {
