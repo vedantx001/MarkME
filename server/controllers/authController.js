@@ -254,11 +254,27 @@ module.exports = {
         await session.commitTransaction();
         session.endSession();
 
-        await sendMail({
-          to: user.email,
-          subject: 'Welcome to MarkME',
-          html: welcomeMail(user.name),
-        });
+        // Best-effort: user verification should not fail if SMTP is down.
+        try {
+          await sendMail({
+            to: user.email,
+            subject: 'Welcome to MarkME',
+            html: welcomeMail(user.name),
+          });
+        } catch (mailErr) {
+          try {
+            console.warn('[AUTH] Failed to send welcome email after OTP verification', {
+              to: user.email,
+              code: mailErr?.code,
+              command: mailErr?.command,
+              responseCode: mailErr?.responseCode,
+              response: mailErr?.response,
+              message: mailErr?.message,
+            });
+          } catch {
+            // ignore logging failures
+          }
+        }
 
         return res.json({ success: true, message: 'Account verified' });
       }
@@ -317,11 +333,27 @@ module.exports = {
       await session.commitTransaction();
       session.endSession();
 
-      await sendMail({
-        to: normalizedEmail,
-        subject: 'Welcome to MarkME',
-        html: welcomeMail(pending.adminName),
-      });
+      // Best-effort: account verification + auto-login should not be blocked by SMTP failures.
+      try {
+        await sendMail({
+          to: normalizedEmail,
+          subject: 'Welcome to MarkME',
+          html: welcomeMail(pending.adminName),
+        });
+      } catch (mailErr) {
+        try {
+          console.warn('[AUTH] Failed to send welcome email after OTP verification', {
+            to: normalizedEmail,
+            code: mailErr?.code,
+            command: mailErr?.command,
+            responseCode: mailErr?.responseCode,
+            response: mailErr?.response,
+            message: mailErr?.message,
+          });
+        } catch {
+          // ignore logging failures
+        }
+      }
 
       // ✅ Auto-login newly verified admin
       const newAdmin = created[0];

@@ -65,13 +65,25 @@ function getTransporter() {
   return cachedTransporter;
 }
 
-const sendMail = async ({ to, subject, html }) => {
+const sendMail = async ({ to, subject, html, text, ...rest }) => {
+  if (!to) {
+    throw new Error('sendMail: "to" is required');
+  }
+  if (!subject) {
+    throw new Error('sendMail: "subject" is required');
+  }
+  if (!html && !text) {
+    throw new Error('sendMail: either "html" or "text" is required');
+  }
+
   const transporter = getTransporter();
   const info = await transporter.sendMail({
     from: cachedFrom,
     to,
     subject,
-    html,
+    ...(text ? { text } : {}),
+    ...(html ? { html } : {}),
+    ...rest,
   });
 
   if (transporter && transporter.__mailDisabled) {
@@ -79,11 +91,19 @@ const sendMail = async ({ to, subject, html }) => {
     // This is intended for local/dev/demo use.
     try {
       console.warn('[MAIL DISABLED] Outbound email captured (SMTP not configured).');
-      console.warn(JSON.stringify(info?.message || { to, subject, html }, null, 2));
+      console.warn(
+        JSON.stringify(
+          info?.message || { to, subject, text: text || undefined, html: html || undefined },
+          null,
+          2
+        )
+      );
     } catch {
       // ignore logging failures
     }
   }
+
+  return info;
 };
 
 module.exports = sendMail;
