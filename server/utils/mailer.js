@@ -1,5 +1,9 @@
 const nodemailer = require("nodemailer");
 
+function looksLikeEmail(value) {
+  return typeof value === 'string' && value.includes('@');
+}
+
 function getMailConfig() {
   const host = process.env.MAIL_HOST;
   const port = Number(process.env.MAIL_PORT || 587);
@@ -24,6 +28,7 @@ function getTransporter() {
   if (cachedTransporter) return cachedTransporter;
 
   const mailConfig = getMailConfig();
+  const explicitFrom = process.env.MAIL_FROM;
 
   // If SMTP isn't configured (common in dev/demo deployments), don't break auth flows.
   // Use a JSON transport and log the outbound email content to the server console.
@@ -34,7 +39,18 @@ function getTransporter() {
     return cachedTransporter;
   }
 
-  cachedFrom = `"MarkME" <${mailConfig.user}>`;
+  // Some SMTP providers use a non-email username (e.g., SendGrid uses "apikey").
+  // In that case, you MUST set MAIL_FROM to a verified sender address.
+  if (explicitFrom) {
+    cachedFrom = explicitFrom;
+  } else if (looksLikeEmail(mailConfig.user)) {
+    cachedFrom = `"MarkME" <${mailConfig.user}>`;
+  } else {
+    cachedFrom = '"MarkME" <no-reply@local>';
+    console.warn(
+      '[MAIL] MAIL_USER is not an email address; set MAIL_FROM to a verified sender to avoid SMTP 550/unauthorized sender errors.'
+    );
+  }
 
   cachedTransporter = nodemailer.createTransport({
     host: mailConfig.host,

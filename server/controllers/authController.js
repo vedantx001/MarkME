@@ -115,6 +115,20 @@ module.exports = {
           html: otpMail(otp),
         });
       } catch (mailErr) {
+        // IMPORTANT: log a sanitized summary so production logs show the exact SMTP failure reason.
+        // Do not log credentials.
+        try {
+          console.error('[AUTH] Failed to send OTP email', {
+            to: normalizedEmail,
+            code: mailErr?.code,
+            command: mailErr?.command,
+            responseCode: mailErr?.responseCode,
+            response: mailErr?.response,
+            message: mailErr?.message,
+          });
+        } catch {
+          // ignore logging failures
+        }
         await PendingAdminRegistration.deleteOne({ email: normalizedEmail }).catch(() => {});
         return res.status(502).json({ success: false, message: 'Failed to send OTP email. Please try again.' });
       }
