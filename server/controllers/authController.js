@@ -309,12 +309,43 @@ module.exports = {
         html: welcomeMail(pending.adminName),
       });
 
+      // ✅ Auto-login newly verified admin
+      const newAdmin = created[0];
+      const accessToken = generateAccessToken(newAdmin);
+      const refreshTokenPlain = randomTokenString();
+      const refreshTokenHash = await hashToken(refreshTokenPlain);
+      const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXP_DAYS * 24 * 60 * 60 * 1000);
+
+      await RefreshToken.create({
+        userId: newAdmin._id,
+        tokenHash: refreshTokenHash,
+        expiresAt,
+        createdByIp: req.ip,
+      });
+
+      const isProd = process.env.NODE_ENV === 'production';
+      res.cookie('refreshToken', refreshTokenPlain, {
+        httpOnly: true,
+        sameSite: isProd ? 'none' : 'lax',
+        secure: isProd,
+        maxAge: REFRESH_TOKEN_EXP_DAYS * 24 * 60 * 60 * 1000,
+      });
+
       return res.json({
         success: true,
         message: 'Account verified',
+        token: accessToken,
+        refreshToken: refreshTokenPlain,
+        user: {
+          id: newAdmin._id,
+          name: newAdmin.name,
+          email: newAdmin.email,
+          role: newAdmin.role,
+          schoolId: newAdmin.schoolId,
+        },
         data: {
           school: { id: schoolDoc._id, schoolIdx: schoolDoc.schoolIdx, name: schoolDoc.name },
-          admin: { id: created[0]._id, name: created[0].name, email: created[0].email, role: created[0].role },
+          admin: { id: newAdmin._id, name: newAdmin.name, email: newAdmin.email, role: newAdmin.role },
         },
       });
     } catch (err) {

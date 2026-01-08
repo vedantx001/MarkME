@@ -44,11 +44,21 @@ export async function forgotPasswordApi(payload) {
 
 // Verify OTP
 export async function verifyOtpApi(payload) {
-  return apiFetch('/auth/verify-otp', {
+  const data = await apiFetch('/auth/verify-otp', {
     method: 'POST',
     auth: false,
     body: payload,
   });
+
+  // If server auto-logs-in (admin verify), persist tokens for subsequent /users/me calls.
+  if (data?.token || data?.refreshToken) {
+    storeAuthTokens({ accessToken: data.token, refreshToken: data.refreshToken });
+  }
+  if (data?.user) {
+    localStorage.setItem('authUser', JSON.stringify(data.user));
+  }
+
+  return data;
 }
 
 // Reset password (token-based from forgot password email)

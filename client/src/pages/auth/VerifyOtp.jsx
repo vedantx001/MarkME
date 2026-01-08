@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { verifyOtpApi, sendOtpApi } from '../../api/auth.api';
+import { useAuth } from '../../context/authContext';
 import { Mail, KeyRound, ArrowRight, RotateCcw } from 'lucide-react';
 
 const VerifyOtp = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
 
   const initialEmail = useMemo(() => {
     const s = location?.state?.email;
@@ -23,19 +25,42 @@ const VerifyOtp = () => {
     if (initialEmail) setEmail(initialEmail);
   }, [initialEmail]);
 
+  const redirectByRole = (role) => {
+    const r = String(role || '').toUpperCase();
+    if (r === 'ADMIN') return '/admin/dashboard';
+    if (r === 'TEACHER') return '/teacher/classroom';
+    if (r === 'PRINCIPAL') return '/principal/dashboard';
+    return '/login';
+  };
+
   const onVerify = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
     setSubmitting(true);
     try {
-      await verifyOtpApi({ email, otp });
+      const data = await verifyOtpApi({ email, otp });
+
+      // If server auto-logged-in (admin verify), fetch profile and redirect.
+      if (data?.token || data?.user) {
+        try {
+          const me = await refreshProfile();
+          const role = me?.role || data?.user?.role;
+          setSuccess('Account verified. Redirecting…');
+          setTimeout(() => {
+            navigate(redirectByRole(role), { replace: true });
+          }, 400);
+          return;
+        } catch {
+          // fall through to login redirect below
+        }
+      }
+
       setSuccess('Account verified. You can login now.');
       setTimeout(() => {
         navigate('/login', { replace: true, state: { prefillEmail: email } });
       }, 600);
     } catch (err) {
-      // If OTP endpoint isn't applicable (e.g., teacher/principal), instruct to login.
       if (err?.status === 400 || err?.status === 404) {
         setError(err?.message || 'OTP verification failed');
       } else {
