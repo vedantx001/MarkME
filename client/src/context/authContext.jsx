@@ -1,6 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { getMeApi, loginApi, logoutApi } from "../api/auth.api";
-import { clearAuthTokens, storeAuthTokens } from "../api/http";
+import {
+  clearAuthTokens,
+  getStoredRefreshToken,
+  getStoredToken,
+  storeAuthTokens,
+} from "../api/http";
 
 const AuthContext = createContext(null);
 
@@ -71,6 +76,15 @@ export const AuthProvider = ({ children }) => {
     (async () => {
       try {
         hydrateFromStorage();
+
+        // If we have no tokens at all, we are not authenticated.
+        // Avoid calling /users/me (it is protected and would 401).
+        const hasAnyToken = !!getStoredToken() || !!getStoredRefreshToken();
+        if (!hasAnyToken) {
+          clearSession();
+          return;
+        }
+
         // Validate token / refresh user. If token is expired, http layer will attempt refresh-token.
         const me = await refreshProfile();
         if (!alive) return;
