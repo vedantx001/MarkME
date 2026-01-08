@@ -1,11 +1,19 @@
 // ✅ Vite-safe environment variable handling
-const SERVER_URL =
-  import.meta.env.SERVER_URL || 'http://localhost:5000/api';
+// Vite only exposes env vars prefixed with VITE_ to client code.
+// Expect the API base URL to INCLUDE the `/api` prefix (e.g. https://example.com/api).
+const DEFAULT_DEV_API_BASE_URL = 'http://localhost:5000/api';
 
 function getBaseUrl() {
-  return (
-    import.meta.env.SERVER_URL
-  ).replace(/\/+$/, '');
+  const configured = import.meta.env.VITE_API_BASE_URL;
+  const base = configured || (import.meta.env.DEV ? DEFAULT_DEV_API_BASE_URL : undefined);
+
+  if (!base) {
+    throw new Error(
+      'Missing required environment variable: VITE_API_BASE_URL (expected to end with /api)'
+    );
+  }
+
+  return String(base).replace(/\/+$/, '');
 }
 
 function getStoredToken() {

@@ -281,14 +281,14 @@ const EditAdminProfileForm = ({ isOpen, onClose }) => {
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-full sm:flex-1 px-4 py-3 min-h-[44px] rounded-xl border border-[rgb(var(--primary-accent-rgb)/0.1)] text-(--primary-accent) font-semibold hover:bg-red-500 hover:text-white transition-colors"
+                  className="w-full sm:flex-1 px-4 py-3 min-h-11 rounded-xl border border-[rgb(var(--primary-accent-rgb)/0.1)] text-(--primary-accent) font-semibold hover:bg-red-500 hover:text-white transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full sm:flex-1 px-4 py-3 min-h-[44px] rounded-xl bg-(--primary-accent) text-(--primary-bg) font-bold shadow-[0_10px_15px_-3px_rgb(var(--primary-accent-rgb)/0.2),0_4px_6px_-4px_rgb(var(--primary-accent-rgb)/0.2)] hover:bg-(--primary-text) transition-all sm:hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:bg-(--primary-accent)"
+                  className="w-full sm:flex-1 px-4 py-3 min-h-11 rounded-xl bg-(--primary-accent) text-(--primary-bg) font-bold shadow-[0_10px_15px_-3px_rgb(var(--primary-accent-rgb)/0.2),0_4px_6px_-4px_rgb(var(--primary-accent-rgb)/0.2)] hover:bg-(--primary-text) transition-all sm:hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:bg-(--primary-accent)"
                 >
                   {submitting ? 'Saving…' : 'Save Changes'}
                 </button>
