@@ -21,12 +21,21 @@ const reportRoutes = require('./routes/reportsRoutes');
 
 const app = express();
 const PORT = process.env.NODE_PORT || 5000;
-const CLIENT_ORIGIN = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/+$/, '');
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://markme-ai-online.vercel.app"
+];
 
 app.use(
   cors({
-    origin: CLIENT_ORIGIN,
-    credentials: true,
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true
   })
 );
 
