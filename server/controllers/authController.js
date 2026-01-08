@@ -7,6 +7,7 @@ const validator = require('validator');
 const School = require('../model/School');
 const User = require('../model/User');
 const RefreshToken = require('../model/RefreshToken');
+const PendingAdminRegistration = require('../model/PendingAdminRegistration');
 
 const sendMail = require("../utils/mailer");
 
@@ -49,102 +50,84 @@ async function hashOtp(otp) {
 }
 
 module.exports = {
-  // register-admin: create School + Admin (transactional)
+  // register-admin: create a pending registration + send OTP.
+  // IMPORTANT: do NOT create School/User in DB until OTP is verified.
   registerAdmin: async (req, res, next) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
     try {
       const { schoolIdx, schoolName, address, adminName, adminEmail, password } = req.body;
 
       // Basic validation
       if (!schoolIdx || !schoolName || !adminName || !adminEmail || !password) {
-        await session.abortTransaction();
-        session.endSession();
         return res.status(422).json({ success: false, message: 'Missing required fields' });
       }
       if (!validator.isEmail(adminEmail)) {
-        await session.abortTransaction();
-        session.endSession();
         return res.status(422).json({ success: false, message: 'Invalid email' });
       }
       if (password.length < 8) {
-        await session.abortTransaction();
-        session.endSession();
         return res.status(422).json({ success: false, message: 'Password must be at least 8 characters' });
       }
 
+      const normalizedEmail = adminEmail.toLowerCase();
+
       // Check schoolIdx uniqueness
-      const existingSchool = await School.findOne({ schoolIdx }).session(session);
+      const existingSchool = await School.findOne({ schoolIdx });
       if (existingSchool) {
-        await session.abortTransaction();
-        session.endSession();
         return res.status(409).json({ success: false, message: 'schoolIdx already exists' });
       }
 
       // Check admin email uniqueness
-      const existingUser = await User.findOne({ email: adminEmail.toLowerCase() }).session(session);
+      const existingUser = await User.findOne({ email: normalizedEmail });
       if (existingUser) {
-        await session.abortTransaction();
-        session.endSession();
         return res.status(409).json({ success: false, message: 'Email already in use' });
       }
 
-      // Create school
-      const school = await School.create([{ schoolIdx, name: schoolName, address }], { session });
-      const schoolDoc = school[0];
+      // If there's an older pending registration for this email/schoolIdx, remove it.
+      // This allows retrying registration if OTP email fails or expires.
+      await PendingAdminRegistration.deleteMany({
+        $or: [{ email: normalizedEmail }, { schoolIdx }],
+      }).catch(() => {});
 
-      // Hash password
       const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-      // Create admin user
-      const adminUser = await User.create(
-        [
-          {
-            schoolId: schoolDoc._id,
-            name: adminName,
-            email: adminEmail.toLowerCase(),
-            passwordHash,
-            role: 'ADMIN',
-            isActive: true,
-            isVerified: false,
-          },
-        ],
-        { session }
-      );
-
-      // Generate OTP and store hash on user (OTP-based verification)
       const otp = generateOtp();
       const otpHash = await hashOtp(otp);
       const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // cleanup window (TTL)
 
-      await User.updateOne(
-        { _id: adminUser[0]._id },
-        { $set: { otpHash, otpExpiresAt, isVerified: false } },
-        { session }
-      );
-
-      await session.commitTransaction();
-      session.endSession();
-
-      // Send OTP email
-      await sendMail({
-        to: adminEmail.toLowerCase(),
-        subject: 'MarkME | Verify your Email',
-        html: otpMail(otp),
+      // Create pending registration FIRST, then send email.
+      // If email sending fails, we delete this record.
+      await PendingAdminRegistration.create({
+        email: normalizedEmail,
+        schoolIdx,
+        schoolName,
+        address,
+        adminName,
+        passwordHash,
+        otpHash,
+        otpExpiresAt,
+        expiresAt,
       });
 
-      // Return minimal info (no access token until verified)
+      try {
+        await sendMail({
+          to: normalizedEmail,
+          subject: 'MarkME | Verify your Email',
+          html: otpMail(otp),
+        });
+      } catch (mailErr) {
+        await PendingAdminRegistration.deleteOne({ email: normalizedEmail }).catch(() => {});
+        return res.status(502).json({ success: false, message: 'Failed to send OTP email. Please try again.' });
+      }
+
       return res.status(201).json({
         success: true,
-        message: 'Admin registered. OTP sent to email for verification.',
+        message: 'OTP sent to email for verification.',
         data: {
-          school: { id: schoolDoc._id, schoolIdx: schoolDoc.schoolIdx, name: schoolDoc.name },
-          admin: { id: adminUser[0]._id, name: adminUser[0].name, email: adminUser[0].email, role: adminUser[0].role },
+          email: normalizedEmail,
+          schoolIdx,
         },
       });
     } catch (err) {
-      await session.abortTransaction().catch(() => {});
-      session.endSession();
       // Handle unique index errors more gracefully
       if (err && err.code === 11000) {
         return res.status(409).json({ success: false, message: 'Conflict, duplicate key' });
@@ -221,33 +204,119 @@ module.exports = {
     }
   },
 
-  // OTP: verify OTP and mark account verified
+  // OTP: verify OTP.
+  // - If a User exists: mark verified.
+  // - Else if there's a PendingAdminRegistration: create School+Admin, then mark verified.
   verifyOtp: async (req, res, next) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
       const { email, otp } = req.body;
-      if (!email || !otp) return res.status(422).json({ success: false, message: 'Email and OTP required' });
+      if (!email || !otp) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(422).json({ success: false, message: 'Email and OTP required' });
+      }
 
-      const user = await User.findOne({ email: email.toLowerCase() });
-      if (!user) return res.status(400).json({ success: false, message: 'Invalid user' });
-
+      const normalizedEmail = email.toLowerCase();
       const hashedOtp = await hashOtp(otp);
-      if (!user.otpHash || user.otpHash !== hashedOtp || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+
+      const user = await User.findOne({ email: normalizedEmail }).session(session);
+      if (user) {
+        if (!user.otpHash || user.otpHash !== hashedOtp || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+        }
+
+        user.isVerified = true;
+        user.otpHash = undefined;
+        user.otpExpiresAt = undefined;
+        await user.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        await sendMail({
+          to: user.email,
+          subject: 'Welcome to MarkME',
+          html: welcomeMail(user.name),
+        });
+
+        return res.json({ success: true, message: 'Account verified' });
+      }
+
+      // Otherwise, complete a pending admin registration
+      const pending = await PendingAdminRegistration.findOne({ email: normalizedEmail }).session(session);
+      if (!pending) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ success: false, message: 'Invalid user' });
+      }
+
+      if (!pending.otpHash || pending.otpHash !== hashedOtp || !pending.otpExpiresAt || pending.otpExpiresAt < new Date()) {
+        await session.abortTransaction();
+        session.endSession();
         return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
       }
 
-      user.isVerified = true;
-      user.otpHash = undefined;
-      user.otpExpiresAt = undefined;
-      await user.save();
+      // Re-check uniqueness at verification time (race-safe)
+      const schoolExists = await School.findOne({ schoolIdx: pending.schoolIdx }).session(session);
+      if (schoolExists) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(409).json({ success: false, message: 'schoolIdx already exists' });
+      }
+      const userExists = await User.findOne({ email: normalizedEmail }).session(session);
+      if (userExists) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(409).json({ success: false, message: 'Email already in use' });
+      }
+
+      const school = await School.create(
+        [{ schoolIdx: pending.schoolIdx, name: pending.schoolName, address: pending.address }],
+        { session }
+      );
+      const schoolDoc = school[0];
+
+      const created = await User.create(
+        [
+          {
+            schoolId: schoolDoc._id,
+            name: pending.adminName,
+            email: normalizedEmail,
+            passwordHash: pending.passwordHash,
+            role: 'ADMIN',
+            isActive: true,
+            isVerified: true,
+          },
+        ],
+        { session }
+      );
+
+      await PendingAdminRegistration.deleteOne({ _id: pending._id }).session(session);
+
+      await session.commitTransaction();
+      session.endSession();
 
       await sendMail({
-        to: user.email,
+        to: normalizedEmail,
         subject: 'Welcome to MarkME',
-        html: welcomeMail(user.name),
+        html: welcomeMail(pending.adminName),
       });
 
-      return res.json({ success: true, message: 'Account verified' });
+      return res.json({
+        success: true,
+        message: 'Account verified',
+        data: {
+          school: { id: schoolDoc._id, schoolIdx: schoolDoc.schoolIdx, name: schoolDoc.name },
+          admin: { id: created[0]._id, name: created[0].name, email: created[0].email, role: created[0].role },
+        },
+      });
     } catch (err) {
+      await session.abortTransaction().catch(() => {});
+      session.endSession();
       next(err);
     }
   },
@@ -401,62 +470,42 @@ module.exports = {
     }
   },
 
-  // OTP: send OTP for email verification (works with User schema: otpHash, otpExpiresAt, isVerified)
+  // OTP: send OTP for email verification.
+  // Works for both existing Users and PendingAdminRegistration.
   sendOtp: async (req, res, next) => {
     try {
       const { email } = req.body;
       if (!email) return res.status(422).json({ success: false, message: 'Email required' });
       if (!validator.isEmail(email)) return res.status(422).json({ success: false, message: 'Invalid email' });
 
-      const user = await User.findOne({ email: email.toLowerCase() });
-      if (!user) return res.status(400).json({ success: false, message: 'Invalid user' });
-
+      const normalizedEmail = email.toLowerCase();
       const otp = generateOtp();
-      user.otpHash = await hashOtp(otp);
-      user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-      user.isVerified = false;
+      const otpHash = await hashOtp(otp);
+      const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-      await user.save();
+      const user = await User.findOne({ email: normalizedEmail });
+      if (user) {
+        user.otpHash = otpHash;
+        user.otpExpiresAt = otpExpiresAt;
+        user.isVerified = false;
+        await user.save();
+      } else {
+        const pending = await PendingAdminRegistration.findOne({ email: normalizedEmail });
+        if (!pending) return res.status(400).json({ success: false, message: 'Invalid user' });
+
+        pending.otpHash = otpHash;
+        pending.otpExpiresAt = otpExpiresAt;
+        pending.expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+        await pending.save();
+      }
 
       await sendMail({
-        to: user.email,
+        to: normalizedEmail,
         subject: 'MarkME | Verify your Email',
         html: otpMail(otp),
       });
 
       return res.status(200).json({ success: true, message: 'OTP sent to email' });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  // OTP: verify OTP and mark account verified
-  verifyOtp: async (req, res, next) => {
-    try {
-      const { email, otp } = req.body;
-      if (!email || !otp) return res.status(422).json({ success: false, message: 'Email and OTP required' });
-
-      const user = await User.findOne({ email: email.toLowerCase() });
-      if (!user) return res.status(400).json({ success: false, message: 'Invalid user' });
-
-      const hashedOtp = await hashOtp(otp);
-
-      if (!user.otpHash || user.otpHash !== hashedOtp || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
-        return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
-      }
-
-      user.isVerified = true;
-      user.otpHash = undefined;
-      user.otpExpiresAt = undefined;
-      await user.save();
-
-      await sendMail({
-        to: user.email,
-        subject: 'Welcome to MarkME',
-        html: welcomeMail(user.name),
-      });
-
-      return res.json({ success: true, message: 'Account verified' });
     } catch (err) {
       next(err);
     }

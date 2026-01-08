@@ -117,12 +117,16 @@ async function apiFetch(
 async function tryRefreshToken() {
   const refreshToken = getStoredRefreshToken();
 
+  // If we don't have a refresh token stored, don't call refresh-token.
+  // This prevents noisy 401 requests for logged-out users.
+  if (!refreshToken) return false;
+
   try {
     const data = await apiFetch('/auth/refresh-token', {
       method: 'POST',
       auth: false,
       retryOn401: false,
-      body: refreshToken ? { refreshToken } : undefined,
+      body: { refreshToken },
     });
 
     if (data?.token) {
@@ -135,6 +139,7 @@ async function tryRefreshToken() {
 
     return false;
   } catch {
+    clearAuthTokens();
     return false;
   }
 }
