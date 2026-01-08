@@ -21,23 +21,27 @@ const reportRoutes = require('./routes/reportsRoutes');
 
 const app = express();
 const PORT = process.env.NODE_PORT || 5000;
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://markme-ai-online.vercel.app"
-];
+
+// For cookie-based auth across domains (Vercel -> Render), origin must be explicit (not '*').
+// Set this to your Vercel deployment URL, e.g. https://<your-app>.vercel.app
+const CLIENT_ORIGIN = (process.env.CLIENT_URL || '').replace(/\/+$/, '');
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
+      // Allow non-browser requests (no Origin) and allow ONLY the configured Vercel frontend origin.
+      if (!origin) return callback(null, true);
+      if (CLIENT_ORIGIN && origin === CLIENT_ORIGIN) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'));
     },
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
+
+// Ensure preflight requests succeed
+app.options('*', cors({ origin: CLIENT_ORIGIN, credentials: true }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

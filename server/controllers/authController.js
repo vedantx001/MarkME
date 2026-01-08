@@ -178,10 +178,13 @@ module.exports = {
         createdByIp: req.ip,
       });
 
+      const isProd = process.env.NODE_ENV === 'production';
+
       res.cookie('refreshToken', refreshTokenPlain, {
         httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
+        // Required for cross-site cookies (Vercel -> Render). Browsers require SameSite=None to also be Secure.
+        sameSite: isProd ? 'none' : 'lax',
+        secure: isProd,
         maxAge: REFRESH_TOKEN_EXP_DAYS * 24 * 60 * 60 * 1000,
       });
 
@@ -365,11 +368,14 @@ module.exports = {
 
       const accessToken = generateAccessToken(user);
 
+      const isProd = process.env.NODE_ENV === 'production';
+
       // set new cookie
       res.cookie('refreshToken', newPlain, {
         httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
+        // Required for cross-site cookies (Vercel -> Render). Browsers require SameSite=None to also be Secure.
+        sameSite: isProd ? 'none' : 'lax',
+        secure: isProd,
         maxAge: REFRESH_TOKEN_EXP_DAYS * 24 * 60 * 60 * 1000,
       });
 
