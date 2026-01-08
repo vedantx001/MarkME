@@ -8,7 +8,7 @@ function getMailConfig() {
   const secureEnv = process.env.MAIL_SECURE;
 
   if (!host || !user || !pass) {
-    throw new Error('Missing mail env vars: MAIL_HOST, MAIL_USER, MAIL_PASS (and optional MAIL_PORT/MAIL_SECURE)');
+    return null;
   }
 
   // If MAIL_SECURE is explicitly set, respect it; otherwise infer from port.
@@ -24,6 +24,16 @@ function getTransporter() {
   if (cachedTransporter) return cachedTransporter;
 
   const mailConfig = getMailConfig();
+
+  // If SMTP isn't configured (common in dev/demo deployments), don't break auth flows.
+  // Use a JSON transport and log the outbound email content to the server console.
+  if (!mailConfig) {
+    cachedFrom = '"MarkME" <no-reply@local>';
+    cachedTransporter = nodemailer.createTransport({ jsonTransport: true });
+    cachedTransporter.__mailDisabled = true;
+    return cachedTransporter;
+  }
+
   cachedFrom = `"MarkME" <${mailConfig.user}>`;
 
   cachedTransporter = nodemailer.createTransport({
@@ -41,12 +51,23 @@ function getTransporter() {
 
 const sendMail = async ({ to, subject, html }) => {
   const transporter = getTransporter();
-  await transporter.sendMail({
+  const info = await transporter.sendMail({
     from: cachedFrom,
     to,
     subject,
     html,
   });
+
+  if (transporter && transporter.__mailDisabled) {
+    // Log the full payload so OTP/reset links can be retrieved from logs when SMTP isn't configured.
+    // This is intended for local/dev/demo use.
+    try {
+      console.warn('[MAIL DISABLED] Outbound email captured (SMTP not configured).');
+      console.warn(JSON.stringify(info?.message || { to, subject, html }, null, 2));
+    } catch {
+      // ignore logging failures
+    }
+  }
 };
 
 module.exports = sendMail;
