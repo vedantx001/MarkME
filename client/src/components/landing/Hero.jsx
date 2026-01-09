@@ -14,7 +14,7 @@ const Hero = () => {
             <Background />
             <div className="max-w-7xl mx-auto relative z-10">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-6 items-center">
-                <div className="order-2 lg:order-1 max-w-3xl mx-auto lg:mx-0 text-center lg:text-left">
+                <div className="order-1 lg:order-1 max-w-3xl mx-auto lg:mx-0 text-center lg:text-left">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -63,7 +63,7 @@ const Hero = () => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.5, duration: 1, ease: 'easeOut' }}
-                    className="order-1 lg:order-2 w-full max-w-md sm:max-w-lg mx-auto lg:mx-0"
+                    className="order-2 lg:order-2 w-full max-w-md sm:max-w-lg mx-auto lg:mx-0"
                 >
                     <HeroCube />
                 </motion.div>
