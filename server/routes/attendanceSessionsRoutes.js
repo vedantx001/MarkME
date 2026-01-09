@@ -12,6 +12,9 @@ router.post('/', attendanceSessionController.fetchOrCreateSession);
 // Get session details
 router.get('/:id', attendanceSessionController.getSessionDetails);
 
+// Get signed params for direct Cloudinary upload (avoid large multipart through backend)
+router.post('/cloudinary-signature', authMiddleware, attendanceController.getCloudinaryUploadSignature);
+
 // Process attendance via AI
 router.post('/process', authMiddleware, uploadClassroomImages, attendanceController.processAttendance);
 
