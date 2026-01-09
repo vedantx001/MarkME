@@ -45,11 +45,8 @@ export const uploadClassroomImages = async ({ classId, files, sessionId } = {}) 
 
     // 2) Upload selected images directly to Cloudinary
     const uploadCount = Math.min(list.length, items.length);
-    const uploads = [];
-
-    for (let i = 0; i < uploadCount; i++) {
-        const file = list[i];
-        const { publicId, timestamp, signature } = items[i] || {};
+    const uploadOne = async (file, item) => {
+        const { publicId, timestamp, signature } = item || {};
         if (!publicId || !timestamp || !signature) {
             throw new Error('Could not prepare image upload. Please try again.');
         }
@@ -73,11 +70,23 @@ export const uploadClassroomImages = async ({ classId, files, sessionId } = {}) 
             throw new Error(message);
         }
 
+        // Always use Cloudinary's returned URL (never construct manually)
         const secureUrl = json?.secure_url;
-        if (!secureUrl) {
-            throw new Error('Cloud upload failed (missing URL).');
+        if (!secureUrl || typeof secureUrl !== 'string' || !secureUrl.startsWith('https://')) {
+            throw new Error('Cloud upload failed (invalid secure_url).');
         }
-        uploads.push(secureUrl);
+        return secureUrl;
+    };
+
+    // Concurrency-limited uploads: faster than sequential, safer than 4-at-once on mobile.
+    const concurrency = 2;
+    const tasks = Array.from({ length: uploadCount }).map((_, i) => ({ file: list[i], item: items[i] }));
+    const uploads = [];
+
+    for (let start = 0; start < tasks.length; start += concurrency) {
+        const chunk = tasks.slice(start, start + concurrency);
+        const results = await Promise.all(chunk.map((t) => uploadOne(t.file, t.item)));
+        uploads.push(...results);
     }
 
     // 3) Call backend attendance processing with imageUrls (small JSON, no multipart)
