@@ -35,7 +35,7 @@ const AdminLayout = ({ sidebarItems, brandLabel, showSettings }) => {
         />
 
         {/* Page Content Slot */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10 pb-20">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-2 lg:p-10 pb-20">
           <AnimatePresence mode="wait">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
