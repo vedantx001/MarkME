@@ -40,10 +40,17 @@ exports.processAttendance = async (req, res) => {
 
                 const folderPath = `${schoolName}/attendance/${className}/${dateStr}`;
 
-                for (const file of uploadedFiles) {
-                    const publicId = `cls_img_${Date.now()}_${Math.round(Math.random() * 1e9)}`;
-                    const secureUrl = await uploadToCloudinary(file.buffer, folderPath, publicId);
+                // Upload concurrently (faster on mobile; reduces chance of proxy timeouts)
+                const batchTs = Date.now();
+                const uploadResults = await Promise.all(
+                    uploadedFiles.map(async (file, idx) => {
+                        const publicId = `cls_img_${batchTs}_${idx}_${Math.round(Math.random() * 1e9)}`;
+                        const secureUrl = await uploadToCloudinary(file.buffer, folderPath, publicId);
+                        return secureUrl;
+                    })
+                );
 
+                for (const secureUrl of uploadResults) {
                     if (!secureUrl || typeof secureUrl !== 'string' || secureUrl.trim() === '') {
                         console.error('❌ Cloudinary FAILURE: Invalid URL returned.');
                         return res.status(500).json({ message: "Error: Image could not be uploaded to the cloud. Recognition aborted." });
