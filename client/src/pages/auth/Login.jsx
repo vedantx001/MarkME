@@ -368,7 +368,7 @@ const AuthPage = ({ initialMode = 'login' }) => {
                     style={{ backgroundColor: '#3182CE' }}
                     disabled={submitting}
                   >
-                    {submitting ? 'Please wait...' : (isLogin ? 'Login Dashboard' : 'Register School Administrator')}
+                    {submitting ? 'Please wait...' : (isLogin ? 'Login Dashboard' : 'Register')}
                     <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                 </form>

@@ -347,50 +347,51 @@ const Attendance = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto pb-25 relative">
-      {/* Header Section */}
-      <div className="mb-8 text-center md:text-left">
-        <h1 className="text-2xl md:text-3xl font-bold text-(--primary-text) tracking-tight">Take Attendance</h1>
-        <p className="text-[rgb(var(--primary-accent-rgb)/0.6)] mt-1 font-medium">
-          Our AI will detect faces from your classroom photos.
-          {activeClass?.name ? ` (Class: ${activeClass.name})` : ""}
-        </p>
-      </div>
+    <div className="relative w-full">
+      <div className="max-w-6xl mx-auto pb-25 relative">
+        {/* Header Section */}
+        <div className="mb-8 text-center md:text-left">
+          <h1 className="text-2xl md:text-3xl font-bold text-(--primary-text) tracking-tight">Take Attendance</h1>
+          <p className="text-[rgb(var(--primary-accent-rgb)/0.6)] mt-1 font-medium">
+            Our AI will detect faces from your classroom photos.
+            {activeClass?.name ? ` (Class: ${activeClass.name})` : ""}
+          </p>
+        </div>
 
-      <StepIndicator currentStage={stage} />
+        <StepIndicator currentStage={stage} />
 
-      <AnimatePresence>
-        {stage === "submitted" && showSubmittedOverlay && (
-          <Motion.div
-            key="submitted-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-(--primary-bg) backdrop-blur-xl"
-            style={{
-              paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
-              paddingRight: 'calc(env(safe-area-inset-right, 0px) + 16px)',
-              paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)',
-              paddingLeft: 'calc(env(safe-area-inset-left, 0px) + 16px)'
-            }}
-          >
+        <AnimatePresence>
+          {stage === "submitted" && showSubmittedOverlay && (
             <Motion.div
-              initial={{ opacity: 0, scale: 0.98, y: 6 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98, y: 6 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="text-center"
+              key="submitted-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="absolute inset-0 z-20 flex items-center justify-center bg-(--primary-bg) backdrop-blur-xl"
+              style={{
+                paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
+                paddingRight: 'calc(env(safe-area-inset-right, 0px) + 16px)',
+                paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)',
+                paddingLeft: 'calc(env(safe-area-inset-left, 0px) + 16px)'
+              }}
             >
-              <AnimatedSuccessIcon />
-              <div className="mt-4 text-sm font-semibold text-(--primary-text)">Attendance submitted</div>
-              <div className="mt-1 text-xs text-[rgb(var(--primary-accent-rgb)/0.6)]">Saving your record…</div>
+              <Motion.div
+                initial={{ opacity: 0, scale: 0.98, y: 6 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.98, y: 6 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="text-center"
+              >
+                <AnimatedSuccessIcon />
+                <div className="mt-4 text-sm font-semibold text-(--primary-text)">Attendance submitted</div>
+                <div className="mt-1 text-xs text-[rgb(var(--primary-accent-rgb)/0.6)]">Saving your record…</div>
+              </Motion.div>
             </Motion.div>
-          </Motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
 
-      <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait">
         {/* STAGE: UPLOAD */}
         {stage === "upload" && (
           <Motion.div
@@ -534,6 +535,7 @@ const Attendance = () => {
           </Motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 };
