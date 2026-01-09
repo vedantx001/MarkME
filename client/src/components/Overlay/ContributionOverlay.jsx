@@ -1,10 +1,40 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import '../../styles/ContributionOverlay.css';
 
 export function ContributionOverlay({ developer, clickPosition, onClose }) {
     const overlayRef = useRef(null);
     const contentRef = useRef(null);
+    const prefersReducedMotion = useReducedMotion();
+
+    const isSmallScreen = useMemo(() => {
+        if (typeof window === 'undefined') return false;
+        return window.matchMedia('(max-width: 600px)').matches;
+    }, []);
+
+    const originOffset = useMemo(() => {
+        // Compute once per open/close to avoid extra work during animation frames
+        const x = clickPosition?.x ?? 0;
+        const y = clickPosition?.y ?? 0;
+        return {
+            x: x - window.innerWidth / 2,
+            y: y - window.innerHeight / 2
+        };
+    }, [clickPosition]);
+
+    const overlayTransition = prefersReducedMotion
+        ? { duration: 0.18, ease: 'easeOut' }
+        : { duration: 0.35, ease: [0.22, 1, 0.36, 1] };
+
+    const contentTransition = prefersReducedMotion
+        ? { duration: 0.22, ease: 'easeOut' }
+        : {
+            type: 'spring',
+            stiffness: 260,
+            damping: 28,
+            mass: 0.9
+        };
 
     // Handle ESC key
     useEffect(() => {
@@ -37,7 +67,7 @@ export function ContributionOverlay({ developer, clickPosition, onClose }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={overlayTransition}
             onClick={(e) => {
                 if (e.target === overlayRef.current) {
                     onClose();
@@ -53,9 +83,11 @@ export function ContributionOverlay({ developer, clickPosition, onClose }) {
                 className="contribution-overlay__content glass-surface-strong"
                 initial={{
                     opacity: 0,
-                    scale: 0.8,
-                    x: clickPosition.x - window.innerWidth / 2,
-                    y: clickPosition.y - window.innerHeight / 2
+                    scale: prefersReducedMotion ? 0.98 : 0.92,
+                    x: prefersReducedMotion || isSmallScreen ? 0 : originOffset.x,
+                    y: prefersReducedMotion
+                        ? 0
+                        : (isSmallScreen ? 18 : originOffset.y)
                 }}
                 animate={{
                     opacity: 1,
@@ -65,11 +97,14 @@ export function ContributionOverlay({ developer, clickPosition, onClose }) {
                 }}
                 exit={{
                     opacity: 0,
-                    scale: 0.9,
-                    x: clickPosition.x - window.innerWidth / 2,
-                    y: clickPosition.y - window.innerHeight / 2
+                    scale: prefersReducedMotion ? 0.98 : 0.96,
+                    x: prefersReducedMotion || isSmallScreen ? 0 : originOffset.x,
+                    y: prefersReducedMotion
+                        ? 0
+                        : (isSmallScreen ? 18 : originOffset.y)
                 }}
-                transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+                transition={contentTransition}
+                style={{ willChange: 'transform, opacity' }}
                 tabIndex={-1}
                 role="dialog"
                 aria-modal="true"

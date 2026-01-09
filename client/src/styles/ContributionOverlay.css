@@ -11,6 +11,8 @@
     justify-content: center;
     padding: 2rem;
     perspective: 1200px;
+    /* Hint to the browser that this surface is animated */
+    will-change: opacity;
 }
 
 /* Premium Backdrop with gradient overlay */
@@ -25,6 +27,8 @@
         var(--overlay-bg);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
+    will-change: opacity;
+    transform: translateZ(0);
 }
 
 /* Animated grid pattern overlay */
@@ -70,6 +74,10 @@
         0 0 0 1px var(--glass-border) inset,
         var(--shadow-lg),
         var(--shadow-glow);
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    contain: layout paint;
 }
 
 .contribution-overlay__scroll {
@@ -555,6 +563,17 @@
         border-radius: 24px;
     }
 
+    /* Mobile GPUs struggle with large backdrop blurs + animated overlays */
+    .contribution-overlay__backdrop {
+        backdrop-filter: blur(12px) saturate(150%);
+        -webkit-backdrop-filter: blur(12px) saturate(150%);
+    }
+
+    .contribution-overlay__backdrop::before {
+        animation: none;
+        opacity: 0.25;
+    }
+
     .contribution-overlay__scroll {
         max-height: 92vh;
     }
@@ -600,17 +619,38 @@
 
 @media (max-width: 480px) {
     .contribution-overlay {
-        padding: 0;
+        /* Breathing room for mobile browser UI + notches */
+        padding:
+            calc(env(safe-area-inset-top, 0px) + 12px)
+            12px
+            calc(env(safe-area-inset-bottom, 0px) + 12px);
     }
 
     .contribution-overlay__content {
-        max-height: 100vh;
-        border-radius: 0;
+        max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px);
+        border-radius: 20px;
         max-width: 100%;
+        /* Reduce heavy shadows on low-end mobile */
+        box-shadow: 0 0 0 1px var(--glass-border) inset, var(--shadow-lg);
+    }
+
+    .contribution-overlay__backdrop {
+        backdrop-filter: blur(8px) saturate(140%);
+        -webkit-backdrop-filter: blur(8px) saturate(140%);
+    }
+
+    .contribution-overlay__backdrop::before {
+        animation: none;
+        opacity: 0.2;
     }
 
     .contribution-overlay__scroll {
-        max-height: 100vh;
+        max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px);
+    }
+
+    .contribution-overlay__close {
+        top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+        right: calc(env(safe-area-inset-right, 0px) + 0.75rem);
     }
 
     .contribution-overlay__content::before {
@@ -628,5 +668,19 @@
 
     .contribution-overlay__list-item {
         padding: 0.875rem 1rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .contribution-overlay__backdrop::before {
+        animation: none;
+    }
+
+    .contribution-overlay__avatar-ring {
+        animation: none;
+    }
+
+    .contribution-overlay__avatar-glow {
+        animation: none;
     }
 }
