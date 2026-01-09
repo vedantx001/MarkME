@@ -6,6 +6,71 @@ const ClassroomImage = require("../model/ClassroomImage"); // Added
 const Classroom = require("../model/Classroom"); // Added for schoolId lookup
 const aiClient = require("../utils/aiClient");
 const { uploadToCloudinary } = require("../utils/cloudinaryHelper"); // Added
+const crypto = require('crypto');
+
+const normalizeNameSegment = (value) =>
+    String(value || '')
+        .trim()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-zA-Z0-9_\-\/]/g, '')
+        .slice(0, 80) || 'Undefined';
+
+const cloudinarySignature = (params, apiSecret) => {
+    // Cloudinary expects params sorted by key and concatenated as key=value&...
+    const toSign = Object.keys(params)
+        .sort()
+        .map((k) => `${k}=${params[k]}`)
+        .join('&');
+    return crypto.createHash('sha1').update(toSign + apiSecret).digest('hex');
+};
+
+// POST /api/attendance-sessions/cloudinary-signature
+// Body: { classId, count }
+exports.getCloudinaryUploadSignature = async (req, res) => {
+    try {
+        const { classId, count } = req.body || {};
+        if (!classId) return res.status(400).json({ message: 'classId is required.' });
+
+        const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+        const apiKey = process.env.CLOUDINARY_API_KEY;
+        const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+        if (!cloudName || !apiKey || !apiSecret) {
+            return res.status(500).json({ message: 'Cloudinary is not configured on the server.' });
+        }
+
+        const classroom = await Classroom.findById(classId).populate('schoolId');
+        if (!classroom) return res.status(404).json({ message: 'Classroom not found.' });
+
+        const schoolName = normalizeNameSegment(classroom?.schoolId?.name || 'Undefined_School');
+        const className = normalizeNameSegment(classroom?.name || 'Undefined_Class');
+        const dateStr = new Date().toISOString().split('T')[0];
+
+        const folder = `${schoolName}/attendance/${className}/${dateStr}`;
+
+        const n = Math.max(1, Math.min(4, Number(count) || 1));
+        const timestamp = Math.floor(Date.now() / 1000);
+        const batchTs = Date.now();
+
+        const items = Array.from({ length: n }).map((_, idx) => {
+            const publicId = `cls_img_${batchTs}_${idx}_${Math.round(Math.random() * 1e9)}`;
+            const paramsToSign = { folder, public_id: publicId, timestamp };
+            const signature = cloudinarySignature(paramsToSign, apiSecret);
+            return { publicId, timestamp, signature };
+        });
+
+        return res.json({
+            cloudName,
+            apiKey,
+            folder,
+            uploadUrl: `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+            items,
+        });
+    } catch (err) {
+        console.error('getCloudinaryUploadSignature error:', err);
+        return res.status(500).json({ message: 'Server error generating signature.', error: err.message });
+    }
+};
 
 exports.processAttendance = async (req, res) => {
     try {

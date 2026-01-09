@@ -17,19 +17,78 @@ const toUiRecord = (r) => {
 };
 
 export const uploadClassroomImages = async ({ classId, files, sessionId } = {}) => {
-    const form = new FormData();
-    if (classId) form.append("classId", classId);
-    if (sessionId) form.append("sessionId", sessionId);
-
     const list = Array.isArray(files) ? files : [];
-    list.forEach((file) => {
-        form.append("classroomImages", file);
+
+    if (!classId) {
+        throw new Error('classId is required');
+    }
+
+    if (list.length === 0) {
+        throw new Error('Please select at least one image');
+    }
+
+    // 1) Ask backend for signed upload params
+    const sig = await apiFetch('/attendance-sessions/cloudinary-signature', {
+        method: 'POST',
+        auth: true,
+        body: { classId, count: Math.min(4, list.length) },
     });
 
-    const data = await apiFetch("/attendance-sessions/process", {
-        method: "POST",
+    const uploadUrl = sig?.uploadUrl;
+    const apiKey = sig?.apiKey;
+    const folder = sig?.folder;
+    const items = Array.isArray(sig?.items) ? sig.items : [];
+
+    if (!uploadUrl || !apiKey || !folder || items.length === 0) {
+        throw new Error('Could not prepare image upload. Please try again.');
+    }
+
+    // 2) Upload selected images directly to Cloudinary
+    const uploadCount = Math.min(list.length, items.length);
+    const uploads = [];
+
+    for (let i = 0; i < uploadCount; i++) {
+        const file = list[i];
+        const { publicId, timestamp, signature } = items[i] || {};
+        if (!publicId || !timestamp || !signature) {
+            throw new Error('Could not prepare image upload. Please try again.');
+        }
+
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('api_key', apiKey);
+        fd.append('timestamp', String(timestamp));
+        fd.append('folder', folder);
+        fd.append('public_id', publicId);
+        fd.append('signature', signature);
+
+        const res = await fetch(uploadUrl, {
+            method: 'POST',
+            body: fd,
+        });
+
+        const json = await res.json().catch(() => null);
+        if (!res.ok) {
+            const message = json?.error?.message || `Cloud upload failed (${res.status})`;
+            throw new Error(message);
+        }
+
+        const secureUrl = json?.secure_url;
+        if (!secureUrl) {
+            throw new Error('Cloud upload failed (missing URL).');
+        }
+        uploads.push(secureUrl);
+    }
+
+    // 3) Call backend attendance processing with imageUrls (small JSON, no multipart)
+    const data = await apiFetch('/attendance-sessions/process', {
+        method: 'POST',
         auth: true,
-        body: form,
+        body: {
+            classId,
+            sessionId,
+            imageUrls: uploads,
+        },
     });
 
     const records = Array.isArray(data?.records) ? data.records : [];
