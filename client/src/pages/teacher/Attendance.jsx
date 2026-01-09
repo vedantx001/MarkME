@@ -79,6 +79,7 @@ const Attendance = () => {
   const [reportDownloading, setReportDownloading] = useState(false);
   const [showSubmittedOverlay, setShowSubmittedOverlay] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [processError, setProcessError] = useState(null);
 
   const handleResetFlow = () => {
     try {
@@ -185,6 +186,7 @@ const Attendance = () => {
       return;
     }
 
+    setProcessError(null);
     setStage("processing");
 
     try {
@@ -199,6 +201,16 @@ const Attendance = () => {
       setStage("preview");
     } catch (error) {
       console.error("Failed to process images", error);
+      const msg =
+        error?.message ||
+        (typeof error === 'string' ? error : null) ||
+        'Failed to process images. Please try again.';
+      // Helpful hint for mobile/network/CORS issues where fetch throws TypeError.
+      const hint =
+        msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network')
+          ? `Network error contacting the server. Check your connection and try again.`
+          : null;
+      setProcessError(hint ? `${msg} — ${hint}` : msg);
       setStage("upload"); // Revert on error
     }
   };
@@ -341,6 +353,12 @@ const Attendance = () => {
           >
             <div className="bg-(--primary-bg) p-6 rounded-2xl shadow-sm border border-[rgb(var(--primary-accent-rgb)/0.05)]">
               <ImageUpload images={images} setImages={setImages} />
+
+              {processError && (
+                <div className="mt-5 w-full rounded-xl border border-rose-500/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-600/90">
+                  {processError}
+                </div>
+              )}
 
               <div className="mt-8 flex flex-col items-center gap-4">
                 <button
