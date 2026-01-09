@@ -24,7 +24,21 @@ const PORT = process.env.NODE_PORT || 5000;
 
 // For cookie-based auth across domains (Vercel -> Render), origin must be explicit (not '*').
 // Set this to your Vercel deployment URL, e.g. https://<your-app>.vercel.app
-const CLIENT_ORIGIN = process.env.CLIENT_URL?.replace(/\/+$/, '');
+const normalizeOrigin = (v) => (v ? String(v).trim().replace(/\/+$/, '') : '');
+const CLIENT_ORIGIN = normalizeOrigin(process.env.CLIENT_URL);
+
+// Optional: allow multiple origins via comma-separated env var.
+// Example: CLIENT_URLS="https://markme.vercel.app,https://www.markme.vercel.app,https://markme.com"
+const CLIENT_ORIGINS = new Set(
+  [CLIENT_ORIGIN]
+    .concat(
+      (process.env.CLIENT_URLS || '')
+        .split(',')
+        .map((s) => normalizeOrigin(s))
+        .filter(Boolean)
+    )
+    .filter(Boolean)
+);
 
 app.use(
   cors({
@@ -32,9 +46,17 @@ app.use(
       // Allow server-to-server, health checks, Postman, curl
       if (!origin) return callback(null, true);
 
-      // Allow frontend only if CLIENT_URL is set and matches
-      if (CLIENT_ORIGIN && origin === CLIENT_ORIGIN) {
+      const normalized = normalizeOrigin(origin);
+
+      // Allow frontend only if CLIENT_URL/CLIENT_URLS is set and matches
+      if (CLIENT_ORIGINS.size > 0 && CLIENT_ORIGINS.has(normalized)) {
         return callback(null, true);
+      }
+
+      if (CLIENT_ORIGINS.size > 0) {
+        console.warn('CORS blocked request from origin:', normalized, 'Allowed:', Array.from(CLIENT_ORIGINS));
+      } else {
+        console.warn('CORS blocked request from origin:', normalized, '(no CLIENT_URL configured)');
       }
 
       return callback(null, false); // IMPORTANT: false, not Error
