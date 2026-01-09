@@ -81,6 +81,16 @@ const Attendance = () => {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [processError, setProcessError] = useState(null);
 
+  const getHealthUrl = () => {
+    try {
+      const apiBase = getBaseUrl();
+      const healthBase = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
+      return `${String(healthBase).replace(/\/+$/, '')}/health`;
+    } catch {
+      return null;
+    }
+  };
+
   const handleResetFlow = () => {
     try {
       if (typeof window !== "undefined" && activeClass?.id) {
@@ -205,12 +215,43 @@ const Attendance = () => {
         error?.message ||
         (typeof error === 'string' ? error : null) ||
         'Failed to process images. Please try again.';
+
       // Helpful hint for mobile/network/CORS issues where fetch throws TypeError.
-      const hint =
-        msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network')
-          ? `Network error contacting the server. Check your connection and try again.`
-          : null;
-      setProcessError(hint ? `${msg} — ${hint}` : msg);
+      const isFetchFailure =
+        msg.toLowerCase().includes('failed to fetch') ||
+        msg.toLowerCase().includes('network');
+
+      if (isFetchFailure) {
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        let apiBase = '';
+        try {
+          apiBase = getBaseUrl();
+        } catch {
+          apiBase = '';
+        }
+
+        // Try a no-cors probe to see if the backend is reachable at all.
+        // If this succeeds but the real request fails, it strongly suggests a CORS/preflight block.
+        const healthUrl = getHealthUrl();
+        if (healthUrl) {
+          try {
+            await fetch(healthUrl, { method: 'GET', mode: 'no-cors', cache: 'no-store' });
+            setProcessError(
+              `Failed to fetch — Backend is reachable but the browser blocked the API call (likely CORS). Origin: ${origin}${apiBase ? ` | API: ${apiBase}` : ''}`
+            );
+          } catch {
+            setProcessError(
+              `Failed to fetch — Cannot reach backend (${healthUrl}). Check DNS/SSL/network.${apiBase ? ` API: ${apiBase}` : ''}`
+            );
+          }
+        } else {
+          setProcessError(
+            `Failed to fetch — Network error contacting the server. Origin: ${origin}${apiBase ? ` | API: ${apiBase}` : ''}`
+          );
+        }
+      } else {
+        setProcessError(msg);
+      }
       setStage("upload"); // Revert on error
     }
   };
