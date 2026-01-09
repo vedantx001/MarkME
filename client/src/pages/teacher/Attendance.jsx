@@ -370,10 +370,10 @@ const Attendance = () => {
               transition={{ duration: 0.15, ease: "easeOut" }}
               className="absolute inset-0 z-20 flex items-center justify-center bg-(--primary-bg) backdrop-blur-xl"
               style={{
-                paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
-                paddingRight: 'calc(env(safe-area-inset-right, 0px) + 16px)',
-                paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)',
-                paddingLeft: 'calc(env(safe-area-inset-left, 0px) + 16px)'
+                paddingTop: 'calc(env(safe-area-inset-top, 0px))',
+                paddingRight: 'calc(env(safe-area-inset-right, 0px))',
+                paddingBottom: 'calc(env(safe-area-inset-bottom, 0px))',
+                paddingLeft: 'calc(env(safe-area-inset-left, 0px))'
               }}
             >
               <Motion.div
