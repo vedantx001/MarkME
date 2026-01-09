@@ -112,17 +112,17 @@ const HeroCube = () => {
 
   if (!mounted) {
     return (
-      <div className="relative w-full h-[320px] sm:h-[420px] lg:h-[600px]">
+      <div className="relative w-full h-80 sm:h-105 lg:h-150">
         <Loader />
       </div>
     );
   }
 
   return (
-    <div className="relative w-full h-[320px] sm:h-[420px] lg:h-[600px]">
+    <div className="relative w-full h-80 sm:h-105 lg:h-150">
       {/* Background glow */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="w-64 h-64 bg-gradient-to-br from-[#85C7F2]/20 to-[#0EA5E9]/10 rounded-full blur-3xl" />
+        <div className="w-64 h-64 bg-linear-to-br from-[#85C7F2]/20 to-[#0EA5E9]/10 rounded-full blur-3xl" />
       </div>
       
       <Suspense fallback={<Loader />}>
