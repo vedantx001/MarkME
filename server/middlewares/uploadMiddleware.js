@@ -22,15 +22,36 @@ const fileFilter = (req, file, cb) => {
     'image/jpeg',
     'image/png',
     'image/jpg',
+    // Some clients (especially mobile) may send generic mime types for images
+    'application/octet-stream',
+    'binary/octet-stream',
+    // Excel
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
     'application/vnd.ms-excel' // .xls
   ];
 
-  if (allowedMimeTypes.includes(file.mimetype)) {
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  const allowedExts = new Set(['.jpg', '.jpeg', '.png', '.xlsx', '.xls']);
+
+  // Prefer mimetype check, but allow extension fallback because some clients
+  // (notably mobile browsers) may upload JPG/PNG as application/octet-stream.
+  const mimeOk = allowedMimeTypes.includes(file.mimetype);
+  const extOk = allowedExts.has(ext);
+
+  if (mimeOk && (file.mimetype.startsWith('image/') || file.mimetype.includes('excel') || file.mimetype.includes('spreadsheet') || file.mimetype.includes('octet-stream') || extOk)) {
     cb(null, true);
-  } else {
-    cb(new Error('Invalid file type. Only JPG, PNG, and Excel files are allowed.'), false);
+    return;
   }
+
+  if (extOk) {
+    cb(null, true);
+    return;
+  }
+
+  cb(
+    new Error('Invalid file type. Allowed: JPG/JPEG, PNG images, and Excel (.xlsx/.xls).'),
+    false
+  );
 };
 
 const excelFilter = (req, file, cb) => {

@@ -310,7 +310,7 @@ const AuthPage = ({ initialMode = 'login' }) => {
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3182CE] transition-colors" size={22} />
                     <input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Enter your account password"
+                      placeholder="Enter Password"
                       className="form-input pr-12"
                       value={isLogin ? loginForm.password : registerForm.password}
                       onChange={(e) => {
