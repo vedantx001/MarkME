@@ -23,7 +23,7 @@ const Workflow = () => {
             icon: Cpu,
             title: "AI Engine",
             desc: "Automated face recognition to identify students and mark attendance accurately.",
-            color: "bg-[#85C7F2]/10",
+            color: "bg-[#85C7F2]/50",
             iconColor: "text-[#2D3748]"
         },
         {
@@ -36,7 +36,7 @@ const Workflow = () => {
     ];
 
     return (
-        <section id="workflow" className="py-24 px-6 bg-[#F2F8FF] relative overflow-hidden">
+        <section id="workflow" className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 bg-[#F2F8FF] relative overflow-hidden">
             {/* Abstract Background Decoration */}
             <div className="absolute top-0 left-0 w-full h-full opacity-40 pointer-events-none">
                 <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-[#85C7F2]/20 rounded-full blur-3xl" />
@@ -92,11 +92,8 @@ const Workflow = () => {
                             </div>
 
                             {/* Icon Container */}
-                            <div className={`w-24 h-24 rounded-3xl ${step.color} shadow-lg flex items-center justify-center mb-8 relative z-10 transform transition-all duration-500 group-hover:rotate-[10deg] group-hover:scale-110`}>
+                            <div className={`w-24 h-24 rounded-3xl ${step.color} shadow-lg flex items-center justify-center mb-8 relative z-10 transform transition-all duration-500 group-hover:scale-110`}>
                                 <step.icon className={step.iconColor} size={32} />
-                                
-                                {/* Orbiting ring effect on hover */}
-                                <div className="absolute inset-0 rounded-3xl border-2 border-[#85C7F2] opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-500" />
                             </div>
 
                             <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-transparent group-hover:border-[#85C7F2]/20 group-hover:bg-white transition-all duration-300 shadow-sm group-hover:shadow-xl">

@@ -1,8 +1,8 @@
 // src/components/landing/Navbar.jsx
 import React, { useState } from 'react';
-import { Cpu, Menu, X, Bot } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -15,12 +15,12 @@ const Navbar = () => {
             transition={{ duration: 0.5 }}
             className="fixed w-full z-50 bg-[#FDFBFF]/80 backdrop-blur-md border-b border-gray-100"
         >
-            <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     {/* <div className="w-8 h-8 bg-[#2D3748] rounded-lg flex items-center justify-center">
                         <Bot size={18} className="text-[#85C7F2]" />
                     </div> */}
-                    <img className='w-14 h-15 rounded-md' src="/markme.png" alt="Logo" />
+                    <img className="w-14 h-14 rounded-md" src="/markme.png" alt="Logo" />
                     <span className="heading-font text-4xl font-bold tracking-tight text-[#2D3748]">Mark<span className="text-[#85C7F2]">ME</span></span>
                 </div>
 
@@ -57,10 +57,71 @@ const Navbar = () => {
                     </button>
                 </div>
 
-                <button className="md:hidden cursor-pointer" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                <button
+                    type="button"
+                    className="md:hidden cursor-pointer"
+                    onClick={() => setIsMenuOpen((open) => !open)}
+                    aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+                    aria-expanded={isMenuOpen}
+                    aria-controls="mobile-nav"
+                >
                     {isMenuOpen ? <X /> : <Menu />}
                 </button>
             </div>
+
+            <AnimatePresence>
+                {isMenuOpen && (
+                    <motion.div
+                        id="mobile-nav"
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2 }}
+                        className="md:hidden border-t border-gray-100 bg-[#FDFBFF]/95 backdrop-blur-md"
+                    >
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col gap-4">
+                            <a
+                                href="#workflow"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="text-sm font-medium cursor-pointer transition-colors hover:text-[#85C7F2]"
+                            >
+                                Workflow
+                            </a>
+                            <a
+                                href="#features"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="text-sm font-medium cursor-pointer transition-colors hover:text-[#85C7F2]"
+                            >
+                                Features
+                            </a>
+                            <a
+                                href="#roles"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="text-sm font-medium cursor-pointer transition-colors hover:text-[#85C7F2]"
+                            >
+                                Solutions
+                            </a>
+                            <a
+                                href="#developers"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="text-sm font-medium cursor-pointer transition-colors hover:text-[#85C7F2]"
+                            >
+                                Developers
+                            </a>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsMenuOpen(false);
+                                    navigate('/login');
+                                }}
+                                className="w-full px-5 py-2.5 bg-[#2D3748] text-white text-sm font-semibold rounded-lg hover:bg-[#1a202c] transition-all cursor-pointer"
+                            >
+                                Login
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.nav>
     );
 };

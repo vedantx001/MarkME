@@ -182,7 +182,7 @@ const AuthPage = ({ initialMode = 'login' }) => {
               MARK<span style={{ color: 'var(--secondary-accent)' }}>ME</span>
             </h1>
             <p className="mt-3 text-gray-300 text-lg font-light">
-              Smart Face Recognition System for Rural Education.
+              Smart Attendance System for Rural and Government Schools
             </p>
           </div>
 
@@ -191,28 +191,28 @@ const AuthPage = ({ initialMode = 'login' }) => {
             <FeatureCard
               icon={Workflow}
               title="Streamlined Pipelines"
-              description="End-to-end automated workflows for School Admins, Teachers, and Principals."
+              description="End‑to‑end digital workflows connecting administrators, teachers, and school leadership."
             />
             <FeatureCard
               icon={ScanFace}
               title="Secure Biometric"
-              description="Instant, accurate student attendance verification via advanced facial scanning."
+              description="Secure face recognition technology for accurate and reliable student attendance."
             />
             <FeatureCard
               icon={BarChart3}
               title="Insight Reports"
-              description="Generate color-coded monthly analytics for data-driven decision making."
+              description="Automatically generated monthly attendance reports for academic monitoring."
             />
             <FeatureCard
               icon={WifiOff}
               title="Offline-First"
-              description="Robust architecture designed for seamless operations in low-connectivity rural areas."
+              description="Designed to operate reliably in rural areas with limited internet connectivity."
             />
           </div>
 
           {/* Footer */}
           <div className="relative z-10 text-sm text-gray-400 font-medium">
-            © 2025 MARKME EdTech Initiative.
+            © 2026 MARKME Attendance System.
           </div>
         </div>
 
@@ -232,12 +232,12 @@ const AuthPage = ({ initialMode = 'login' }) => {
                 {/* Form Header */}
                 <div className="mb-10 text-center md:text-left">
                   <h2 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: 'var(--primary-text)' }}>
-                    {isLogin ? 'Welcome Back' : 'Register School'}
+                    {isLogin ? 'School Portal Login' : 'Register Your School'}
                   </h2>
                   <p className="text-gray-500">
                     {isLogin
-                      ? 'Enter your credentials to access the dashboard.'
-                      : 'Setup your admin account to manage your institution.'}
+                      ? 'Sign in to access your official school attendance dashboard.'
+                      : 'Create an administrator account to set up and manage your school attendance system.'}
                   </p>
                 </div>
 
@@ -255,7 +255,7 @@ const AuthPage = ({ initialMode = 'login' }) => {
                         <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3182CE] transition-colors" size={22} />
                         <input
                           type="text"
-                          placeholder="Admin Full Name"
+                          placeholder="Administrator Full Name"
                           className="form-input"
                           value={registerForm.adminName}
                           onChange={(e) => setRegisterForm((p) => ({ ...p, adminName: e.target.value }))}
@@ -268,7 +268,7 @@ const AuthPage = ({ initialMode = 'login' }) => {
                           <School className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3182CE] transition-colors" size={22} />
                           <input
                             type="text"
-                            placeholder="School Name"
+                            placeholder="School Identification Code (e.g. SCH-001)"
                             className="form-input"
                             value={registerForm.schoolName}
                             onChange={(e) => setRegisterForm((p) => ({ ...p, schoolName: e.target.value }))}
@@ -310,7 +310,7 @@ const AuthPage = ({ initialMode = 'login' }) => {
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3182CE] transition-colors" size={22} />
                     <input
                       type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
+                      placeholder="Enter your account password"
                       className="form-input pr-12"
                       value={isLogin ? loginForm.password : registerForm.password}
                       onChange={(e) => {
@@ -368,7 +368,7 @@ const AuthPage = ({ initialMode = 'login' }) => {
                     style={{ backgroundColor: '#3182CE' }}
                     disabled={submitting}
                   >
-                    {submitting ? 'Please wait...' : (isLogin ? 'Login Dashboard' : 'Create Admin Account')}
+                    {submitting ? 'Please wait...' : (isLogin ? 'Login Dashboard' : 'Register School Administrator')}
                     <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                 </form>
@@ -376,13 +376,13 @@ const AuthPage = ({ initialMode = 'login' }) => {
                 {/* Toggle Login/Signup */}
                 <div className="mt-10 text-center">
                   <p className="text-gray-500 font-medium">
-                    {isLogin ? "New to MARKME? " : "Already have an account? "}
+                    {isLogin ? "New to MarkME? Register your school " : "Already registered?"}
                     <button
                       onClick={toggleMode}
                       className="font-bold hover:underline transition-colors"
                       style={{ color: '#3182CE' }}
                     >
-                      {isLogin ? 'Register School' : 'Login here'}
+                      {isLogin ? 'Register School' : 'Sign in here'}
                     </button>
                   </p>
                 </div>

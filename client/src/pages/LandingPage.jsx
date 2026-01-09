@@ -25,7 +25,7 @@ const LandingPage = () => {
             <Features />
             <Roles />
             <DeveloperCarousel />
-            {/* <Footer /> */}
+            <Footer />
         </div>
     );
 };
