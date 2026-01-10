@@ -17,6 +17,15 @@ const AddStudentForm = ({ isOpen, onClose, classroomId, onCreated }) => {
 
   const rollNoNum = useMemo(() => Number(String(form.rollNo).trim()), [form.rollNo]);
 
+  const isMobileBrowser = useMemo(() => {
+    if (typeof navigator === "undefined") return false;
+    if (navigator.userAgentData && typeof navigator.userAgentData.mobile === "boolean") {
+      return navigator.userAgentData.mobile;
+    }
+    const ua = navigator.userAgent || "";
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  }, []);
+
   const validatePhoto = (file, rollNumber) => {
     if (!file) return null;
 
@@ -28,8 +37,10 @@ const AddStudentForm = ({ isOpen, onClose, classroomId, onCreated }) => {
     const base = parts.join(".");
 
     if (!/^(jpg|jpeg|png)$/.test(ext || "")) return "Only JPG, JPEG, PNG files are allowed.";
-    if (!/^\d+$/.test(base)) return "Photo filename must start with digits (roll number).";
-    if (Number(base) !== Number(rollNumber)) return `Photo filename must be ${rollNumber}.${ext}`;
+    if (!isMobileBrowser) {
+      if (!/^\d+$/.test(base)) return "Photo filename must start with digits (roll number).";
+      if (Number(base) !== Number(rollNumber)) return `Photo filename must be ${rollNumber}.${ext}`;
+    }
 
     return null;
   };
@@ -94,7 +105,7 @@ const AddStudentForm = ({ isOpen, onClose, classroomId, onCreated }) => {
     <AnimatePresence>
       {isOpen ? (
         <Motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-[rgb(var(--primary-text-rgb)/0.5)] w-full h-full"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:backdrop-blur-sm bg-[rgb(var(--primary-text-rgb)/0.5)] w-full h-full"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -211,10 +222,17 @@ const AddStudentForm = ({ isOpen, onClose, classroomId, onCreated }) => {
                   />
                 </div>
                 <p className="text-xs text-(--primary-accent) opacity-60 ml-1">
-                  Filename must be{" "}
-                  <span className="font-bold">
-                    {Number.isFinite(rollNoNum) && rollNoNum > 0 ? `${rollNoNum}.jpg` : "<rollNo>.jpg"}
-                  </span>
+                  {isMobileBrowser ? (
+                    <>
+                      On mobile, the gallery may show a generated filename — that&apos;s OK. We&apos;ll store it as{" "}
+                      <span className="font-bold">{Number.isFinite(rollNoNum) && rollNoNum > 0 ? `${rollNoNum}.jpg` : "<rollNo>.jpg"}</span>
+                    </>
+                  ) : (
+                    <>
+                      Filename must be{" "}
+                      <span className="font-bold">{Number.isFinite(rollNoNum) && rollNoNum > 0 ? `${rollNoNum}.jpg` : "<rollNo>.jpg"}</span>
+                    </>
+                  )}
                 </p>
               </div>
 

@@ -52,14 +52,6 @@ const Principal = () => {
           <h2 className="text-2xl font-bold text-(--primary-text)">Principal</h2>
           <p className="text-(--primary-accent) opacity-60">View and edit principal details (only one principal allowed).</p>
         </div>
-
-        <button
-          onClick={() => setIsEditOpen(true)}
-          className="flex items-center gap-2 bg-(--primary-accent) text-(--primary-bg) px-4 py-2.5 rounded-xl font-bold shadow-lg shadow-[rgb(var(--primary-accent-rgb)/0.2)] hover:bg-(--primary-text) transition-all"
-        >
-          <Pencil size={18} />
-          Edit
-        </button>
       </div>
 
       {/* Principal Card (match Teachers card style) */}

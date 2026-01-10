@@ -59,7 +59,7 @@ const BulkStudentUploadForm = ({ isOpen, onClose, classroomId, onUploaded, mode 
     <AnimatePresence>
       {isOpen ? (
         <Motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-[rgb(var(--primary-text-rgb)/0.5)] w-full h-full"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:backdrop-blur-sm bg-[rgb(var(--primary-text-rgb)/0.5)] w-full h-full"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

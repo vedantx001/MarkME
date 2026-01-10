@@ -178,7 +178,7 @@ const ClassroomDetail = () => {
       <AnimatePresence>
         {confirmDeleteOpen ? (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-[rgb(var(--primary-text-rgb)/0.5)]"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:backdrop-blur-sm bg-[rgb(var(--primary-text-rgb)/0.5)]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -421,7 +421,7 @@ const ClassroomDetail = () => {
                     >
                       Profile
                     </button>
-                    <div className="ml-auto flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="ml-auto flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                       <button
                         disabled={rowBusyId === s.id}
                         onClick={(e) => {
